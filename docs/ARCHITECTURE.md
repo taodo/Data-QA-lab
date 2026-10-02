@@ -11,13 +11,13 @@ Local, single-user learning environment. Backend domain and services are indepen
 - API: FastAPI planned for Task 6.
 - UI: React planned for Task 7.
 
-Task 0 provides domain contracts and a catalog CLI only. Docker Compose is introduced with an executable database adapter in Task 1 rather than an unused service file.
+Task 1 adds Docker Compose, the PostgreSQL adapter, deterministic source generation, the executable orders pipeline and run inspection. The QA engine starts in Task 2.
 
 ## Boundaries
 
 Execution SUCCESS means all required job stages completed. Quality PASS means the requested validation suite completed with no failures/errors. Before any validation, quality is NOT_RUN. An ERROR signals that a check could not produce a verdict and retains failure evidence separately.
 
-Each run will preserve immutable source snapshots, effective fault configuration, stage metrics, schema observations and logs. New runs must not overwrite evidence of earlier runs. A second run or reset must recreate a clean baseline.
+Each run preserves a Bronze source snapshot plus run-scoped Silver, Gold and Target rows, stage metrics, timestamps and errors. New runs do not overwrite earlier evidence. Source reseeding changes only Data QA Lab source tables; existing run evidence remains available.
 
 Challenge mode conceals fault metadata/solutions from learner responses; sandbox mode can expose them. This boundary applies in API payloads, not only the UI.
 

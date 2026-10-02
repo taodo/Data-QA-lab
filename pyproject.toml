@@ -4,11 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "data-qa-lab"
-version = "0.1.0"
+version = "0.2.0"
 description = "Interactive data pipeline testing and learning platform"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = ["psycopg[binary]>=3.2,<4"]
+
+[project.scripts]
+data-qa-lab = "backend.app.main:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["backend*", "pipeline*", "qa*", "faults*"]
+
+[tool.setuptools.package-data]
+"backend.app.persistence" = ["*.sql"]

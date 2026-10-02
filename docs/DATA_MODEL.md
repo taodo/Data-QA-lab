@@ -6,7 +6,7 @@ PipelineRun references lab_id and pipeline_id; execution_status and computed dat
 
 Quality aggregation priority: ERROR → FAIL → NOT_RUN → PASS. An empty suite is NOT_RUN. Individual outcomes remain visible if aggregate status is ERROR.
 
-## Planned database schema — Task 1
+## PostgreSQL schema — implemented in Task 1
 
 orders: order_id (integer key), customer_id, ordered_at (UTC timestamptz), gross_amount, discount_amount, refund_amount (NUMERIC), updated_at.
 customers: customer_id (integer key), country_code.
@@ -14,4 +14,4 @@ silver.orders adds net_amount = gross_amount - discount_amount - refund_amount.
 gold.daily_sales: order_date (UTC), order_count, net_revenue.
 target.orders_report retains order grain; target.daily_sales_report retains day grain.
 
-Use fixed seed and dates for repeatable results. Record dataset/run scope on evidence. Validation rule IDs reference the lab's datasets; identifiers and schema ownership will be checked during catalog registration in Task 5. Current contracts do not implement persistence or a transition state machine.
+Use fixed seed and dates for repeatable results. Record dataset/run scope on evidence. Validation rule IDs reference the lab's datasets; identifiers and schema ownership will be checked during catalog registration in Task 5. Task 1 persists pipeline and stage execution evidence. The domain dataclasses remain transport-neutral; a full workflow transition state machine is outside this task.

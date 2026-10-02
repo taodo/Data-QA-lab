@@ -1,19 +1,48 @@
 # Task 1 — First working PostgreSQL pipeline
 
-Engineering objective: run a deterministic pipeline with retained evidence through every layer.
-Learning objective: explain extraction, raw preservation, cleaning, business transformation and reporting grain.
+Status: implemented on `feature/task-1-postgresql-pipeline`, awaiting review and merge into `feature/develop`.
 
-Implement Docker Compose PostgreSQL bound only to loopback. Load 10,000 deterministic orders plus customers. Use money as NUMERIC, UTC timestamps, fixed data generation seed/date. Execute source → bronze.orders → silver.orders → gold.daily_sales → target.orders_report and target.daily_sales_report.
+## Objectives
 
-Add dependency/configuration management for the PostgreSQL adapter. Keep database credentials out of git. Use an app-specific database. Never reset unrelated schemas or databases. Provide CLI commands for seed/run/inspect. Preserve run_id, timestamps, stage status, counts and errors. Bind evidence to each run and protect old run snapshots from subsequent loads.
+Engineering: run a deterministic PostgreSQL pipeline with retained evidence through Source, Bronze, Silver, Gold and Target.
 
-Acceptance:
-- One clean run completes all stages with execution SUCCESS and quality NOT_RUN until checks exist.
-- 10,000 order rows remain at order grain; Gold daily order_count sums to 10,000.
-- Exact expected net revenue is verified by an independently specified fixture or calculation.
-- Repeated runs remain reproducible without duplicating rows or overwriting past run evidence.
-- Stage failure retains error evidence and does not claim downstream success.
-- Integration tests actually connect to PostgreSQL; report a skip if unavailable.
-- Document D-drive bind paths and explicitly note that Docker's own disk image needs separate configuration.
+Learning: explain extraction, raw preservation, cleaning, business transformation, reporting grain and why pipeline execution status is separate from data quality.
 
-Out of scope: web UI, API, AI, fault injection, learner SQL execution, cloud. Deliver a small runnable pipeline and explain what each stage does.
+## Delivered behavior
+
+- Docker Compose starts PostgreSQL 16 on loopback only.
+- Six app-owned schemas isolate source, four pipeline concerns and run metadata.
+- Source seed creates 1,000 customers and 10,000 orders with fixed formulas, UTC timestamps and exact decimal money.
+- Every pipeline run gets a UUID. Bronze, Silver, Gold and Target rows carry it, so later runs do not overwrite prior evidence.
+- Each stage commits separately. A failed stage is rolled back and logged; downstream stages are not claimed successful.
+- Gold uses UTC-day grain. Its `row_count` is the number of dates; `metrics.order_count` reconciles orders.
+- Target exposes an order-detail table and a daily-sales table.
+- CLI supports `db-init`, `seed`, `pipeline-run` and `inspect`.
+- GitHub Actions runs unit and live PostgreSQL integration tests.
+
+## Contracts
+
+Clean fixture:
+
+- Customers: 1,000.
+- Orders: 10,000 unique `order_id` values.
+- Expected net revenue: `25,245,493.29`.
+- `net_amount = gross_amount - discount_amount - refund_amount`.
+- Business timestamps are timezone-aware and stored as `TIMESTAMPTZ`.
+
+A clean run ends with execution `SUCCESS` and quality `NOT_RUN`. Task 1 does not infer quality from successful movement/transformation.
+
+## Commands
+
+Run from the repository root:
+
+```text
+python -m backend.app.main db-init
+python -m backend.app.main seed
+python -m backend.app.main pipeline-run
+python -m backend.app.main inspect
+```
+
+## Scope boundary
+
+The QA Engine, fault injection, learner SQL, API and UI remain later tasks. PostgreSQL schemas model medallion layers locally; this task does not claim to implement lakehouse file storage.
