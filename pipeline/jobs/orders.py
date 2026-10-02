@@ -47,7 +47,7 @@ def _record_stage(database_url: str, run_id: UUID, name: str, status: str,
             """INSERT INTO metadata.stage_runs
                (run_id, stage_name, execution_status, row_count, metrics, started_at, completed_at, error)
                VALUES (%s, %s, %s, %s, %s::jsonb, %s, %s, %s)""",
-            (run_id, name, status, row_count, json.dumps(metrics or {}),
+            (run_id, name, status, row_count, json.dumps(metrics or {}, default=str),
              started_at, _utcnow(), error),
         )
 
@@ -99,7 +99,7 @@ def _gold(connection, run_id: UUID) -> StageOutcome:
         """SELECT COUNT(*), COALESCE(SUM(order_count), 0), COALESCE(SUM(net_revenue), 0)
            FROM gold.daily_sales WHERE run_id = %s""", (run_id,)
     ).fetchone()
-    return StageOutcome("GOLD", row[0], {"order_count": row[1], "net_revenue": str(row[2]), "grain": "UTC day"})
+    return StageOutcome("GOLD", row[0], {"order_count": int(row[1]), "net_revenue": str(row[2]), "grain": "UTC day"})
 
 def _target(connection, run_id: UUID) -> StageOutcome:
     connection.execute(
