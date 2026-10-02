@@ -15,3 +15,7 @@ gold.daily_sales: order_date (UTC), order_count, net_revenue.
 target.orders_report retains order grain; target.daily_sales_report retains day grain.
 
 Use fixed seed and dates for repeatable results. Record dataset/run scope on evidence. Validation rule IDs reference the lab's datasets; identifiers and schema ownership will be checked during catalog registration in Task 5. Task 1 persists pipeline and stage execution evidence. The domain dataclasses remain transport-neutral; a full workflow transition state machine is outside this task.
+
+## Validation persistence — Task 2
+
+`metadata.validation_runs` identifies each suite execution and links it to one successful pipeline run. `metadata.validation_results` stores one immutable result per rule with dataset, check type, status, expected/actual JSON, evidence JSON and execution error. The latest completed suite status is copied to `pipeline_runs.data_quality_status`; pipeline execution status remains independent.

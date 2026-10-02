@@ -95,3 +95,28 @@ CREATE TABLE IF NOT EXISTS target.daily_sales_report (
 );
 
 CREATE INDEX IF NOT EXISTS idx_pipeline_runs_started_at ON metadata.pipeline_runs(started_at DESC);
+
+CREATE TABLE IF NOT EXISTS metadata.validation_runs (
+    validation_run_id UUID PRIMARY KEY,
+    pipeline_run_id UUID NOT NULL REFERENCES metadata.pipeline_runs(run_id),
+    suite_id TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('RUNNING','NOT_RUN','PASS','FAIL','ERROR')),
+    started_at TIMESTAMPTZ NOT NULL,
+    completed_at TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS metadata.validation_results (
+    validation_run_id UUID NOT NULL REFERENCES metadata.validation_runs(validation_run_id),
+    rule_id TEXT NOT NULL,
+    dataset_id TEXT NOT NULL,
+    check_type TEXT NOT NULL CHECK (check_type IN ('RECORD_COUNT','UNIQUENESS','NOT_NULL','SCHEMA')),
+    status TEXT NOT NULL CHECK (status IN ('PASS','FAIL','ERROR')),
+    expected JSONB NOT NULL,
+    actual JSONB NOT NULL,
+    evidence JSONB NOT NULL,
+    error TEXT,
+    PRIMARY KEY (validation_run_id, rule_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_validation_runs_pipeline
+    ON metadata.validation_runs(pipeline_run_id, started_at DESC);

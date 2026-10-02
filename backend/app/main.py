@@ -30,6 +30,10 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("pipeline-run", help="Run Source through Target")
     inspect = subparsers.add_parser("inspect", help="Inspect a pipeline run")
     inspect.add_argument("--run-id", type=UUID)
+    quality_run = subparsers.add_parser("quality-run", help="Run the built-in data quality suite")
+    quality_run.add_argument("--run-id", type=UUID)
+    quality_inspect = subparsers.add_parser("quality-inspect", help="Inspect the latest quality run")
+    quality_inspect.add_argument("--run-id", type=UUID)
     return parser
 
 def main() -> None:
@@ -60,6 +64,15 @@ def main() -> None:
         result = inspect_run(database_url, args.run_id)
         if result is None:
             raise SystemExit("No matching pipeline run found")
+        _print(result)
+    elif args.command == "quality-run":
+        from qa.engine.runner import run_quality_suite
+        _print(asdict(run_quality_suite(database_url, args.run_id)))
+    elif args.command == "quality-inspect":
+        from qa.engine.runner import inspect_quality_run
+        result = inspect_quality_run(database_url, args.run_id)
+        if result is None:
+            raise SystemExit("No matching quality run found")
         _print(result)
 
 if __name__ == "__main__":
