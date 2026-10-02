@@ -11,5 +11,6 @@ dist/
 node_modules/
 data/generated/*
 !data/generated/.gitkeep
+data/postgres/
 *.db
 *.sqlite*

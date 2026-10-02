@@ -1,12 +1,17 @@
-# Task 0 verification
+# Verification
 
-Verified on Python 3.12.14, Linux:
+## Task 0
 
-- `python -m unittest discover -s tests/unit -v`: 10 tests passed.
-- `python -m backend.app.main check`: 1 lab loaded.
-- `python -m backend.app.main labs`: expected Lab 001 fields returned.
-- Delivery ZIP extracted to a clean directory; CLI and tests rerun successfully.
+Python 3.12: 10 unit tests passed and Lab 001 loaded.
 
-Windows PowerShell instructions are provided but were not executed on a Windows machine. PostgreSQL/Docker/API/UI have not been implemented or tested at this checkpoint.
+## Task 1 local environment
 
-Run commands from the project root. An initial test attempt from the parent directory failed to import the backend package; running the documented command from the root resolved it.
+Python 3.12:
+
+- 14 unit tests passed.
+- Catalog CLI passed.
+- PostgreSQL integration test was discovered and skipped because this execution environment has no Docker/PostgreSQL service.
+
+The task branch includes GitHub Actions with PostgreSQL 16. It installs the package, runs all unit tests, then runs the live integration test. The workflow result on the pushed commit is the authoritative PostgreSQL execution evidence.
+
+The integration test runs the clean pipeline twice and checks counts, exact revenue, run status, quality `NOT_RUN`, and retention of the first run's five stage records.
