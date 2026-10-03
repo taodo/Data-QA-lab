@@ -58,10 +58,12 @@ docker compose down
 
 ```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s tests/unit -v
-$env:DATA_QA_TEST_DATABASE_URL = 'postgresql://data_qa_lab:data_qa_lab@localhost:5432/data_qa_lab'
+$env:DATA_QA_TEST_DATABASE_URL = 'postgresql://data_qa_lab:data_qa_lab@127.0.0.1:5432/data_qa_lab'
 .\.venv\Scripts\python.exe -m unittest discover -s tests/integration -v
 ```
 
 The integration test initializes only Data QA Lab schemas, reseeds its source tables, runs the pipeline twice, and verifies that evidence from the first run remains available.
+
+The Windows connection uses `127.0.0.1` because Compose publishes PostgreSQL on the IPv4 loopback interface. The database adapter also applies a five-second connection timeout so an unreachable host fails promptly instead of leaving a pipeline command waiting indefinitely.
 
 See `docs/TASK_1.md`, `docs/TASK_2.md`, `docs/ARCHITECTURE.md`, `docs/DATA_MODEL.md`, `docs/BRANCHING.md` and `docs/WINDOWS_D_DRIVE.md`.

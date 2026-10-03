@@ -25,3 +25,5 @@ Python 3.12:
 - GitHub Actions supplies PostgreSQL 16 and is the authoritative live integration result for the task branch.
 
 Coverage includes clean PASS, retained validation history, count FAIL with pipeline execution still SUCCESS, duplicate/null/schema failures, execution ERROR, empty-suite NOT_RUN, immutable Source baseline and cross-run isolation.
+
+Windows Docker verification exposed a loopback mismatch: Compose publishes PostgreSQL on `127.0.0.1`, while the original application default used `localhost`. On a host that tried IPv6 first, each connection waited roughly 260 seconds before falling back to IPv4. The local default now matches the IPv4-only port binding and every connection has a five-second timeout. The corrected 10,000-row pipeline completed in 2.4 seconds; its 20-rule quality suite passed. Local verification then passed 19 unit tests and eight PostgreSQL integration tests.
