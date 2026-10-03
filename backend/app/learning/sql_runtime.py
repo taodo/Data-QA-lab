@@ -93,7 +93,7 @@ def restricted_workspace(database_url, snapshot, variant="current", limits=Query
             "CREATE ROLE {} LOGIN PASSWORD {} NOSUPERUSER NOCREATEDB NOCREATEROLE "
             "NOINHERIT NOREPLICATION NOBYPASSRLS CONNECTION LIMIT 1 VALID UNTIL {}"
         ).format(sql.Identifier(role), sql.Literal(password),
-                 sql.Literal(datetime.now(timezone.utc) + timedelta(minutes=5))))
+                 sql.Literal((datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat())))
         admin.execute(sql.SQL("GRANT USAGE ON SCHEMA {} TO {}").format(
             sql.Identifier(schema), sql.Identifier(role)))
         for table in TABLES:
