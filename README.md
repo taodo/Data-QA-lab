@@ -2,9 +2,9 @@
 
 Interactive Data Pipeline Testing & Learning Platform. The local V1 runs a real PostgreSQL pipeline and preserves evidence for every run.
 
-**Current branch checkpoint: Task 2 — basic Data Quality Engine.**
+**Current branch checkpoint: Task 3 — key and field reconciliation.**
 
-Core principle: **Pipeline SUCCESS ≠ Data Quality PASS.** Task 2 now evaluates quality independently as `PASS`, `FAIL`, `ERROR` or `NOT_RUN`.
+Core principle: **Pipeline SUCCESS ≠ Data Quality PASS.** The quality engine evaluates basic checks plus source-to-target reconciliation independently as `PASS`, `FAIL`, `ERROR` or `NOT_RUN`.
 
 ## Pipeline
 
@@ -46,7 +46,8 @@ Expected clean-run facts:
 - Gold `SUM(order_count)`: 10,000. Gold row count is the number of UTC dates.
 - Net revenue at Source, Silver, Gold and Target: `25,245,493.29`.
 - Pipeline execution: `SUCCESS`.
-- Data quality after the built-in clean suite: `PASS` across 20 rules.
+- Data quality after the built-in clean suite: `PASS` across 26 rules.
+- Reconciliation uses immutable run-scoped datasets and reports missing keys, unexpected keys and field mismatches with bounded evidence.
 
 Stop PostgreSQL without deleting its D-drive data:
 
@@ -66,4 +67,4 @@ The integration test initializes only Data QA Lab schemas, reseeds its source ta
 
 The Windows connection uses `127.0.0.1` because Compose publishes PostgreSQL on the IPv4 loopback interface. The database adapter also applies a five-second connection timeout so an unreachable host fails promptly instead of leaving a pipeline command waiting indefinitely.
 
-See `docs/TASK_1.md`, `docs/TASK_2.md`, `docs/ARCHITECTURE.md`, `docs/DATA_MODEL.md`, `docs/BRANCHING.md` and `docs/WINDOWS_D_DRIVE.md`.
+See `docs/TASK_1.md`, `docs/TASK_2.md`, `docs/TASK_3.md`, `docs/ARCHITECTURE.md`, `docs/DATA_MODEL.md`, `docs/BRANCHING.md` and `docs/WINDOWS_D_DRIVE.md`.

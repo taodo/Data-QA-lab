@@ -1,8 +1,9 @@
 import unittest
 from backend.app.domain.models import QualityStatus
 from qa.engine.contracts import (
-    CountMode, DatasetRegistry, DatasetSpec, NotNullRule, RecordCountRule,
-    UniquenessRule, ValidationSuite, aggregate_statuses, validate_suite,
+    CountMode, DatasetRegistry, DatasetSpec, FieldMapping, FieldReconciliationRule,
+    KeyReconciliationRule, NotNullRule, RecordCountRule, UniquenessRule,
+    ValidationSuite, aggregate_statuses, validate_suite,
 )
 
 class QualityContractTests(unittest.TestCase):
@@ -44,3 +45,33 @@ class QualityContractTests(unittest.TestCase):
         registry = DatasetRegistry((DatasetSpec("orders", "silver", "orders"),))
         with self.assertRaises(ValueError):
             validate_suite(ValidationSuite("suite", (RecordCountRule("count", "missing"),)), registry)
+
+    def test_reconciliation_contracts_are_allowlisted_and_bounded(self):
+        registry = DatasetRegistry((
+            DatasetSpec("source_orders", "bronze", "orders"),
+            DatasetSpec("target_orders", "target", "orders_report"),
+        ))
+        rules = (
+            KeyReconciliationRule(
+                "keys", "source_orders", "target_orders", ("tenant_id", "order_id")
+            ),
+            FieldReconciliationRule(
+                "fields", "source_orders", "target_orders", ("order_id",),
+                (FieldMapping("net_amount", "net_amount"),), max_evidence=5,
+            ),
+        )
+        validate_suite(ValidationSuite("reconciliation", rules), registry)
+        with self.assertRaises(ValueError):
+            KeyReconciliationRule("unsafe", "source_orders", "target_orders", ("order_id; drop",))
+        with self.assertRaises(ValueError):
+            FieldReconciliationRule(
+                "empty", "source_orders", "target_orders", ("order_id",), ()
+            )
+        with self.assertRaises(ValueError):
+            KeyReconciliationRule(
+                "unbounded", "source_orders", "target_orders", ("order_id",), max_evidence=101
+            )
+        with self.assertRaises(ValueError):
+            validate_suite(ValidationSuite("missing", (
+                KeyReconciliationRule("keys", "source_orders", "unknown", ("order_id",)),
+            )), registry)

@@ -3,12 +3,17 @@ from uuid import UUID
 
 from backend.app.domain.models import QualityStatus
 from qa.engine.contracts import (
-    CheckResult, CountMode, DatasetRegistry, NotNullRule, RecordCountRule,
-    Rule, SchemaRule, UniquenessRule,
+    CheckResult, CountMode, DatasetRegistry, FieldReconciliationRule,
+    KeyReconciliationRule, NotNullRule, RecordCountRule, Rule, SchemaRule,
+    UniquenessRule,
 )
 
 def execute_rule(connection, pipeline_run_id: UUID, rule: Rule,
                  registry: DatasetRegistry) -> CheckResult:
+    if isinstance(rule, KeyReconciliationRule):
+        return _key_reconciliation(connection, pipeline_run_id, rule, registry)
+    if isinstance(rule, FieldReconciliationRule):
+        return _field_reconciliation(connection, pipeline_run_id, rule, registry)
     dataset = registry.get(rule.dataset_id)
     if isinstance(rule, RecordCountRule):
         return _record_count(connection, pipeline_run_id, rule, dataset)
@@ -115,3 +120,127 @@ def _schema(connection, rule, dataset):
     return CheckResult(rule.id, dataset.id, rule.check_type, status,
                        {"columns": expected, "allow_extra_columns": rule.allow_extra_columns},
                        {"columns": actual}, evidence)
+
+def _relation(dataset, alias, pipeline_run_id):
+    sql = _sql_module()
+    relation = sql.SQL("{}.{} AS {}").format(
+        sql.Identifier(dataset.schema), sql.Identifier(dataset.table), sql.Identifier(alias)
+    )
+    if dataset.run_scoped:
+        return relation, sql.SQL("{}.run_id = %s").format(sql.Identifier(alias)), [pipeline_run_id]
+    return relation, sql.SQL("TRUE"), []
+
+def _difference_query(source, target, key_columns, pipeline_run_id, reverse=False):
+    sql = _sql_module()
+    left, right = (target, source) if reverse else (source, target)
+    left_relation, left_scope, left_params = _relation(left, "left_side", pipeline_run_id)
+    right_relation, right_scope, right_params = _relation(right, "right_side", pipeline_run_id)
+    columns = sql.SQL(", ").join(sql.Identifier(column) for column in key_columns)
+    query = sql.SQL(
+        "SELECT {columns} FROM {left_relation} WHERE {left_scope} "
+        "EXCEPT SELECT {columns} FROM {right_relation} WHERE {right_scope}"
+    ).format(
+        columns=columns,
+        left_relation=left_relation,
+        left_scope=left_scope,
+        right_relation=right_relation,
+        right_scope=right_scope,
+    )
+    return query, tuple(left_params + right_params)
+
+def _difference_evidence(connection, query, params, key_columns, kind, limit):
+    sql = _sql_module()
+    count = connection.execute(
+        sql.SQL("SELECT COUNT(*) FROM ({}) AS differences").format(query), params
+    ).fetchone()[0]
+    order = sql.SQL(", ").join(sql.Identifier(column) for column in key_columns)
+    rows = connection.execute(
+        sql.SQL("SELECT * FROM ({}) AS differences ORDER BY {} LIMIT %s").format(query, order),
+        params + (limit,),
+    ).fetchall()
+    evidence = tuple({"kind": kind, "key": dict(zip(key_columns, row))} for row in rows)
+    return int(count), evidence
+
+def _key_reconciliation(connection, pipeline_run_id, rule, registry):
+    source = registry.get(rule.source_dataset_id)
+    target = registry.get(rule.target_dataset_id)
+    missing_query, missing_params = _difference_query(
+        source, target, rule.key_columns, pipeline_run_id
+    )
+    unexpected_query, unexpected_params = _difference_query(
+        source, target, rule.key_columns, pipeline_run_id, reverse=True
+    )
+    missing_count, missing_evidence = _difference_evidence(
+        connection, missing_query, missing_params, rule.key_columns, "MISSING_KEY", rule.max_evidence
+    )
+    remaining = max(0, rule.max_evidence - len(missing_evidence))
+    unexpected_count, unexpected_evidence = _difference_evidence(
+        connection, unexpected_query, unexpected_params, rule.key_columns,
+        "UNEXPECTED_KEY", max(1, remaining),
+    )
+    evidence = (missing_evidence + unexpected_evidence)[:rule.max_evidence]
+    status = QualityStatus.PASS if missing_count == 0 and unexpected_count == 0 else QualityStatus.FAIL
+    return CheckResult(
+        rule.id, target.id, rule.check_type, status,
+        {"missing_count": 0, "unexpected_count": 0,
+         "source_dataset": source.id, "target_dataset": target.id},
+        {"missing_count": missing_count, "unexpected_count": unexpected_count},
+        evidence,
+    )
+
+def _field_reconciliation(connection, pipeline_run_id, rule, registry):
+    sql = _sql_module()
+    source = registry.get(rule.source_dataset_id)
+    target = registry.get(rule.target_dataset_id)
+    source_relation, source_scope, source_params = _relation(source, "source_side", pipeline_run_id)
+    target_relation, target_scope, target_params = _relation(target, "target_side", pipeline_run_id)
+    join = sql.SQL(" AND ").join(
+        sql.SQL("source_side.{} = target_side.{}").format(
+            sql.Identifier(column), sql.Identifier(column)
+        ) for column in rule.key_columns
+    )
+    scopes = sql.SQL(" AND ").join((source_scope, target_scope))
+    params = tuple(source_params + target_params)
+    key_select = sql.SQL(", ").join(
+        sql.SQL("source_side.{}").format(sql.Identifier(column)) for column in rule.key_columns
+    )
+    order = sql.SQL(", ").join(
+        sql.SQL("source_side.{}").format(sql.Identifier(column)) for column in rule.key_columns
+    )
+    mismatch_count = 0
+    evidence = []
+    for mapping in rule.fields:
+        mismatch = sql.SQL("source_side.{} IS DISTINCT FROM target_side.{}").format(
+            sql.Identifier(mapping.source), sql.Identifier(mapping.target)
+        )
+        base = sql.SQL(" FROM {} JOIN {} ON {} WHERE {} AND {}").format(
+            source_relation, target_relation, join, scopes, mismatch
+        )
+        count = int(connection.execute(sql.SQL("SELECT COUNT(*)") + base, params).fetchone()[0])
+        mismatch_count += count
+        remaining = rule.max_evidence - len(evidence)
+        if remaining <= 0 or count == 0:
+            continue
+        rows = connection.execute(
+            sql.SQL("SELECT {}, source_side.{}, target_side.{}").format(
+                key_select, sql.Identifier(mapping.source), sql.Identifier(mapping.target)
+            ) + base + sql.SQL(" ORDER BY {} LIMIT %s").format(order),
+            params + (remaining,),
+        ).fetchall()
+        for row in rows:
+            key_size = len(rule.key_columns)
+            evidence.append({
+                "kind": "FIELD_MISMATCH",
+                "key": dict(zip(rule.key_columns, row[:key_size])),
+                "source_column": mapping.source,
+                "target_column": mapping.target,
+                "expected": row[key_size],
+                "actual": row[key_size + 1],
+            })
+    status = QualityStatus.PASS if mismatch_count == 0 else QualityStatus.FAIL
+    return CheckResult(
+        rule.id, target.id, rule.check_type, status,
+        {"mismatch_count": 0, "source_dataset": source.id, "target_dataset": target.id,
+         "fields": [{"source": item.source, "target": item.target} for item in rule.fields]},
+        {"mismatch_count": mismatch_count}, tuple(evidence),
+    )

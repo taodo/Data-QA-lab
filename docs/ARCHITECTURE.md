@@ -5,19 +5,21 @@ Local, single-user learning environment. Backend domain and services are indepen
 - Source adapter: PostgreSQL orders and customers.
 - Pipeline engine: Python jobs, explicit Source → Bronze → Silver → Gold → Target stages.
 - Storage: PostgreSQL schemas for source, bronze, silver, gold, target; separate metadata schema for runs in Task 1. No lakehouse file format claim.
-- QA engine: allowlisted PostgreSQL checks run in read-only transactions and persist expected, actual, evidence and errors per pipeline run.
+- QA engine: allowlisted PostgreSQL checks and reconciliation rules run in read-only transactions and persist expected, actual, bounded evidence and errors per pipeline run.
 - Fault engine: deterministic scenario specifications applied to a run workspace.
 - Lab engine: requirement, learning objectives, hints, learner submissions and grading.
 - API: FastAPI planned for Task 6.
 - UI: React planned for Task 7.
 
-Task 1 added the executable PostgreSQL pipeline. Task 2 adds an allowlisted, read-only QA Engine with persisted validation runs and structured evidence.
+Task 1 added the executable PostgreSQL pipeline. Task 2 added an allowlisted, read-only QA Engine with persisted validation runs and structured evidence. Task 3 adds key and field reconciliation without accepting arbitrary SQL in rule contracts.
 
 ## Boundaries
 
 Execution SUCCESS means all required job stages completed. Quality PASS means the requested validation suite completed with no failures/errors. Before any validation, quality is NOT_RUN. An ERROR signals that a check could not produce a verdict and retains failure evidence separately.
 
 Each run preserves a Bronze source snapshot plus run-scoped Silver, Gold and Target rows, stage metrics, timestamps and errors. New runs do not overwrite earlier evidence. Source reseeding changes only Data QA Lab source tables; existing run evidence remains available.
+
+Reconciliation treats Bronze as the immutable source-side baseline for raw order fields, compares Silver to the order-detail Target, and compares Gold to the daily Target. Key rules find missing and unexpected keys independently, so equal row counts cannot hide swapped records. Field rules compare only matching keys with PostgreSQL `IS DISTINCT FROM`, preserving null semantics and exact `NUMERIC` values.
 
 Challenge mode conceals fault metadata/solutions from learner responses; sandbox mode can expose them. This boundary applies in API payloads, not only the UI.
 

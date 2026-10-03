@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS metadata.validation_results (
     validation_run_id UUID NOT NULL REFERENCES metadata.validation_runs(validation_run_id),
     rule_id TEXT NOT NULL,
     dataset_id TEXT NOT NULL,
-    check_type TEXT NOT NULL CHECK (check_type IN ('RECORD_COUNT','UNIQUENESS','NOT_NULL','SCHEMA')),
+    check_type TEXT NOT NULL,
     status TEXT NOT NULL CHECK (status IN ('PASS','FAIL','ERROR')),
     expected JSONB NOT NULL,
     actual JSONB NOT NULL,
@@ -120,3 +120,13 @@ CREATE TABLE IF NOT EXISTS metadata.validation_results (
 
 CREATE INDEX IF NOT EXISTS idx_validation_runs_pipeline
     ON metadata.validation_runs(pipeline_run_id, started_at DESC);
+
+ALTER TABLE metadata.validation_results
+    DROP CONSTRAINT IF EXISTS validation_results_check_type_check;
+ALTER TABLE metadata.validation_results
+    ADD CONSTRAINT validation_results_check_type_check CHECK (
+        check_type IN (
+            'RECORD_COUNT','UNIQUENESS','NOT_NULL','SCHEMA',
+            'KEY_RECONCILIATION','FIELD_RECONCILIATION'
+        )
+    );
