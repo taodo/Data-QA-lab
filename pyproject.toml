@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "data-qa-lab"
-version = "0.4.0"
+version = "0.5.0"
 description = "Interactive data pipeline testing and learning platform"
 requires-python = ">=3.11"
 dependencies = ["psycopg[binary]>=3.2,<4"]

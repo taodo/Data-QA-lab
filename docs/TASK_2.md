@@ -35,8 +35,8 @@ Omit `--run-id` to use the latest successful pipeline run.
 
 ## Negative-test boundary
 
-Task 1 analytical tables enforce keys and required columns. Task 2 tests duplicate, null and incompatible-schema behavior through isolated PostgreSQL fixtures. Task 4 will add controlled fault injection while preserving the core requirement that a technically successful pipeline can still fail quality checks.
+Task 1 analytical tables enforce keys and required columns. Task 2 tests duplicate, null and incompatible-schema behavior through isolated PostgreSQL fixtures. Task 4 later added controlled fault injection while preserving the core requirement that a technically successful pipeline can still fail quality checks.
 
 ## Out of scope
 
-Field-level reconciliation, fault injection, learner SQL, API, UI and external data-quality frameworks remain later tasks.
+Field-level reconciliation and fault injection are delivered separately in Tasks 3 and 4. Learner SQL, API, UI and external data-quality frameworks remain outside Task 2.
