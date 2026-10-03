@@ -103,12 +103,17 @@ class LearningLabTests(unittest.TestCase):
         self.assertLessEqual(len(json.dumps([total.columns, total.rows]).encode()), 280)
 
     def test_server_timeout_and_independent_watchdog(self):
+        from backend.app.learning.sql_runtime import _terminate_execution
         limits = QueryLimits(timeout_ms=100, watchdog_ms=400)
-        for query in ("SELECT pg_sleep(10)",
-                      "SELECT CASE WHEN set_config('statement_timeout','0',false)='0' THEN pg_sleep(10) END"):
+        for index, query in enumerate((
+            "SELECT pg_sleep(10)",
+            "SELECT CASE WHEN set_config('statement_timeout','0',false)='0' THEN pg_sleep(10) END",
+        )):
             with self.subTest(query=query):
                 started = time.monotonic()
-                result = self.query(query, limits=limits)
+                with patch("backend.app.learning.sql_runtime._terminate_execution", wraps=_terminate_execution) as watchdog:
+                    result = self.query(query, limits=limits)
+                    self.assertEqual(watchdog.call_count, index)
                 self.assertEqual(result.error, "TIMEOUT")
                 self.assertLess(time.monotonic() - started, 5)
         self.assertEqual(self.query("SELECT 1").status, "SUCCESS")
@@ -184,3 +189,17 @@ class LearningLabTests(unittest.TestCase):
         finally:
             with transaction(DATABASE_URL) as connection:
                 connection.execute("REVOKE USAGE ON SCHEMA target FROM PUBLIC")
+
+    def test_user_schema_with_pg_like_name_is_not_a_system_schema(self):
+        from psycopg import sql
+        from backend.app.persistence.database import transaction
+        schema = "pguser_" + uuid4().hex
+        with transaction(DATABASE_URL) as connection:
+            connection.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
+            connection.execute(sql.SQL("GRANT USAGE ON SCHEMA {} TO PUBLIC").format(sql.Identifier(schema)))
+        try:
+            with self.assertRaises(SqlSecurityError):
+                self.query("SELECT 1")
+        finally:
+            with transaction(DATABASE_URL) as connection:
+                connection.execute(sql.SQL("DROP SCHEMA {}").format(sql.Identifier(schema)))

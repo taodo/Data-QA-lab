@@ -54,7 +54,7 @@ def _audit_permissions(connection, schema):
         raise SqlSecurityError("Learner login must not have role memberships")
     accessible = connection.execute(
         """SELECT nspname FROM pg_namespace
-           WHERE nspname NOT LIKE 'pg_%%' AND nspname <> 'information_schema'
+           WHERE nspname NOT IN ('pg_catalog','pg_toast','information_schema')
            AND has_schema_privilege(oid, 'USAGE')"""
     ).fetchall()
     if {row[0] for row in accessible} != {schema}:
@@ -64,7 +64,7 @@ def _audit_permissions(connection, schema):
                   has_table_privilege(c.oid, 'SELECT'),
                   has_table_privilege(c.oid, 'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
            FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
-           WHERE n.nspname NOT LIKE 'pg_%%' AND n.nspname <> 'information_schema'
+           WHERE n.nspname NOT IN ('pg_catalog','pg_toast','information_schema')
            AND c.relkind IN ('r','v','m','p','f')"""
     ).fetchall()
     if any(write or (read and (ns != schema or table not in TABLES))
@@ -72,7 +72,7 @@ def _audit_permissions(connection, schema):
         raise SqlSecurityError("Learner object privileges exceed the SELECT allowlist")
     if connection.execute(
         """SELECT COUNT(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
-           WHERE n.nspname NOT LIKE 'pg_%%' AND n.nspname <> 'information_schema'
+           WHERE n.nspname NOT IN ('pg_catalog','pg_toast','information_schema')
            AND has_function_privilege(p.oid, 'EXECUTE')"""
     ).fetchone()[0]:
         raise SqlSecurityError("Learner can execute a non-system routine")
