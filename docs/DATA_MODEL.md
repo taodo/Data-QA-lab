@@ -27,3 +27,17 @@ Task 3 adds `KEY_RECONCILIATION` and `FIELD_RECONCILIATION` result types. Pair r
 `fault_workspace.orders_report` and `fault_workspace.daily_sales_report` are run-scoped Target copies with deliberately relaxed constraints. They exist only so missing, duplicate and null behavior can be exercised without weakening or mutating the real Target tables.
 
 `metadata.fault_runs` links a fault UUID to one successful pipeline run, an allowlisted scenario, `APPLIED`/`RESET` lifecycle state, before/after mutation evidence and the latest fault validation run. A partial unique index enforces at most one `APPLIED` fault per pipeline run. Apply and reset are transactional; reset deletes workspace rows but retains metadata evidence.
+
+## Learning persistence — Task 5
+
+`metadata.lab_sessions` stores session ID, lab/pipeline linkage, mode, ACTIVE /
+COMPLETED / REVEALED state, private scenario/schema, hint level and UTC timestamps.
+`metadata.lab_queries` retains submitted SQL and bounded public query results.
+`metadata.lab_submissions` retains SQL, conclusion, PASS/FAIL/ERROR and private
+grading case results. Inspection projects only learner-visible fields.
+
+Private `learner_session_<uuid>` schemas preserve immutable order/day snapshots.
+Per-execution `learner_query_<uuid>` schemas and `learner_role_<uuid>` logins are
+created and dropped around each query. Schemas are admin-owned; roles receive only
+USAGE and SELECT. Results are text/null cells so money remains an exact string.
+Lab 001 grades key sets; it does not replace the separate 26-rule quality suite.

@@ -44,3 +44,19 @@ Windows Docker verification exposed a loopback mismatch: Compose publishes Postg
 - Forced mid-apply failure leaves neither workspace rows nor fault metadata, proving transactional rollback.
 - A second active fault is rejected, reset is idempotent, and reapplying the same scenario produces identical mutation evidence.
 - After reset, the normal 26-rule suite passes against the unchanged Target.
+
+## Task 5 verification coverage
+
+- Unit tests cover SQL input bounds, bounded limits, grading result shape/numeric
+  contract, owned identifiers, challenge visibility and CLI parsing.
+- Live integration tests exercise actual restricted session_user/current_user,
+  denied writes/DDL/COPY/role escalation/hidden metadata access, single-statement
+  protocol, cleanup, cross-session isolation and PUBLIC-grant fail-closed behavior.
+- Server timeout and an independent watchdog are tested, including SQL attempting
+  to disable statement_timeout. Output row/column/cell/byte bounds are exercised.
+- Good key checks pass; constants, count-only checks, false positives and malformed
+  result contracts fail. Syntax errors produce ERROR. Challenge visibility, hints,
+  reveal, completion and persistent query/submission history are covered.
+- Local integration tests skip when no database URL is configured; GitHub Actions
+  runs all integration tests against PostgreSQL 16. Read the pushed commit's CI
+  result before treating these coverage claims as observed passes.

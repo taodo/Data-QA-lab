@@ -4,6 +4,7 @@ from dataclasses import asdict
 from datetime import date, datetime
 from decimal import Decimal
 import json
+from pathlib import Path
 from uuid import UUID
 
 from backend.app.config import Settings
@@ -46,6 +47,19 @@ def build_parser() -> argparse.ArgumentParser:
     fault_inspect.add_argument("--fault-run-id", type=UUID)
     fault_reset = subparsers.add_parser("fault-reset", help="Reset an applied fault workspace")
     fault_reset.add_argument("--fault-run-id", type=UUID, required=True)
+    subparsers.add_parser("lab-sql-init", help="Harden the dedicated lab database's PUBLIC privileges")
+    lab_start = subparsers.add_parser("lab-start", help="Start an executable learning session")
+    lab_start.add_argument("lab_id")
+    lab_start.add_argument("--run-id", type=UUID)
+    lab_start.add_argument("--mode", choices=("CHALLENGE", "SANDBOX"), default="CHALLENGE")
+    lab_start.add_argument("--scenario", choices=("missing_order", "equal_count_swap"))
+    for name in ("lab-show", "lab-inspect", "lab-hint", "lab-reveal", "lab-query", "lab-submit"):
+        command = subparsers.add_parser(name, help=f"Learning session operation: {name}")
+        command.add_argument("--session-id", type=UUID, required=True)
+        if name in {"lab-query", "lab-submit"}:
+            command.add_argument("--sql-file", type=Path, required=True)
+        if name == "lab-submit":
+            command.add_argument("--conclusion", required=True)
     return parser
 
 def main() -> None:
@@ -105,6 +119,32 @@ def main() -> None:
     elif args.command == "fault-reset":
         from faults.service import reset_fault
         _print(asdict(reset_fault(database_url, args.fault_run_id)))
+    elif args.command == "lab-sql-init":
+        from backend.app.learning.sql_runtime import initialize_sql_security
+        initialize_sql_security(database_url)
+        print("Dedicated lab SQL permissions initialized.")
+    elif args.command == "lab-start":
+        from backend.app.learning.service import start_session
+        _print(start_session(database_url, args.lab_id, args.run_id, args.mode, args.scenario))
+    elif args.command in {"lab-show", "lab-inspect", "lab-hint", "lab-reveal", "lab-query", "lab-submit"}:
+        from backend.app.learning.service import (
+            inspect_session, next_hint, reveal_solution, query_session, submit_solution,
+        )
+        if args.command in {"lab-show", "lab-inspect"}:
+            result = inspect_session(database_url, args.session_id)
+        elif args.command == "lab-hint":
+            result = next_hint(database_url, args.session_id)
+        elif args.command == "lab-reveal":
+            result = reveal_solution(database_url, args.session_id)
+        else:
+            if args.sql_file.stat().st_size > 16384:
+                raise SystemExit("SQL file exceeds 16 KiB")
+            query = args.sql_file.read_text(encoding="utf-8-sig")
+            if args.command == "lab-query":
+                result = query_session(database_url, args.session_id, query)
+            else:
+                result = submit_solution(database_url, args.session_id, query, args.conclusion)
+        _print(result)
 
 if __name__ == "__main__":
     main()
