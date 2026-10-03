@@ -2,7 +2,7 @@
 from dataclasses import dataclass
 import os
 
-DEFAULT_DATABASE_URL = "postgresql://data_qa_lab:data_qa_lab@localhost:5432/data_qa_lab"
+DEFAULT_DATABASE_URL = "postgresql://data_qa_lab:data_qa_lab@127.0.0.1:5432/data_qa_lab"
 
 @dataclass(frozen=True)
 class Settings:

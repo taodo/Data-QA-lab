@@ -13,4 +13,4 @@
 | 8 — Advanced | Incremental, joins, freshness, dates, SCD | Diagnose realistic data incidents | Scenarios and regression evidence |
 | 9 — Cloud adapter | Optional Fabric implementation | Transfer established concepts | Explicit separate planning checkpoint |
 
-Current state: Task 1 implemented on its task branch and awaiting review. Tasks 2–9 planned. No promise of completion by a fixed calendar date. No QA Sentinel integration in this roadmap.
+Current state: Task 2 implemented on its task branch and awaiting review. Tasks 3–9 planned. No promise of completion by a fixed calendar date. No QA Sentinel integration in this roadmap.

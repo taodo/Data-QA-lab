@@ -5,13 +5,13 @@ Local, single-user learning environment. Backend domain and services are indepen
 - Source adapter: PostgreSQL orders and customers.
 - Pipeline engine: Python jobs, explicit Source → Bronze → Silver → Gold → Target stages.
 - Storage: PostgreSQL schemas for source, bronze, silver, gold, target; separate metadata schema for runs in Task 1. No lakehouse file format claim.
-- QA engine: SQL checks and key-based comparisons produce evidence per run.
+- QA engine: allowlisted PostgreSQL checks run in read-only transactions and persist expected, actual, evidence and errors per pipeline run.
 - Fault engine: deterministic scenario specifications applied to a run workspace.
 - Lab engine: requirement, learning objectives, hints, learner submissions and grading.
 - API: FastAPI planned for Task 6.
 - UI: React planned for Task 7.
 
-Task 1 adds Docker Compose, the PostgreSQL adapter, deterministic source generation, the executable orders pipeline and run inspection. The QA engine starts in Task 2.
+Task 1 added the executable PostgreSQL pipeline. Task 2 adds an allowlisted, read-only QA Engine with persisted validation runs and structured evidence.
 
 ## Boundaries
 

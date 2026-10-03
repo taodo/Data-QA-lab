@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Iterator, Any
 
 SCHEMA_PATH = Path(__file__).with_name("schema.sql")
+DEFAULT_CONNECT_TIMEOUT_SECONDS = 5
 
 def connect(database_url: str):
     try:
@@ -12,7 +13,7 @@ def connect(database_url: str):
         raise RuntimeError(
             "PostgreSQL support is not installed. Run: python -m pip install -e ."
         ) from exc
-    return psycopg.connect(database_url)
+    return psycopg.connect(database_url, connect_timeout=DEFAULT_CONNECT_TIMEOUT_SECONDS)
 
 @contextmanager
 def transaction(database_url: str) -> Iterator[Any]:
