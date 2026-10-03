@@ -1,6 +1,7 @@
 """Built-in Task 2 quality suite for the orders pipeline."""
 from qa.engine.contracts import (
     ColumnExpectation as C, CountMode, DatasetRegistry, DatasetSpec,
+    FieldMapping as F, FieldReconciliationRule, KeyReconciliationRule,
     NotNullRule, RecordCountRule, SchemaRule, UniquenessRule, ValidationSuite,
 )
 
@@ -19,7 +20,7 @@ _COMMON_RAW = (
     C("refund_amount", "numeric", False), C("updated_at", "timestamp with time zone", False),
 )
 
-ORDERS_SUITE = ValidationSuite("orders_basic_v1", (
+ORDERS_BASIC_SUITE = ValidationSuite("orders_basic_v1", (
     *(RecordCountRule(f"count_{dataset}", dataset) for dataset in ORDERS_DATASETS.ids),
     UniquenessRule("unique_bronze_order_id", "bronze_orders", ("order_id",)),
     UniquenessRule("unique_silver_order_id", "silver_orders", ("order_id",)),
@@ -43,3 +44,31 @@ ORDERS_SUITE = ValidationSuite("orders_basic_v1", (
         C("run_id", "uuid", False), C("order_date", "date", False), C("order_count", "bigint", False),
         C("net_revenue", "numeric", False))),
 ))
+
+ORDERS_RECONCILIATION_RULES = (
+    KeyReconciliationRule("keys_bronze_to_silver", "bronze_orders", "silver_orders", ("order_id",)),
+    FieldReconciliationRule(
+        "fields_bronze_to_silver", "bronze_orders", "silver_orders", ("order_id",),
+        tuple(F(column, column) for column in (
+            "customer_id", "ordered_at", "gross_amount", "discount_amount", "refund_amount", "updated_at"
+        )),
+    ),
+    KeyReconciliationRule(
+        "keys_silver_to_target_orders", "silver_orders", "target_orders", ("order_id",)
+    ),
+    FieldReconciliationRule(
+        "fields_silver_to_target_orders", "silver_orders", "target_orders", ("order_id",),
+        tuple(F(column, column) for column in ("customer_id", "ordered_at", "net_amount")),
+    ),
+    KeyReconciliationRule(
+        "keys_gold_to_target_daily", "gold_daily_sales", "target_daily_sales", ("order_date",)
+    ),
+    FieldReconciliationRule(
+        "fields_gold_to_target_daily", "gold_daily_sales", "target_daily_sales", ("order_date",),
+        tuple(F(column, column) for column in ("order_count", "net_revenue")),
+    ),
+)
+
+ORDERS_SUITE = ValidationSuite(
+    "orders_quality_v2", ORDERS_BASIC_SUITE.rules + ORDERS_RECONCILIATION_RULES
+)

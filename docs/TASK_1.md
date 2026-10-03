@@ -1,6 +1,6 @@
 # Task 1 — First working PostgreSQL pipeline
 
-Status: implemented on `feature/task-1-postgresql-pipeline`, awaiting review and merge into `feature/develop`.
+Status: completed and merged into `feature/develop`.
 
 ## Objectives
 

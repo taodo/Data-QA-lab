@@ -14,6 +14,8 @@ class CheckType(str, Enum):
     UNIQUENESS = "UNIQUENESS"
     NOT_NULL = "NOT_NULL"
     SCHEMA = "SCHEMA"
+    KEY_RECONCILIATION = "KEY_RECONCILIATION"
+    FIELD_RECONCILIATION = "FIELD_RECONCILIATION"
 
 class CountMode(str, Enum):
     ROWS = "ROWS"
@@ -90,7 +92,58 @@ class SchemaRule:
         if len(names) != len(set(names)):
             raise ValueError("schema rule column names must be unique")
 
-Rule = RecordCountRule | UniquenessRule | NotNullRule | SchemaRule
+@dataclass(frozen=True)
+class FieldMapping:
+    source: str
+    target: str
+
+    def __post_init__(self):
+        _require_identifier(self.source, "source column")
+        _require_identifier(self.target, "target column")
+
+@dataclass(frozen=True)
+class KeyReconciliationRule:
+    id: str
+    source_dataset_id: str
+    target_dataset_id: str
+    key_columns: tuple[str, ...]
+    max_evidence: int = 20
+    check_type: CheckType = field(default=CheckType.KEY_RECONCILIATION, init=False)
+
+    def __post_init__(self):
+        _validate_columns(self.key_columns)
+        _validate_evidence_limit(self.max_evidence)
+
+    @property
+    def dataset_id(self) -> str:
+        return self.target_dataset_id
+
+@dataclass(frozen=True)
+class FieldReconciliationRule:
+    id: str
+    source_dataset_id: str
+    target_dataset_id: str
+    key_columns: tuple[str, ...]
+    fields: tuple[FieldMapping, ...]
+    max_evidence: int = 20
+    check_type: CheckType = field(default=CheckType.FIELD_RECONCILIATION, init=False)
+
+    def __post_init__(self):
+        _validate_columns(self.key_columns)
+        if not self.fields:
+            raise ValueError("field reconciliation requires at least one field mapping")
+        if len({mapping.target for mapping in self.fields}) != len(self.fields):
+            raise ValueError("target field mappings must be unique")
+        _validate_evidence_limit(self.max_evidence)
+
+    @property
+    def dataset_id(self) -> str:
+        return self.target_dataset_id
+
+Rule = (
+    RecordCountRule | UniquenessRule | NotNullRule | SchemaRule
+    | KeyReconciliationRule | FieldReconciliationRule
+)
 
 @dataclass(frozen=True)
 class ValidationSuite:
@@ -143,7 +196,11 @@ def aggregate_statuses(statuses) -> QualityStatus:
 
 def validate_suite(suite: ValidationSuite, registry: DatasetRegistry) -> None:
     for rule in suite.rules:
-        registry.get(rule.dataset_id)
+        if isinstance(rule, (KeyReconciliationRule, FieldReconciliationRule)):
+            registry.get(rule.source_dataset_id)
+            registry.get(rule.target_dataset_id)
+        else:
+            registry.get(rule.dataset_id)
 
 def _require_identifier(value: str, label: str) -> None:
     if not isinstance(value, str) or not _IDENTIFIER.fullmatch(value):
@@ -156,3 +213,7 @@ def _validate_columns(columns: tuple[str, ...]) -> None:
         _require_identifier(column, "column")
     if len(columns) != len(set(columns)):
         raise ValueError("check columns must be unique")
+
+def _validate_evidence_limit(value: int) -> None:
+    if not isinstance(value, int) or isinstance(value, bool) or not 1 <= value <= 100:
+        raise ValueError("max_evidence must be an integer from 1 to 100")

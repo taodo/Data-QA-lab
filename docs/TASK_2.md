@@ -1,6 +1,6 @@
 # Task 2 — Basic Data Quality Engine
 
-Status: implemented on `feature/task-2-qa-engine`, awaiting review and merge into `feature/develop`.
+Status: completed and merged into `feature/develop`.
 
 ## Objectives
 
