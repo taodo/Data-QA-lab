@@ -21,3 +21,9 @@ Use fixed seed and dates for repeatable results. Record dataset/run scope on evi
 `metadata.validation_runs` identifies each suite execution and links it to one successful pipeline run. `metadata.validation_results` stores one immutable result per rule with dataset, check type, status, expected/actual JSON, evidence JSON and execution error. The latest completed suite status is copied to `pipeline_runs.data_quality_status`; pipeline execution status remains independent.
 
 Task 3 adds `KEY_RECONCILIATION` and `FIELD_RECONCILIATION` result types. Pair rules persist the target dataset in `dataset_id` and include both source and target dataset IDs in expected JSON. Evidence is bounded per rule. Key evidence carries `MISSING_KEY` or `UNEXPECTED_KEY`; field evidence carries the business key, source/target columns and exact expected/actual values.
+
+## Fault persistence — Task 4
+
+`fault_workspace.orders_report` and `fault_workspace.daily_sales_report` are run-scoped Target copies with deliberately relaxed constraints. They exist only so missing, duplicate and null behavior can be exercised without weakening or mutating the real Target tables.
+
+`metadata.fault_runs` links a fault UUID to one successful pipeline run, an allowlisted scenario, `APPLIED`/`RESET` lifecycle state, before/after mutation evidence and the latest fault validation run. A partial unique index enforces at most one `APPLIED` fault per pipeline run. Apply and reset are transactional; reset deletes workspace rows but retains metadata evidence.

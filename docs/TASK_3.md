@@ -1,6 +1,6 @@
 # Task 3 — Key and field reconciliation
 
-Status: implemented on `feature/task-3-reconciliation`, awaiting review and merge into `feature/develop`.
+Status: approved and merged into `feature/develop`.
 
 ## Objectives
 
@@ -36,4 +36,4 @@ python -m backend.app.main quality-inspect
 
 ## Out of scope
 
-User-authored SQL, transformations expressed as arbitrary formulas, fault-scenario orchestration, API and UI remain later tasks. Derived `net_amount` is reconciled from Silver to Target after the pipeline computes it; Task 3 does not introduce an expression language.
+User-authored SQL, transformations expressed as arbitrary formulas, API and UI remain later tasks. Derived `net_amount` is reconciled from Silver to Target after the pipeline computes it; Task 3 does not introduce an expression language. Fault-scenario orchestration is delivered separately in Task 4.

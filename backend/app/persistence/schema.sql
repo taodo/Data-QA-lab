@@ -3,6 +3,7 @@ CREATE SCHEMA IF NOT EXISTS bronze;
 CREATE SCHEMA IF NOT EXISTS silver;
 CREATE SCHEMA IF NOT EXISTS gold;
 CREATE SCHEMA IF NOT EXISTS target;
+CREATE SCHEMA IF NOT EXISTS fault_workspace;
 CREATE SCHEMA IF NOT EXISTS metadata;
 
 CREATE TABLE IF NOT EXISTS source.customers (
@@ -94,6 +95,29 @@ CREATE TABLE IF NOT EXISTS target.daily_sales_report (
     PRIMARY KEY (run_id, order_date)
 );
 
+-- Deliberately relaxed copies used only by allowlisted fault scenarios.
+-- Core target tables retain their production-like constraints and are never mutated.
+CREATE TABLE IF NOT EXISTS fault_workspace.orders_report (
+    run_id UUID NOT NULL REFERENCES metadata.pipeline_runs(run_id),
+    order_id BIGINT,
+    customer_id BIGINT,
+    ordered_at TIMESTAMPTZ,
+    net_amount NUMERIC(14,2)
+);
+
+CREATE INDEX IF NOT EXISTS idx_fault_orders_run
+    ON fault_workspace.orders_report(run_id);
+
+CREATE TABLE IF NOT EXISTS fault_workspace.daily_sales_report (
+    run_id UUID NOT NULL REFERENCES metadata.pipeline_runs(run_id),
+    order_date DATE,
+    order_count BIGINT,
+    net_revenue NUMERIC(18,2)
+);
+
+CREATE INDEX IF NOT EXISTS idx_fault_daily_run
+    ON fault_workspace.daily_sales_report(run_id);
+
 CREATE INDEX IF NOT EXISTS idx_pipeline_runs_started_at ON metadata.pipeline_runs(started_at DESC);
 
 CREATE TABLE IF NOT EXISTS metadata.validation_runs (
@@ -130,3 +154,22 @@ ALTER TABLE metadata.validation_results
             'KEY_RECONCILIATION','FIELD_RECONCILIATION'
         )
     );
+
+CREATE TABLE IF NOT EXISTS metadata.fault_runs (
+    fault_run_id UUID PRIMARY KEY,
+    pipeline_run_id UUID NOT NULL REFERENCES metadata.pipeline_runs(run_id),
+    scenario_id TEXT NOT NULL CHECK (
+        scenario_id IN ('missing_order','duplicate_order','null_net_amount','wrong_net_amount')
+    ),
+    status TEXT NOT NULL CHECK (status IN ('APPLIED','RESET')),
+    mutation_evidence JSONB NOT NULL,
+    validation_run_id UUID REFERENCES metadata.validation_runs(validation_run_id),
+    applied_at TIMESTAMPTZ NOT NULL,
+    reset_at TIMESTAMPTZ
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_one_active_fault_per_pipeline
+    ON metadata.fault_runs(pipeline_run_id) WHERE status = 'APPLIED';
+
+CREATE INDEX IF NOT EXISTS idx_fault_runs_applied_at
+    ON metadata.fault_runs(applied_at DESC);

@@ -72,3 +72,25 @@ ORDERS_RECONCILIATION_RULES = (
 ORDERS_SUITE = ValidationSuite(
     "orders_quality_v2", ORDERS_BASIC_SUITE.rules + ORDERS_RECONCILIATION_RULES
 )
+
+# Fault scenarios use relaxed, isolated target copies. Physical schema rules for
+# those two copies are intentionally excluded; semantic rules still prove each defect.
+ORDERS_FAULT_DATASETS = DatasetRegistry((
+    DatasetSpec("bronze_orders", "bronze", "orders"),
+    DatasetSpec("silver_orders", "silver", "orders"),
+    DatasetSpec(
+        "gold_daily_sales", "gold", "daily_sales",
+        count_mode=CountMode.SUM, count_column="order_count",
+    ),
+    DatasetSpec("target_orders", "fault_workspace", "orders_report"),
+    DatasetSpec(
+        "target_daily_sales", "fault_workspace", "daily_sales_report",
+        count_mode=CountMode.SUM, count_column="order_count",
+    ),
+))
+
+_FAULT_SCHEMA_RULES = {"schema_target_orders", "schema_target_daily"}
+ORDERS_FAULT_SUITE = ValidationSuite(
+    "orders_fault_v1",
+    tuple(rule for rule in ORDERS_SUITE.rules if rule.id not in _FAULT_SCHEMA_RULES),
+)

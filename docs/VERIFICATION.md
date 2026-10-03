@@ -34,3 +34,13 @@ Windows Docker verification exposed a loopback mismatch: Compose publishes Postg
 - Unit coverage validates pair-dataset allowlisting, composite keys, safe identifiers, field mappings and evidence limits.
 - PostgreSQL integration covers clean PASS, equal-count key swaps, exact field mismatches, composite keys, bounded evidence and existing cross-run behavior.
 - The equal-count scenario proves the record-count rule can PASS while key reconciliation correctly FAILs with one missing and one unexpected key.
+
+## Task 4 verification
+
+- The fault catalog contains exactly four deterministic scenarios: missing row, duplicate row, null `net_amount` and `net_amount + 0.01`.
+- Unit coverage validates catalog allowlisting and the 24-rule workspace suite.
+- PostgreSQL integration applies every scenario, requires the expected rules to fail, and proves pipeline execution remains `SUCCESS` while quality becomes `FAIL`.
+- Target fingerprints before and after each fault are identical; only the selected pipeline run's workspace is mutated.
+- Forced mid-apply failure leaves neither workspace rows nor fault metadata, proving transactional rollback.
+- A second active fault is rejected, reset is idempotent, and reapplying the same scenario produces identical mutation evidence.
+- After reset, the normal 26-rule suite passes against the unchanged Target.

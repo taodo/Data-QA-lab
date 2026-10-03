@@ -34,11 +34,27 @@ def build_parser() -> argparse.ArgumentParser:
     quality_run.add_argument("--run-id", type=UUID)
     quality_inspect = subparsers.add_parser("quality-inspect", help="Inspect the latest quality run")
     quality_inspect.add_argument("--run-id", type=UUID)
+    subparsers.add_parser("fault-list", help="List allowlisted fault scenarios")
+    fault_apply = subparsers.add_parser("fault-apply", help="Apply a fault to an isolated workspace")
+    fault_apply.add_argument("scenario")
+    fault_apply.add_argument("--run-id", type=UUID)
+    fault_quality = subparsers.add_parser(
+        "fault-quality-run", help="Validate an applied fault workspace"
+    )
+    fault_quality.add_argument("--fault-run-id", type=UUID, required=True)
+    fault_inspect = subparsers.add_parser("fault-inspect", help="Inspect a fault run")
+    fault_inspect.add_argument("--fault-run-id", type=UUID)
+    fault_reset = subparsers.add_parser("fault-reset", help="Reset an applied fault workspace")
+    fault_reset.add_argument("--fault-run-id", type=UUID, required=True)
     return parser
 
 def main() -> None:
     args = build_parser().parse_args()
-    if args.command in {"labs", "check"}:
+    if args.command in {"labs", "check", "fault-list"}:
+        if args.command == "fault-list":
+            from faults.catalog import list_fault_scenarios
+            _print([asdict(scenario) for scenario in list_fault_scenarios()])
+            return
         labs = load_labs()
         if args.command == "labs":
             _print([asdict(lab) for lab in labs])
@@ -74,6 +90,21 @@ def main() -> None:
         if result is None:
             raise SystemExit("No matching quality run found")
         _print(result)
+    elif args.command == "fault-apply":
+        from faults.service import apply_fault
+        _print(asdict(apply_fault(database_url, args.scenario, args.run_id)))
+    elif args.command == "fault-quality-run":
+        from faults.service import run_fault_quality
+        _print(asdict(run_fault_quality(database_url, args.fault_run_id)))
+    elif args.command == "fault-inspect":
+        from faults.service import inspect_fault
+        result = inspect_fault(database_url, args.fault_run_id)
+        if result is None:
+            raise SystemExit("No matching fault run found")
+        _print(asdict(result))
+    elif args.command == "fault-reset":
+        from faults.service import reset_fault
+        _print(asdict(reset_fault(database_url, args.fault_run_id)))
 
 if __name__ == "__main__":
     main()

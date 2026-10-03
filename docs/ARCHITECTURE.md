@@ -4,14 +4,14 @@ Local, single-user learning environment. Backend domain and services are indepen
 
 - Source adapter: PostgreSQL orders and customers.
 - Pipeline engine: Python jobs, explicit Source → Bronze → Silver → Gold → Target stages.
-- Storage: PostgreSQL schemas for source, bronze, silver, gold, target; separate metadata schema for runs in Task 1. No lakehouse file format claim.
+- Storage: PostgreSQL schemas for source, bronze, silver, gold and target; isolated `fault_workspace` copies; separate metadata for pipeline, validation and fault runs. No lakehouse file format claim.
 - QA engine: allowlisted PostgreSQL checks and reconciliation rules run in read-only transactions and persist expected, actual, bounded evidence and errors per pipeline run.
 - Fault engine: deterministic scenario specifications applied to a run workspace.
 - Lab engine: requirement, learning objectives, hints, learner submissions and grading.
 - API: FastAPI planned for Task 6.
 - UI: React planned for Task 7.
 
-Task 1 added the executable PostgreSQL pipeline. Task 2 added an allowlisted, read-only QA Engine with persisted validation runs and structured evidence. Task 3 adds key and field reconciliation without accepting arbitrary SQL in rule contracts.
+Task 1 added the executable PostgreSQL pipeline. Task 2 added an allowlisted, read-only QA Engine with persisted validation runs and structured evidence. Task 3 added key and field reconciliation without accepting arbitrary SQL in rule contracts. Task 4 adds allowlisted, atomic fault scenarios against isolated Target copies.
 
 ## Boundaries
 
@@ -20,6 +20,8 @@ Execution SUCCESS means all required job stages completed. Quality PASS means th
 Each run preserves a Bronze source snapshot plus run-scoped Silver, Gold and Target rows, stage metrics, timestamps and errors. New runs do not overwrite earlier evidence. Source reseeding changes only Data QA Lab source tables; existing run evidence remains available.
 
 Reconciliation treats Bronze as the immutable source-side baseline for raw order fields, compares Silver to the order-detail Target, and compares Gold to the daily Target. Key rules find missing and unexpected keys independently, so equal row counts cannot hide swapped records. Field rules compare only matching keys with PostgreSQL `IS DISTINCT FROM`, preserving null semantics and exact `NUMERIC` values.
+
+Fault application copies one successful run's two Target datasets into `fault_workspace` inside a transaction, then performs exactly one deterministic mutation. The original Target and every unrelated run remain unchanged. A partial unique index permits one active fault per pipeline run. Reset removes only that run's workspace rows and is safe to repeat. Fault validation reuses the QA Engine with an explicit workspace registry; pipeline execution status remains `SUCCESS` when the deliberately corrupted copy fails quality.
 
 Challenge mode conceals fault metadata/solutions from learner responses; sandbox mode can expose them. This boundary applies in API payloads, not only the UI.
 
