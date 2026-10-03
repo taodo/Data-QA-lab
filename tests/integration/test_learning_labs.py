@@ -45,6 +45,13 @@ class LearningLabTests(unittest.TestCase):
             ).fetchall()
             for (schema,) in schemas:
                 connection.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema)))
+            for table in ("lab_queries", "lab_submissions"):
+                connection.execute(sql.SQL(
+                    "DELETE FROM metadata.{} WHERE session_id IN "
+                    "(SELECT session_id FROM metadata.lab_sessions WHERE pipeline_run_id=%s)"
+                ).format(sql.Identifier(table)), (self.pipeline.run_id,))
+            connection.execute("DELETE FROM metadata.lab_sessions WHERE pipeline_run_id=%s",
+                               (self.pipeline.run_id,))
 
     def query(self, query, **kwargs):
         from backend.app.learning.sql_runtime import run_sql
@@ -107,7 +114,10 @@ class LearningLabTests(unittest.TestCase):
         limits = QueryLimits(timeout_ms=100, watchdog_ms=400)
         for index, query in enumerate((
             "SELECT pg_sleep(10)",
-            "SELECT CASE WHEN set_config('statement_timeout','0',false)='0' THEN pg_sleep(10) END",
+            # PostgreSQL does not cancel an already-running statement deadline.
+            # Disable it on the first row; the next FETCH then relies on watchdog.
+            "SELECT CASE WHEN n=1 THEN set_config('statement_timeout','0',false) "
+            "ELSE pg_sleep(10)::text END FROM generate_series(1,2) AS s(n)",
         )):
             with self.subTest(query=query):
                 started = time.monotonic()
