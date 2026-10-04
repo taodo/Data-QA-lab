@@ -56,7 +56,7 @@ class BrowserTests(unittest.TestCase):
         cls.log.close()
 
     def setUp(self):
-        self.context = self.browser.new_context(viewport={"width":1440,"height":1000})
+        self.context = self.browser.new_context(viewport={"width":1440,"height":1000},timezone_id="Asia/Bangkok")
         self.page = self.context.new_page()
         self.errors = []
         self.page.on("pageerror", lambda exc:self.errors.append(str(exc)))
@@ -168,6 +168,53 @@ class BrowserTests(unittest.TestCase):
             expect(self.page.locator(".lesson-heading .badge")).to_have_text("COMPLETED")
             self.page.locator(".back").click()
         self.page.screenshot(path=str(self.artifacts/"v1-learning-catalog-desktop.png"),full_page=True)
+
+    def test_review_navigation_challenge_and_pipeline_guidance(self):
+        import json
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+        from playwright.sync_api import expect
+        self.select_lab()
+        answer=self.page.get_by_label("Answer the challenge",exact=True)
+        expect(answer).to_be_visible()
+        challenge=self.page.locator(".challenge-answer")
+        expect(challenge.get_by_role("heading",name="Your challenge",exact=True)).to_be_visible()
+        self.assertLess(challenge.get_by_role("heading",name="Your challenge",exact=True).bounding_box()["y"],answer.bounding_box()["y"])
+        expect(challenge).to_contain_text("SQL currently in the editor")
+        self.sql("SELECT COUNT(*) FROM source_orders")
+        answer.fill("I will compare business keys in both directions.")
+        crumb=self.page.get_by_role("navigation",name="Breadcrumb",exact=True)
+        crumb.get_by_role("link",name="Learning path",exact=True).click()
+        expect(self.page.locator(".lesson-card")).to_have_count(13)
+        self.page.reload();self.idle()
+        expect(self.page.locator(".lesson-card")).to_have_count(13)
+        self.page.locator(".lesson-card[data-lab-id='lab_001_record_count'] button").click();self.idle()
+        expect(self.page.get_by_label("SQL editor",exact=True)).to_have_text("SELECT COUNT(*) FROM source_orders")
+        expect(self.page.get_by_label("Answer the challenge",exact=True)).to_have_value("I will compare business keys in both directions.")
+        self.page.get_by_role("navigation",name="Breadcrumb",exact=True).get_by_role("link",name="DATA QA",exact=True).click()
+        expect(self.page.locator(".lesson-card")).to_have_count(13)
+        self.page.get_by_role("button",name="Pipeline & QA",exact=False).click();self.idle()
+        expect(self.page.get_by_role("heading",name="What is this pipeline for?",exact=True)).to_be_visible()
+        expect(self.page.get_by_role("heading",name="How to test",exact=True)).to_be_visible()
+        expect(self.page.locator(".pipeline-guide")).to_contain_text("Gold aggregates orders by UTC day")
+        self.page.get_by_text("Time details",exact=True).click()
+        run_id=self.page.locator(".run-selector select").input_value()
+        with urllib.request.urlopen(self.url+"/api/runs/"+run_id) as response:
+            run=json.load(response)
+        instant=datetime.fromisoformat(run["started_at"])
+        local=instant.astimezone(ZoneInfo("Asia/Bangkok"))
+        selected=self.page.locator(".run-selector select option:checked")
+        expect(selected).to_contain_text(local.strftime("%d/%m/%Y"))
+        expect(selected).to_contain_text(local.strftime("%H:%M:%S"))
+        expect(selected).to_contain_text("GMT+7")
+        expect(self.page.locator(".pipeline-times time").first).to_have_attribute("datetime",run["started_at"])
+        expect(self.page.locator(".pipeline-times code").first).to_contain_text(instant.strftime("%Y-%m-%dT%H:%M:%S"))
+        self.page.get_by_label("Select language").select_option("VIE")
+        expect(self.page.get_by_role("heading",name="Cách kiểm thử",exact=True)).to_be_visible()
+        expect(selected).to_contain_text(local.strftime("%H:%M:%S"))
+        expect(selected).to_contain_text("GMT+7")
+        self.page.set_viewport_size({"width":390,"height":844})
+        self.assertLessEqual(self.page.evaluate("document.documentElement.scrollWidth"),390)
 
     def test_incremental_simulation_filter_language_and_restart(self):
         from playwright.sync_api import expect

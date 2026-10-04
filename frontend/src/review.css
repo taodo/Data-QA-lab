@@ -1,0 +1,15 @@
+.crumb{display:flex;align-items:center;gap:8px}
+.crumb a{color:#3d5857;text-decoration:none;border-radius:3px}
+.crumb a:hover{text-decoration:underline;color:#244d4b}
+.challenge-answer .challenge-box{margin-top:0}
+.challenge-answer .challenge-box h2{padding-top:16px}
+.pipeline-guide{font-size:13px;line-height:1.8}
+.pipeline-guide ol{padding-left:20px}
+.pipeline-guide li{margin-bottom:12px}
+.pipeline-guide dl>div{display:grid;grid-template-columns:80px minmax(0,1fr);gap:12px;margin:12px 0}
+.pipeline-guide dt{font-weight:700}
+.pipeline-guide dd{margin:0}
+.pipeline-times{margin:12px 0 24px;font-size:12px;overflow-wrap:anywhere}
+.pipeline-times dt{font-weight:600;margin-top:10px}
+.pipeline-times dd{margin:4px 0}
+.pipeline-times code{font-size:11px}

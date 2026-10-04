@@ -68,6 +68,12 @@ available in the [Task 8 PR checks](https://github.com/taodo/Data-QA-lab/pull/10
 
 ## Limits and interpretation
 
+User review refinements add clickable breadcrumbs/home navigation, move the
+challenge next to its answer, rename the answer label in both languages, explain
+Pipeline/QA/fault testing, and show the browser timezone plus inspectable UTC run
+times. These are Task 8 review changes. Course-platform redesign and local accounts
+are a separate proposal in TASK_9_PLAN.md and are not implemented in this branch.
+
 No new dependency, AI key, cloud, authentication, scheduler, CDC connector or delete
 events. Incremental merge is an atomic operator-controlled keyed replacement in a
 small session snapshot; it is not a general production upsert service. SCD datasets
