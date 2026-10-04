@@ -63,7 +63,7 @@ SCD2_SQL = """WITH ranked AS (
  ON e.customer_id=t.customer_id AND e.valid_from=t.valid_from
  WHERE e.customer_id IS NULL OR t.customer_id IS NULL OR e.tier IS DISTINCT FROM t.tier
  OR e.valid_to IS DISTINCT FROM t.valid_to OR t.is_current IS DISTINCT FROM (e.valid_to IS NULL)
-), overlaps AS (
+), overlap_pairs AS (
  SELECT 1 FROM target_customer_history a JOIN target_customer_history b
  ON a.customer_id=b.customer_id AND a.version_id<b.version_id
  AND a.valid_from<COALESCE(b.valid_to,'infinity'::timestamptz)
@@ -76,7 +76,7 @@ SCD2_SQL = """WITH ranked AS (
 ), duplicates AS (
  SELECT customer_id,valid_from FROM target_customer_history GROUP BY customer_id,valid_from HAVING COUNT(*)>1
 )
-SELECT (SELECT COUNT(*) FROM mismatches)+(SELECT COUNT(*) FROM overlaps)+
+SELECT (SELECT COUNT(*) FROM mismatches)+(SELECT COUNT(*) FROM overlap_pairs)+
  (SELECT COUNT(*) FROM current_keys)+(SELECT COUNT(*) FROM bad_ranges)+
  (SELECT COUNT(*) FROM duplicates) AS violation_count"""
 

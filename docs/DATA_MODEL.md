@@ -60,7 +60,8 @@ data attached to a run/session, not new rows in the original pipeline schemas.
 
 Freshness separates per-dataset requirements/as_of/SLA from load/event observations.
 SCD fixtures separate source changes from either current Type 1 rows or Type 2
-versions with half-open validity ranges. No metadata migration is needed: existing
-session rows already store lab ID, run ID and owned snapshot schema. Foundation
+versions with half-open validity ranges. Startup transactionally expands the existing
+scenario CHECK allowlist; no new metadata columns are needed. Existing session rows
+already store lab ID, run ID and owned snapshot schema. Foundation
 sessions retain their original tables; query copies discover and validate the exact
 dataset set before granting SELECT.

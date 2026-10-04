@@ -200,7 +200,10 @@ CREATE TABLE IF NOT EXISTS metadata.lab_submissions (
 ALTER TABLE metadata.lab_sessions DROP CONSTRAINT IF EXISTS lab_sessions_scenario_id_check;
 ALTER TABLE metadata.lab_sessions ADD CONSTRAINT lab_sessions_scenario_id_check CHECK (
     scenario_id IN ('clean','missing_order','equal_count_swap','invalid_customer','null_net_amount',
-                    'duplicate_order','wrong_net_amount','mixed_order_faults','daily_wrong')
+                    'duplicate_order','wrong_net_amount','mixed_order_faults','daily_wrong',
+                    'join_fanout','join_missing','latest_stale','latest_tie','utc_local_day','utc_missing',
+                    'inc_append','inc_event_watermark','fresh_stale','fresh_missing','fresh_failed',
+                    'scd1_stale','scd1_tie','scd2_overlap','scd2_two_current','scd2_missing')
 );
 
 CREATE TABLE IF NOT EXISTS metadata.lab_queries (

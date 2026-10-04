@@ -99,3 +99,20 @@ class AdvancedIntegrationTests(unittest.TestCase):
             self.assertNotIn("scenario_id",visible);self.assertNotIn("snapshot_schema",visible);self.assertNotIn("solution_sql",visible)
         reveal_solution(DB,sid)
         with self.assertRaises(LabStateError):simulate_session(DB,sid,"RESET")
+
+    def test_simulation_history_limit_and_reset_preserve_queries(self):
+        from backend.app.learning.advanced_workspace import execute
+        sid=self.session("lab_010_incremental")["session_id"]
+        query_session(DB,sid,"SELECT COUNT(*) FROM incremental_target")
+        simulate_session(DB,sid,"RESET")
+        schema=self.schema(sid)
+        with connect(DB) as connection:
+            execute(connection,schema,"INSERT INTO {s}.incremental_steps SELECT n,1,'REPLAY','SUCCESS',0,0,c.as_of FROM generate_series(1,100) n CROSS JOIN {s}.lab_context c")
+        state=inspect_session(DB,sid)
+        self.assertEqual(state["simulation"]["step_count"],100)
+        self.assertEqual(len(state["simulation"]["steps"]),20)
+        self.assertEqual(state["query_count"],1)
+        with self.assertRaises(LabStateError):simulate_session(DB,sid,"REPLAY")
+        state=simulate_session(DB,sid,"RESET")
+        self.assertEqual(state["simulation"]["step_count"],0)
+        self.assertEqual(state["query_count"],1)

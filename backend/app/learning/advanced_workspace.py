@@ -138,7 +138,7 @@ def _utc(connection,schema,keys,clock,variant):
                 datetime(2026,1,1,23,30,tzinfo=timezone.utc),datetime(2026,1,2,0,0,tzinfo=timezone.utc)]
     insert(connection,schema,"source_time_orders",[(key,stamp+shift,Decimal(amount)) for key,stamp,amount in zip(keys,timestamps,("10.01","0.00","20.02","7.00"),strict=True)])
     zone="Asia/Bangkok" if variant=="utc_local_day" else "UTC"
-    execute(connection,schema,"INSERT INTO {s}.target_utc_daily SELECT (ordered_at AT TIME ZONE %s)::date,COUNT(*),SUM(net_amount) FROM {s}.source_time_orders GROUP BY (ordered_at AT TIME ZONE %s)::date",(zone,zone))
+    execute(connection,schema,"INSERT INTO {s}.target_utc_daily SELECT (ordered_at AT TIME ZONE %s)::date,COUNT(*),SUM(net_amount) FROM {s}.source_time_orders GROUP BY 1",(zone,))
     if variant=="utc_missing":
         execute(connection,schema,"DELETE FROM {s}.target_utc_daily WHERE order_date=(SELECT MIN(order_date) FROM {s}.target_utc_daily)")
     elif variant=="utc_null":

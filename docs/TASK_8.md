@@ -38,6 +38,10 @@ wall-clock monitoring or a production CDC pipeline. Their fixed January 2026 clo
 is intentional; do not replace freshness evaluation with NOW(). The original four
 foundation tables and existing sessions continue working unchanged.
 
+Startup transactionally expands the metadata scenario CHECK allowlist. Bootstrap
+integration tests emulate the previous V1 constraint, upgrade it, open an advanced
+faulty session and restart again while retaining the original session/query/run.
+
 ## Verification
 
 ```bash

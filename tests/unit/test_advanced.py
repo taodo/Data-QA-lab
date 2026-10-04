@@ -7,6 +7,14 @@ from backend.app.learning.lessons import lesson
 
 
 class AdvancedTests(unittest.TestCase):
+    def test_session_scenarios_are_supported_by_database_upgrade(self):
+        from backend.app.persistence.database import SCHEMA_PATH
+        from backend.app.learning.profiles import PROFILES
+        schema=SCHEMA_PATH.read_text()
+        for profile in PROFILES.values():
+            for scenario in (*profile.scenarios,"clean"):
+                self.assertIn("'"+scenario+"'",schema)
+
     def test_keyed_merge_is_replay_safe_and_accepts_late_new_keys(self):
         old=(1,101,AS_OF-timedelta(days=2),Decimal("10.00"))
         current=(2,101,AS_OF-timedelta(days=1),Decimal("11.01"))
