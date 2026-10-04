@@ -1,11 +1,12 @@
 """Admin-owned snapshots. Identifiers are generated, never supplied as learner SQL."""
 import re
+from decimal import Decimal
 
 from backend.app.learning.contracts import LabStateError
 
 
 TABLES = ("source_orders", "target_orders", "gold_daily_sales", "target_daily_sales")
-VARIANTS = {"current", "clean", "clean_subset", "missing", "swapped"}
+VARIANTS = {"current", "clean", "clean_subset", "clean_zero", "missing", "swapped", "invalid_customer", "invalid_customer_last", "invalid_customer_two", "null_net_amount", "null_last", "null_two", "duplicate_order", "duplicate_last", "duplicate_twice", "duplicate_triple", "wrong_net_amount", "wrong_last", "wrong_two", "daily_wrong", "daily_missing", "mixed_order_faults"}
 
 
 def require_schema(schema: str):
@@ -35,7 +36,47 @@ def create_session_snapshot(connection, schema, run_id, scenario):
         sql.Identifier(schema))).fetchone()[0]
     if count < 2:
         raise LabStateError("Lab 001 needs a successful run with at least two orders")
-    mutate_keys(connection, schema, scenario)
+    mutate_fixture(connection, schema, scenario)
+
+
+def mutate_fixture(connection, schema, scenario):
+    from psycopg import sql
+    require_schema(schema)
+    identifier = sql.Identifier(schema)
+    if scenario == "clean":
+        return
+    if scenario in {"missing_order", "equal_count_swap", "missing", "swapped"}:
+        return mutate_keys(connection, schema, "missing_order" if scenario in {"missing_order", "missing"} else "equal_count_swap")
+    if scenario == "mixed_order_faults":
+        for defect in ("missing_order", "null_last", "duplicate_order", "wrong_net_amount", "daily_wrong"):
+            mutate_fixture(connection, schema, defect)
+        return
+    if scenario in {"daily_wrong", "daily_missing"}:
+        statement = ("UPDATE {}.target_daily_sales SET net_revenue=net_revenue+0.01 WHERE order_date=(SELECT MIN(order_date) FROM {}.target_daily_sales)" if scenario == "daily_wrong" else "DELETE FROM {}.target_daily_sales WHERE order_date=(SELECT MIN(order_date) FROM {}.target_daily_sales)")
+        connection.execute(sql.SQL(statement).format(identifier, identifier))
+        return
+    if scenario not in VARIANTS:
+        raise ValueError("Unknown learning fixture")
+    last = scenario.endswith("last")
+    aggregate = sql.SQL("MAX" if last else "MIN")
+    key = connection.execute(sql.SQL("SELECT {}(order_id) FROM {}.target_orders").format(aggregate, identifier)).fetchone()[0]
+    if scenario.startswith("invalid_customer"):
+        connection.execute(sql.SQL("UPDATE {}.target_orders SET customer_id=%s WHERE order_id=%s").format(identifier), (0 if last else -1, key))
+    elif scenario.startswith("null"):
+        connection.execute(sql.SQL("UPDATE {}.target_orders SET net_amount=NULL WHERE order_id=%s").format(identifier), (key,))
+    elif scenario.startswith("wrong"):
+        connection.execute(sql.SQL("UPDATE {}.target_orders SET net_amount=net_amount+%s WHERE order_id=%s").format(identifier), (Decimal("-0.01" if last else "0.01"), key))
+    elif scenario.startswith("duplicate"):
+        connection.execute(sql.SQL("INSERT INTO {}.target_orders SELECT * FROM {}.target_orders WHERE order_id=%s").format(identifier, identifier), (key,))
+    else:
+        raise ValueError("Unknown learning fixture")
+    if scenario.endswith("two"):
+        mutate_fixture(connection, schema, {"invalid_customer_two": "invalid_customer_last", "null_two": "null_last", "wrong_two": "wrong_last"}[scenario])
+    if scenario == "duplicate_twice":
+        # Duplicate a different key; grading counts duplicate keys, not extra rows.
+        mutate_fixture(connection, schema, "duplicate_last")
+    if scenario == "duplicate_triple":
+        mutate_fixture(connection, schema, "duplicate_order")
 
 
 def mutate_keys(connection, schema, scenario):
@@ -74,6 +115,8 @@ def populate_query_snapshot(connection, destination, snapshot, variant):
             "(SELECT order_id FROM {}.source_orders ORDER BY order_id LIMIT "
             "(SELECT GREATEST(1, COUNT(*) / 2) FROM {}.source_orders))"
         ).format(*[sql.Identifier(destination)] * 3))
+    if variant == "clean_zero":
+        connection.execute(sql.SQL("UPDATE {}.source_orders SET gross_amount=0,discount_amount=0,refund_amount=0 WHERE order_id=(SELECT MIN(order_id) FROM {}.source_orders)").format(sql.Identifier(destination), sql.Identifier(destination)))
     connection.execute(sql.SQL("TRUNCATE {}.target_orders").format(sql.Identifier(destination)))
     connection.execute(sql.SQL(
         "INSERT INTO {}.target_orders SELECT order_id, customer_id, ordered_at, "
@@ -88,6 +131,5 @@ def populate_query_snapshot(connection, destination, snapshot, variant):
             "SUM(gross_amount - discount_amount - refund_amount) FROM {}.source_orders "
             "GROUP BY (ordered_at AT TIME ZONE 'UTC')::date"
         ).format(sql.Identifier(destination), sql.Identifier(table), sql.Identifier(destination)))
-    if variant in {"missing", "swapped"}:
-        mutate_keys(connection, destination,
-                    "missing_order" if variant == "missing" else "equal_count_swap")
+    if variant not in {"clean", "clean_subset", "clean_zero"}:
+        mutate_fixture(connection, destination, variant)

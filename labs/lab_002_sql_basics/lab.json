@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "id": "lab_002_sql_basics",
+  "title": "Read data, find invalid values",
+  "requirement": "Return one integer column violation_count: the number of Target rows with customer_id <= 0. No hardcoded order IDs or LIMIT on the counted rows. NULL and referential integrity are separate checks.",
+  "pipeline_id": "orders_v1",
+  "difficulty": "beginner",
+  "available_fault_ids": [],
+  "learning_objectives": [
+    "Read table grain and column types",
+    "Filter with WHERE and count violations"
+  ]
+}

@@ -52,7 +52,7 @@ def build_parser() -> argparse.ArgumentParser:
     lab_start.add_argument("lab_id")
     lab_start.add_argument("--run-id", type=UUID)
     lab_start.add_argument("--mode", choices=("CHALLENGE", "SANDBOX"), default="CHALLENGE")
-    lab_start.add_argument("--scenario", choices=("missing_order", "equal_count_swap"))
+    lab_start.add_argument("--scenario", help="A scenario allowed for the selected SANDBOX lesson")
     for name in ("lab-show", "lab-inspect", "lab-hint", "lab-reveal", "lab-query", "lab-submit"):
         command = subparsers.add_parser(name, help=f"Learning session operation: {name}")
         command.add_argument("--session-id", type=UUID, required=True)

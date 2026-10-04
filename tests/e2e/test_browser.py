@@ -136,3 +136,29 @@ class BrowserTests(unittest.TestCase):
         expect(self.page.get_by_role("button",name="Submit check",exact=True)).to_be_disabled()
         self.page.set_viewport_size({"width":390,"height":844})
         self.assertLessEqual(self.page.evaluate("document.documentElement.scrollWidth"),390)
+
+    def test_all_six_lessons_are_usable_through_the_browser(self):
+        from playwright.sync_api import expect
+        from backend.app.learning.lessons import CATALOG
+        from backend.app.learning.profiles import PROFILES
+        self.page.goto(self.url)
+        self.page.locator(".lesson-card").first.wait_for()
+        self.idle()
+        self.page.get_by_label("Select language").select_option("ENG")
+        expect(self.page.locator(".lesson-card")).to_have_count(6)
+        for lab_id in sorted(CATALOG, key=lambda key:CATALOG[key]["order"]):
+            title=CATALOG[lab_id]["ENG"]["title"]
+            self.page.locator(".lesson-card").filter(has_text=title).get_by_role("button").click()
+            self.page.locator(".work-column .primary").click()
+            self.page.get_by_label("SQL editor",exact=True).wait_for()
+            self.idle()
+            self.page.get_by_role("button",name="Run SQL",exact=False).click()
+            self.idle()
+            expect(self.page.locator(".work-column .panel").nth(1).locator(".badge")).to_have_text("SUCCESS")
+            self.sql(PROFILES[lab_id].solution)
+            self.page.locator("#conclusion").fill("Checked the documented contract on clean and defective data.")
+            self.page.get_by_role("button",name="Submit check",exact=True).click()
+            self.idle()
+            expect(self.page.locator(".lesson-heading .badge")).to_have_text("COMPLETED")
+            self.page.locator(".back").click()
+        self.page.screenshot(path=str(self.artifacts/"v1-learning-catalog-desktop.png"),full_page=True)
