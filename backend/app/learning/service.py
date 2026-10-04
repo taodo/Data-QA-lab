@@ -5,7 +5,9 @@ import json
 import secrets
 from uuid import UUID, uuid4
 
-from backend.app.learning.content import LAB_ID, HINTS, SOLUTION, EXPLANATION
+from backend.app.learning.content import LAB_ID
+from backend.app.learning.lessons import CATALOG
+from backend.app.learning.profiles import PROFILES
 from backend.app.learning.contracts import LabStateError, normalize_sql, violation_count
 from backend.app.learning.sql_runtime import run_sql
 from backend.app.learning.workspace import create_session_snapshot, TABLES
@@ -30,30 +32,32 @@ def _get(connection, session_id):
 
 
 def _public(session):
-    lab = next(lab for lab in load_labs() if lab.id == session["lab_id"])
+    text = CATALOG[session["lab_id"]]["ENG"]
+    profile = PROFILES[session["lab_id"]]
     payload = {key: session[key] for key in (
         "session_id", "lab_id", "pipeline_run_id", "mode", "status", "hints_used",
         "started_at", "completed_at",
     )}
-    payload.update(title=lab.title, requirement=lab.requirement,
-                   learning_objectives=lab.learning_objectives, datasets=TABLES,
+    payload.update(title=text["title"], requirement=text["requirement"],
+                   learning_objectives=text["objectives"], datasets=TABLES,
                    result_contract="one non-negative integer column: violation_count",
-                   hints=HINTS[:session["hints_used"]])
+                   hints=text["hints"][:session["hints_used"]])
     if session["mode"] == "SANDBOX" or session["status"] == "REVEALED":
         payload["scenario_id"] = session["scenario_id"]
     if session["status"] in {"COMPLETED", "REVEALED"}:
-        payload.update(solution_sql=SOLUTION, explanation=EXPLANATION)
+        payload.update(solution_sql=profile.solution, explanation=text["explanation"])
     return payload
 
 
 def start_session(database_url, lab_id=LAB_ID, pipeline_run_id=None, mode="CHALLENGE", scenario=None):
-    if lab_id != LAB_ID or mode not in {"CHALLENGE", "SANDBOX"}:
+    if lab_id not in PROFILES or mode not in {"CHALLENGE", "SANDBOX"}:
         raise ValueError("Unsupported lab or mode")
-    if scenario is not None and (mode != "SANDBOX" or scenario not in {"missing_order", "equal_count_swap"}):
+    profile = PROFILES[lab_id]
+    if scenario is not None and (mode != "SANDBOX" or scenario not in (*profile.scenarios, "clean")):
         raise ValueError("Only SANDBOX can explicitly choose a supported scenario")
     session_id = uuid4()
     schema = "learner_session_" + session_id.hex
-    scenario = scenario or secrets.choice(("missing_order", "equal_count_swap"))
+    scenario = scenario or secrets.choice(profile.scenarios)
     with transaction(database_url) as connection:
         if pipeline_run_id is None:
             row = connection.execute(
@@ -128,7 +132,7 @@ def next_hint(database_url, session_id):
         )
         session = _get(connection, session_id)
     return {"session_id": session_id, "level": session["hints_used"],
-            "hint": HINTS[session["hints_used"] - 1]}
+            "hint": CATALOG[session["lab_id"]]["ENG"]["hints"][session["hints_used"] - 1]}
 
 
 def submit_solution(database_url, session_id, query, conclusion):
@@ -137,11 +141,13 @@ def submit_solution(database_url, session_id, query, conclusion):
     if not isinstance(conclusion, str) or not conclusion.strip() or len(conclusion.encode("utf-8")) > 4096:
         raise ValueError("A non-empty conclusion of at most 4 KiB is required")
     cases = []
-    for variant in ("clean", "clean_subset", "missing", "swapped"):
+    profile = PROFILES[session["lab_id"]]
+    for variant in profile.variants:
         result = run_sql(database_url, session["snapshot_schema"], query, variant)
         try:
             count = violation_count(result)
-            passed = (count == 0) if variant.startswith("clean") else (count > 0)
+            expected = violation_count(run_sql(database_url, session["snapshot_schema"], profile.solution, variant))
+            passed = count == expected
             status = "PASS" if passed else "FAIL"
         except ValueError:
             count = None
@@ -173,7 +179,7 @@ def submit_solution(database_url, session_id, query, conclusion):
     if session["mode"] == "SANDBOX":
         payload["cases"] = cases
     if status == "PASS":
-        payload.update(solution_sql=SOLUTION, explanation=EXPLANATION)
+        payload.update(solution_sql=profile.solution, explanation=CATALOG[session["lab_id"]]["ENG"]["explanation"])
     return payload
 
 

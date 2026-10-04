@@ -197,6 +197,12 @@ CREATE TABLE IF NOT EXISTS metadata.lab_submissions (
     submitted_at TIMESTAMPTZ NOT NULL
 );
 
+ALTER TABLE metadata.lab_sessions DROP CONSTRAINT IF EXISTS lab_sessions_scenario_id_check;
+ALTER TABLE metadata.lab_sessions ADD CONSTRAINT lab_sessions_scenario_id_check CHECK (
+    scenario_id IN ('clean','missing_order','equal_count_swap','invalid_customer','null_net_amount',
+                    'duplicate_order','wrong_net_amount','mixed_order_faults','daily_wrong')
+);
+
 CREATE TABLE IF NOT EXISTS metadata.lab_queries (
     query_id UUID PRIMARY KEY,
     session_id UUID NOT NULL REFERENCES metadata.lab_sessions(session_id),

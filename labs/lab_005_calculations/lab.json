@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "id": "lab_005_calculations",
+  "title": "Reconcile exact amounts",
+  "requirement": "Return violation_count equal to the number of joined Source/Target rows with incorrect net_amount, including NULL actual amounts. Compare exact NUMERIC values; key completeness is outside this lesson.",
+  "pipeline_id": "orders_v1",
+  "difficulty": "beginner",
+  "available_fault_ids": [],
+  "learning_objectives": [
+    "Match rows by business key",
+    "Validate money with exact decimals and NULL-safe comparison"
+  ]
+}

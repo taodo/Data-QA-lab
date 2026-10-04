@@ -1,5 +1,6 @@
 import type {Language} from './types';
 const ENG = {
+  invalid_customer:'Invalid customer ID', mixed_order_faults:'Combined defects', daily_wrong:'Wrong daily revenue',
   learn:'Learning path', pipeline:'Pipeline & QA', history:'Learning history', language:'Select language',
   eyebrow:'LEARN BY INVESTIGATING', hero:'Trust the data. Prove it.', intro:'Build SQL checks, uncover data defects, and learn why a successful pipeline can still be wrong.',
   completed:'Completed', lessons:'Lessons', attempts:'Attempts', continue:'Continue', start:'Start lesson', restart:'New attempt', ready:'Ready', loading:'Working…', retry:'Retry',
@@ -22,6 +23,7 @@ const ENG = {
   ACTIVE:'In progress', COMPLETED:'Completed', REVEALED:'Solution revealed', SUCCESS:'SUCCESS', FAILED:'FAILED', NOT_RUN:'NOT_RUN', APPLIED:'APPLIED', RESET:'RESET',
 };
 const VIE:typeof ENG = {
+  invalid_customer:'Customer ID không hợp lệ', mixed_order_faults:'Nhiều lỗi kết hợp', daily_wrong:'Revenue theo ngày sai',
   learn:'Lộ trình học', pipeline:'Pipeline & QA', history:'Lịch sử học', language:'Chọn ngôn ngữ',
   eyebrow:'HỌC QUA ĐIỀU TRA DỮ LIỆU', hero:'Tin dữ liệu. Có bằng chứng.', intro:'Viết kiểm tra SQL, tìm lỗi dữ liệu và hiểu vì sao pipeline chạy thành công vẫn có thể cho kết quả sai.',
   completed:'Đã hoàn thành', lessons:'Bài học', attempts:'Lần thực hành', continue:'Tiếp tục', start:'Bắt đầu học', restart:'Thực hành mới', ready:'Sẵn sàng', loading:'Đang xử lý…', retry:'Thử lại',
