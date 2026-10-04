@@ -52,3 +52,20 @@ jobs:
           path: |
             e2e-artifacts/
             e2e-server.log
+
+  packaged-v1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: docker compose up -d --build --wait --wait-timeout 180
+      - run: python scripts/container_smoke.py
+      - run: docker compose restart app && docker compose up -d --wait --wait-timeout 180
+      - run: python scripts/container_smoke.py resume
+      - run: docker compose logs --no-color --tail 100 app postgres
+        if: always()
+      - run: docker compose down
+        if: always()

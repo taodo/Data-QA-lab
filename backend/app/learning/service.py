@@ -86,19 +86,36 @@ def inspect_session(database_url, session_id):
         session = _get(connection, session_id)
         submissions = connection.execute(
             """SELECT submission_id, sql_text, conclusion, status, submitted_at FROM metadata.lab_submissions
-               WHERE session_id=%s ORDER BY submitted_at""", (session_id,)
+               WHERE session_id=%s ORDER BY submitted_at DESC,submission_id DESC LIMIT 20""", (session_id,)
         ).fetchall()
         queries = connection.execute(
             """SELECT query_id, sql_text, result, executed_at FROM metadata.lab_queries
-               WHERE session_id=%s ORDER BY executed_at""", (session_id,)
+               WHERE session_id=%s ORDER BY executed_at DESC,query_id DESC LIMIT 20""", (session_id,)
         ).fetchall()
+        counts = connection.execute("SELECT (SELECT COUNT(*) FROM metadata.lab_queries WHERE session_id=%s), (SELECT COUNT(*) FROM metadata.lab_submissions WHERE session_id=%s)", (session_id,session_id)).fetchone()
     payload = _public(session)
     payload["submissions"] = [dict(zip(
         ("submission_id", "sql", "conclusion", "status", "submitted_at"), row, strict=True
-    )) for row in submissions]
+    )) for row in reversed(submissions)]
     payload["queries"] = [dict(zip(("query_id", "sql", "result", "executed_at"), row, strict=True))
-                          for row in queries]
+                          for row in reversed(queries)]
+    payload["query_count"],payload["submission_count"] = counts
     return payload
+
+
+def history_page(database_url, session_id, kind, offset=0, limit=20):
+    from psycopg import sql
+    definitions = {
+        "queries": ("lab_queries", "query_id,sql_text,result,executed_at", "executed_at", "query_id", ("query_id","sql","result","executed_at")),
+        "submissions": ("lab_submissions", "submission_id,sql_text,conclusion,status,submitted_at", "submitted_at", "submission_id", ("submission_id","sql","conclusion","status","submitted_at")),
+    }
+    if kind not in definitions or not 0 <= offset <= 100000 or not 1 <= limit <= 20:
+        raise ValueError("Invalid history page")
+    table,fields,timestamp,key,names=definitions[kind]
+    with connect(database_url) as connection:
+        _get(connection,session_id)
+        rows=connection.execute(sql.SQL("SELECT {} FROM metadata.{} WHERE session_id=%s ORDER BY {} DESC,{} DESC LIMIT %s OFFSET %s").format(sql.SQL(fields),sql.Identifier(table),sql.Identifier(timestamp),sql.Identifier(key)),(session_id,limit,offset)).fetchall()
+    return [dict(zip(names,row,strict=True)) for row in reversed(rows)]
 
 
 def _active(database_url, session_id):
@@ -144,9 +161,14 @@ def submit_solution(database_url, session_id, query, conclusion):
     profile = PROFILES[session["lab_id"]]
     for variant in profile.variants:
         result = run_sql(database_url, session["snapshot_schema"], query, variant)
+        oracle = run_sql(database_url, session["snapshot_schema"], profile.solution, variant)
+        try:
+            expected = violation_count(oracle)
+        except ValueError:
+            cases.append({"case":variant,"status":"ERROR","count":None,"result":asdict(result)})
+            continue
         try:
             count = violation_count(result)
-            expected = violation_count(run_sql(database_url, session["snapshot_schema"], profile.solution, variant))
             passed = count == expected
             status = "PASS" if passed else "FAIL"
         except ValueError:

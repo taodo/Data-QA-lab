@@ -8,8 +8,9 @@ Local, single-user learning environment. Backend domain and services are indepen
 - QA engine: allowlisted PostgreSQL checks and reconciliation rules run in read-only transactions and persist expected, actual, bounded evidence and errors per pipeline run.
 - Fault engine: deterministic scenario specifications applied to a run workspace.
 - Lab engine: requirement, learning objectives, hints, learner submissions and grading.
-- API: FastAPI planned for Task 6.
-- UI: React planned for Task 7.
+- API: FastAPI learning/pipeline/quality/fault routes with local Host/Origin guards, bounded inputs/history and safe error responses.
+- UI: React/TypeScript with CodeMirror SQL editor, six complete ENG/VIE lessons, hints, deterministic grading, progress/history and pipeline evidence.
+- Local release: Compose app + PostgreSQL, non-root app OS user, one worker, idempotent dedicated-database bootstrap and persistent D-drive bind mount.
 
 Task 1 added the executable PostgreSQL pipeline. Task 2 added an allowlisted, read-only QA Engine with persisted validation runs and structured evidence. Task 3 added key and field reconciliation without accepting arbitrary SQL in rule contracts. Task 4 adds allowlisted, atomic fault scenarios against isolated Target copies.
 

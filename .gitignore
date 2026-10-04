@@ -16,3 +16,5 @@ data/postgres/
 *.sqlite*
 e2e-artifacts/
 e2e-server.log
+backups/
+.container-smoke-state.json

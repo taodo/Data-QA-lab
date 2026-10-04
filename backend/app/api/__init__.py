@@ -7,7 +7,7 @@ from typing import Literal
 from uuid import UUID
 
 import psycopg
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Query as QueryParameter
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -76,7 +76,7 @@ class BodyLimit:
 
 
 def create_app(database_url=None):
-    app = FastAPI(title="Data QA Lab", version="0.9.0")
+    app = FastAPI(title="Data QA Lab", version="1.0.0")
     db = database_url or Settings.from_env().database_url
     gate = Lock()
     app.add_middleware(BodyLimit)
@@ -87,7 +87,22 @@ def create_app(database_url=None):
         origin = request.headers.get("origin")
         if request.method not in {"GET", "HEAD", "OPTIONS"} and origin and origin != str(request.base_url).rstrip("/"):
             return response({"error": {"code": "ORIGIN_DENIED"}}, 403)
-        return await call_next(request)
+        result = await call_next(request)
+        result.headers["X-Content-Type-Options"] = "nosniff"
+        result.headers["Referrer-Policy"] = "no-referrer"
+        if request.url.path.startswith("/api/"):
+            result.headers["Cache-Control"] = "no-store"
+        elif request.url.path not in {"/docs","/redoc"}:
+            result.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
+        return result
+
+    @app.exception_handler(HTTPException)
+    async def http_error(request,exc):
+        return response({"error":{"code":str(exc.detail)}},exc.status_code)
+
+    @app.exception_handler(Exception)
+    async def unexpected(request,exc):
+        return response({"error":{"code":"INTERNAL_ERROR"}},500)
 
     @app.exception_handler(RequestValidationError)
     async def invalid(request, exc):
@@ -135,9 +150,9 @@ def create_app(database_url=None):
         return lesson(lab_id, language)
 
     @app.get("/api/sessions")
-    def sessions():
+    def sessions(offset: int = QueryParameter(0,ge=0,le=100000), limit: int = QueryParameter(50,ge=1,le=50)):
         with connect(db) as connection:
-            rows = connection.execute("SELECT session_id,lab_id,mode,status,hints_used,started_at,completed_at FROM metadata.lab_sessions ORDER BY started_at DESC LIMIT 200").fetchall()
+            rows = connection.execute("SELECT session_id,lab_id,mode,status,hints_used,started_at,completed_at FROM metadata.lab_sessions ORDER BY started_at DESC,session_id DESC LIMIT %s OFFSET %s",(limit,offset)).fetchall()
         return response([dict(zip(("session_id", "lab_id", "mode", "status", "hints_used", "started_at", "completed_at"), row, strict=True)) for row in rows])
 
     @app.get("/api/progress")
@@ -154,6 +169,10 @@ def create_app(database_url=None):
     @app.get("/api/sessions/{session_id}")
     def session(session_id: UUID, language: Language = "VIE"):
         return response(localize_session(service.inspect_session(db, session_id), language))
+
+    @app.get("/api/sessions/{session_id}/history/{kind}")
+    def history(session_id: UUID,kind: Literal["queries","submissions"], offset: int = QueryParameter(0,ge=0,le=100000)):
+        return response(service.history_page(db,session_id,kind,offset))
 
     @app.post("/api/sessions/{session_id}/query")
     def query(session_id: UUID, body: Query):

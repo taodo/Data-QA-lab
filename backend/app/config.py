@@ -10,4 +10,10 @@ class Settings:
 
     @classmethod
     def from_env(cls) -> "Settings":
+        if os.getenv("DATA_QA_DATABASE_HOST"):
+            from psycopg.conninfo import make_conninfo
+            return cls(make_conninfo(host=os.environ["DATA_QA_DATABASE_HOST"], port="5432",
+                                     dbname=os.getenv("POSTGRES_DB", "data_qa_lab"),
+                                     user=os.getenv("POSTGRES_USER", "data_qa_lab"),
+                                     password=os.getenv("POSTGRES_PASSWORD", "data_qa_lab")))
         return cls(database_url=os.getenv("DATABASE_URL", DEFAULT_DATABASE_URL))

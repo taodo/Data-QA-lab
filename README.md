@@ -2,7 +2,33 @@
 
 Interactive Data Pipeline Testing & Learning Platform. The local V1 runs a real PostgreSQL pipeline and preserves evidence for every run.
 
-**Current branch checkpoint: Task 5 — secure learning labs.**
+**V1: local browser app with six complete ENG/VIE lessons, real SQL execution and deterministic grading.**
+
+## Start V1 on D:\Data-QA-Lab
+
+Docker Desktop must be running. No local Python/Node installation is needed for the packaged app.
+
+```powershell
+Set-Location D:\Data-QA-Lab
+git fetch origin
+git switch feature/develop
+git pull --ff-only origin feature/develop
+docker compose up -d --build --wait --wait-timeout 180
+Start-Process 'http://127.0.0.1:8000'
+```
+
+Select ENG/VIE, open a lesson, follow instructions, run SQL, inspect evidence,
+request hints and submit. Challenge hides the defect; Sandbox offers clean and
+faulty data. Sessions, grades and history persist through restart. A fresh setup
+creates 1,000 deterministic orders; existing usable runs are retained. The first
+build needs internet; the built learning app uses local assets and no AI API.
+
+Lessons: SELECT/WHERE business rules, NULLs, duplicate keys, completeness,
+exact calculations and combined order/day reconciliation.
+
+See [Windows/D-drive guide](docs/V1_GUIDE.md), [SQL boundary](docs/SQL_SECURITY.md)
+and [verification](docs/VERIFICATION.md). Docker images/cache follow Docker
+Desktop's disk location; PostgreSQL's default bind mount is D:\Data-QA-Lab\data\postgres.
 
 Core principle: **Pipeline SUCCESS ≠ Data Quality PASS.** The quality engine evaluates basic checks plus source-to-target reconciliation independently as `PASS`, `FAIL`, `ERROR` or `NOT_RUN`.
 
@@ -28,7 +54,7 @@ Requirements: Python 3.11+ and Docker Desktop with Docker Compose.
 
 ```powershell
 Set-Location D:\Data-QA-Lab
-git switch feature/task-5-learning-labs
+git switch feature/develop
 py -3 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -e .
 docker compose up -d postgres

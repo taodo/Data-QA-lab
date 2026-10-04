@@ -8,6 +8,15 @@ from backend.app.persistence.database import DEFAULT_CONNECT_TIMEOUT_SECONDS, co
 
 
 class DatabaseConfigTests(unittest.TestCase):
+    def test_container_host_handles_password_without_uri_interpolation(self):
+        from unittest.mock import patch
+        from psycopg.conninfo import conninfo_to_dict
+        from backend.app.config import Settings
+        with patch.dict("os.environ",{"DATA_QA_DATABASE_HOST":"postgres","POSTGRES_PASSWORD":"a@b:c / d","DATABASE_URL":"postgresql://wrong"}):
+            settings=Settings.from_env()
+        parts=conninfo_to_dict(settings.database_url)
+        self.assertEqual(parts["host"],"postgres")
+        self.assertEqual(parts["password"],"a@b:c / d")
     def test_default_url_matches_ipv4_only_compose_binding(self):
         with patch.dict(os.environ, {}, clear=True):
             settings = Settings.from_env()
