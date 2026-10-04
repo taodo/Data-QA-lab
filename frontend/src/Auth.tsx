@@ -34,8 +34,8 @@ export function AuthPage({signup,t}:{signup:boolean;t:(key:string)=>string}){
     <h2>{t(signup?'createAccount':'welcomeBack')}</h2><p className="muted">{t(signup?'signupHelp':'loginHelp')}</p>
     {error&&<p className="notice error" role="alert">{t(error)}</p>}
     {signup&&<label>{t('displayName')}<input name="display_name" autoComplete="name" required maxLength={80} value={display} onChange={e=>setDisplay(e.target.value)} disabled={busy}/></label>}
-    <label>{t('username')}<input name="username" autoComplete="username" required minLength={3} maxLength={32} pattern="[A-Za-z0-9_]+" value={name} onChange={e=>setName(e.target.value)} disabled={busy}/><small>{t('usernameHelp')}</small></label>
-    <label>{t('password')}<input name="password" type="password" autoComplete={signup?'new-password':'current-password'} required minLength={12} maxLength={128} value={password} onChange={e=>setPassword(e.target.value)} disabled={busy}/><small>{t('passwordHelp')}</small></label>
+    <label>{t('username')}<input name="username" aria-label={t('username')} aria-describedby="username-help" autoComplete="username" required minLength={3} maxLength={32} pattern="[A-Za-z0-9_]+" value={name} onChange={e=>setName(e.target.value)} disabled={busy}/><small id="username-help">{t('usernameHelp')}</small></label>
+    <label>{t('password')}<input name="password" aria-label={t('password')} aria-describedby="password-help" type="password" autoComplete={signup?'new-password':'current-password'} required minLength={12} maxLength={128} value={password} onChange={e=>setPassword(e.target.value)} disabled={busy}/><small id="password-help">{t('passwordHelp')}</small></label>
     <button className="primary full" disabled={busy}>{t(busy?'loading':signup?'signup':'login')}</button>
     <p>{t(signup?'haveAccount':'needAccount')} <Link to={(signup?'/login':'/signup')+'?next='+encodeURIComponent(next)}>{t(signup?'login':'signup')}</Link></p>
     {!signup&&<details><summary>{t('accountRecovery')}</summary><p className="muted">{t('accountRecoveryHelp')}</p></details>}

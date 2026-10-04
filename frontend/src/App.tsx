@@ -16,8 +16,9 @@ function Platform(){
   const course=path.match(/^\/courses\/([a-z0-9-]+)(?:\/lessons\/(lab_[a-z0-9_]+))?$/),subject=path.match(/^\/subjects\/([a-z0-9-]+)$/);
   useEffect(()=>{let live=true;save('dqa-language',language);document.documentElement.lang=language==='ENG'?'en':'vi';Promise.all([api<Subject[]>('/subjects?language='+language),api<Course[]>('/courses?language='+language)]).then(([s,c])=>{if(live){setSubjects(s);setCourses(c);}}).catch(e=>{if(live)setError(e.message);});return()=>{live=false;};},[language]);
   useEffect(()=>{const old=path.match(/^\/learn\/(lab_[a-z0-9_]+)$/);if(old)navigate('/courses/sql-data-qa/lessons/'+old[1]+url.search,true);},[route]);
+  useEffect(()=>{document.querySelectorAll<HTMLDetailsElement>('.site-header details[open]').forEach(item=>item.open=false);},[route]);
   const crumbs:{label:string;to?:string}[]=[{label:'Data QA Lab',to:'/'}];
-  if(course){crumbs.push({label:t('courses'),to:'/courses'},{label:courses.find(c=>c.id===course[1])?.title??t('courseOverview'),to:course[2]?'/courses/'+course[1]:undefined});if(course[2])crumbs.push({label:t('learn')});}
+  if(course){crumbs.push({label:t('courses'),to:'/courses'},{label:courses.find(c=>c.id===course[1])?.title??t('courseOverview'),to:course[2]?'/courses/'+course[1]:undefined});if(course[2])crumbs.push({label:t('lessonPage')});}
   else if(subject)crumbs.push({label:t('subjects'),to:'/courses'},{label:subjects.find(s=>s.id===subject[1])?.title??subject[1]});
   else if(path!=='/')crumbs.push({label:t(({'/courses':'courses','/my-learning':'myLearning','/history':'history','/pipeline':'pipeline','/account':'account','/login':'login','/signup':'signup'} as Record<string,string>)[path]??'notFound')});
   let content;

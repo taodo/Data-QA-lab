@@ -46,7 +46,7 @@ def main():
         assert len(session["queries"])==1 and len(session["submissions"])==1
         assert len(api("/runs"))==previous["run_count"]
         assert api("/enrollments")[0]["course_id"]=="sql-data-qa"
-        assert api("/progress")[0]["completed"]
+        assert any(p["lab_id"]=="lab_001_record_count" and p["completed"] for p in api("/progress"))
         incremental=api("/sessions/"+previous["incremental_id"])
         assert incremental["simulation"]["step_count"]==2
         assert incremental["simulation"]["steps"][-1]["target_rows"]==2

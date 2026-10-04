@@ -6,3 +6,5 @@
 .course-cover{color:#61418c}.course-cover>small{position:absolute;bottom:1rem;right:1rem;font-size:.6rem;letter-spacing:.16em}.course-outline>h2{font-size:.9rem;margin:1rem}.course-outline nav h3{padding:.7rem 1rem;background:var(--soft);font-size:.78rem;margin:.4rem 0}.course-outline nav a{font-size:.75rem;line-height:1.5}.course-outline nav a.current{background:var(--soft);color:var(--purple);border-left-color:var(--purple)}
 
 .curriculum-filters{display:flex;gap:1rem;flex-wrap:wrap;margin:1.2rem 0}.curriculum-filters label{display:flex;flex-direction:column;gap:.4rem;font-size:.8rem;flex:1;min-width:160px}.curriculum-filters input,.curriculum-filters select{padding:.7rem;border:1px solid var(--line);border-radius:7px;background:white;min-width:0}
+@media(min-width:901px) and (max-width:1350px){.header-primary{flex-wrap:wrap;gap:1rem}.header-links{padding-bottom:0}.site-header .header-account{position:static;margin-left:auto}.header-search{min-width:180px}}
+.site-header details{border-top:0;padding:0}.site-header summary{color:var(--ink)}.site-header .header-subjects[open]>summary,.site-header .account-menu[open]>summary{color:var(--purple)}
