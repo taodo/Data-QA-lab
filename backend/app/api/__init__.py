@@ -76,7 +76,7 @@ class BodyLimit:
 
 
 def create_app(database_url=None):
-    app = FastAPI(title="Data QA Lab", version="0.7.0")
+    app = FastAPI(title="Data QA Lab", version="0.8.0")
     db = database_url or Settings.from_env().database_url
     gate = Lock()
     app.add_middleware(BodyLimit)
@@ -232,6 +232,12 @@ def create_app(database_url=None):
         from faults.service import reset_fault
         return response(asdict(mutate(reset_fault, db, fault_id)))
 
+    # Frontend is built locally or in the container. No external CDN assets.
+    from pathlib import Path
+    from fastapi.staticfiles import StaticFiles
+    frontend = Path(__file__).resolve().parents[3] / "frontend" / "dist"
+    if frontend.is_dir():
+        app.mount("/", StaticFiles(directory=frontend, html=True), name="frontend")
     return app
 
 
