@@ -10,7 +10,7 @@ Use deterministic seed data, exact decimal money (database NUMERIC), UTC-aware t
 
 Begin each task with engineering and learning objectives. Finish with commands, observed results, limitations and a learning explanation.
 
-New dependencies require a concrete use in the active task. Prefer small modules and meaningful behavior tests. Never claim unexecuted checks passed. No AI, cloud, authentication or multi-user scope in V1.
+New dependencies require a concrete use in the active task. Prefer small modules and meaningful behavior tests. Never claim unexecuted checks passed. V1 Tasks 0–7.2 exclude AI, cloud, authentication and multi-user scope. The user explicitly approved local accounts, per-account ownership and course-platform UI for Task 9; cloud/AI remain out of scope.
 
 Before SQL workspace implementation, design database read-only permissions, allowlisted lab schemas, row/time limits and cancellation. Do not rely on SQL text filtering alone.
 

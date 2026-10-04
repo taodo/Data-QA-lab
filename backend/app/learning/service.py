@@ -50,7 +50,7 @@ def _public(session):
     return payload
 
 
-def start_session(database_url, lab_id=LAB_ID, pipeline_run_id=None, mode="CHALLENGE", scenario=None):
+def start_session(database_url, lab_id=LAB_ID, pipeline_run_id=None, mode="CHALLENGE", scenario=None, owner_id=None):
     if lab_id not in PROFILES or mode not in {"CHALLENGE", "SANDBOX"}:
         raise ValueError("Unsupported lab or mode")
     profile = PROFILES[lab_id]
@@ -63,22 +63,26 @@ def start_session(database_url, lab_id=LAB_ID, pipeline_run_id=None, mode="CHALL
         if pipeline_run_id is None:
             row = connection.execute(
                 """SELECT run_id FROM metadata.pipeline_runs WHERE execution_status='SUCCESS'
-                   AND pipeline_id='orders_v1' ORDER BY started_at DESC LIMIT 1"""
+                   AND pipeline_id='orders_v1' AND (%s::uuid IS NULL OR owner_id=%s OR is_shared)
+                   ORDER BY is_shared ASC,started_at DESC LIMIT 1""", (owner_id,owner_id)
             ).fetchone()
         else:
             row = connection.execute(
                 """SELECT run_id FROM metadata.pipeline_runs WHERE run_id=%s
-                   AND execution_status='SUCCESS' AND pipeline_id='orders_v1'""", (pipeline_run_id,)
+                   AND execution_status='SUCCESS' AND pipeline_id='orders_v1'
+                   AND (%s::uuid IS NULL OR owner_id=%s OR is_shared)""", (pipeline_run_id,owner_id,owner_id)
             ).fetchone()
         if row is None:
             raise LabStateError("Run the orders pipeline successfully before starting a lab")
         create_session_snapshot(connection, schema, row[0], scenario, lab_id)
         connection.execute(
             """INSERT INTO metadata.lab_sessions
-               (session_id, lab_id, pipeline_run_id, mode, status, scenario_id, snapshot_schema, started_at)
-               VALUES (%s,%s,%s,%s,'ACTIVE',%s,%s,%s)""",
-            (session_id, lab_id, row[0], mode, scenario, schema, _now()),
+               (session_id, lab_id, pipeline_run_id, mode, status, scenario_id, snapshot_schema, started_at,owner_id)
+               VALUES (%s,%s,%s,%s,'ACTIVE',%s,%s,%s,%s)""",
+            (session_id, lab_id, row[0], mode, scenario, schema, _now(),owner_id),
         )
+        if owner_id is not None:
+            connection.execute("INSERT INTO metadata.course_enrollments (user_id,course_id) VALUES (%s,'sql-data-qa') ON CONFLICT DO NOTHING",(owner_id,))
     return inspect_session(database_url, session_id)
 
 

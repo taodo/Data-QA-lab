@@ -126,7 +126,7 @@ def _fetch_fault(connection, fault_run_id: UUID):
 
 
 def apply_fault(
-    database_url: str, scenario_id: str, pipeline_run_id: UUID | None = None
+    database_url: str, scenario_id: str, pipeline_run_id: UUID | None = None, owner_id=None
 ) -> FaultRunSummary:
     scenario = get_fault_scenario(scenario_id)
     fault_run_id = uuid4()
@@ -171,9 +171,9 @@ def apply_fault(
         connection.execute(
             """INSERT INTO metadata.fault_runs
                (fault_run_id, pipeline_run_id, scenario_id, status,
-                mutation_evidence, applied_at)
-               VALUES (%s, %s, %s, 'APPLIED', %s::jsonb, %s)""",
-            (fault_run_id, resolved_run_id, scenario.id, _json(evidence), applied_at),
+                mutation_evidence, applied_at,owner_id)
+               VALUES (%s, %s, %s, 'APPLIED', %s::jsonb, %s,%s)""",
+            (fault_run_id, resolved_run_id, scenario.id, _json(evidence), applied_at,owner_id),
         )
 
     return FaultRunSummary(

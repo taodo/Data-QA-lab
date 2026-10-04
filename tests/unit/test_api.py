@@ -21,11 +21,11 @@ class ApiContractTests(unittest.TestCase):
         self.assertEqual(self.client.get("/api/lessons?language=FR").status_code, 422)
 
     def test_input_origin_host_and_body_limits(self):
-        self.assertEqual(self.client.post("/api/sessions", json={"lab_id": "x", "admin": True}).status_code, 422)
+        self.assertEqual(self.client.post("/api/sessions", json={"lab_id": "x", "admin": True}).status_code, 401)
         self.assertEqual(self.client.post("/api/sessions", json={"lab_id": "x"}, headers={"Origin": "https://evil.example"}).status_code, 403)
         self.assertEqual(self.client.get("/api/lessons", headers={"Host": "evil.example"}).status_code, 400)
         self.assertEqual(self.client.post("/api/sessions", content=b"x" * 65537).status_code, 413)
-        self.assertEqual(self.client.get("/api/sessions/not-a-uuid").status_code, 422)
+        self.assertEqual(self.client.get("/api/sessions/not-a-uuid").status_code, 401)
         self.assertEqual(self.client.get("/api/lessons/unknown").status_code, 404)
 
     def test_exact_decimal_encoding(self):
@@ -33,8 +33,8 @@ class ApiContractTests(unittest.TestCase):
 
     def test_history_bounds_and_private_failures_are_safe(self):
         from unittest.mock import patch
-        self.assertEqual(self.client.get("/api/sessions?limit=51").status_code,422)
-        self.assertEqual(self.client.get("/api/sessions?offset=-1").status_code,422)
+        self.assertEqual(self.client.get("/api/sessions?limit=51").status_code,401)
+        self.assertEqual(self.client.get("/api/sessions?offset=-1").status_code,401)
         with patch("backend.app.api.connect",side_effect=RuntimeError("private credential detail")):
             result=TestClient(create_app("postgresql://invalid"),raise_server_exceptions=False).get("/api/health")
         self.assertEqual(result.status_code,500)

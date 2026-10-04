@@ -7,6 +7,7 @@ import sys
 import time
 import unittest
 import urllib.request
+from uuid import uuid4
 
 DB = os.getenv("DATA_QA_TEST_DATABASE_URL")
 ROOT = Path(__file__).resolve().parents[2]
@@ -24,7 +25,11 @@ class BrowserTests(unittest.TestCase):
         initialize_database(DB)
         initialize_sql_security(DB)
         seed_source(DB, 20)
-        run_orders_pipeline(DB)
+        baseline=run_orders_pipeline(DB)
+        from backend.app.persistence.database import transaction
+        with transaction(DB) as connection:
+            connection.execute('UPDATE metadata.pipeline_runs SET is_shared=true WHERE run_id=%s',(baseline.run_id,))
+            connection.execute('DELETE FROM metadata.auth_budgets')
         with socket.socket() as sock:
             sock.bind(("127.0.0.1", 0))
             cls.port = sock.getsockname()[1]
@@ -57,6 +62,9 @@ class BrowserTests(unittest.TestCase):
 
     def setUp(self):
         self.context = self.browser.new_context(viewport={"width":1440,"height":1000},timezone_id="Asia/Bangkok")
+        self.name='browser_'+uuid4().hex[:12]
+        result=self.context.request.post(self.url+'/api/auth/signup',data={'username':self.name,'display_name':'Browser learner','password':'browser-test-passphrase'},headers={'X-DQA-Intent':'1'})
+        self.assertEqual(result.status,201,result.text())
         self.page = self.context.new_page()
         self.errors = []
         self.page.on("pageerror", lambda exc:self.errors.append(str(exc)))
@@ -70,7 +78,7 @@ class BrowserTests(unittest.TestCase):
         self.page.locator(".working").wait_for(state="hidden")
 
     def select_lab(self):
-        self.page.goto(self.url)
+        self.page.goto(self.url+"/courses/sql-data-qa")
         self.page.locator(".lesson-card").first.wait_for()
         self.idle()
         self.page.get_by_label("Select language").select_option("ENG")
@@ -113,16 +121,18 @@ class BrowserTests(unittest.TestCase):
         self.sql(SOLUTION)
         self.page.get_by_role("button",name="Nộp bài",exact=True).click()
         self.idle()
-        expect(self.page.locator(".lesson-heading .badge")).to_have_text("COMPLETED")
+        expect(self.page.locator(".lesson-heading .badge")).to_have_text("Đã hoàn thành")
         expect(self.page.locator(".solution")).to_be_visible()
         self.page.reload()
-        expect(self.page.locator(".lesson-heading .badge")).to_have_text("COMPLETED")
+        expect(self.page.locator(".lesson-heading .badge")).to_have_text("Đã hoàn thành")
         expect(self.page.get_by_label("Select language")).to_have_value("VIE")
-        self.page.get_by_role("button",name="Lịch sử học",exact=False).click()
+        self.page.goto(self.url+"/history")
         expect(self.page.locator(".session-row").first).to_be_visible()
-        self.page.get_by_role("button",name="Pipeline & QA",exact=False).click()
+        self.page.get_by_role("navigation",name="Main navigation").get_by_role("link",name="Pipeline & QA",exact=True).click()
         self.idle()
         expect(self.page.locator(".stage-grid .stage")).to_have_count(5)
+        self.page.get_by_role("button",name="Chạy pipeline",exact=True).click()
+        self.idle()
         self.page.get_by_role("button",name="Chạy bộ QA",exact=True).click()
         self.idle()
         expect(self.page.locator(".run-status .badge").nth(1)).to_have_text("PASS")
@@ -135,7 +145,7 @@ class BrowserTests(unittest.TestCase):
         self.page.on("dialog", lambda dialog:dialog.accept())
         self.page.get_by_role("button",name="Reveal solution",exact=True).click()
         self.idle()
-        expect(self.page.locator(".lesson-heading .badge")).to_have_text("REVEALED")
+        expect(self.page.locator(".lesson-heading .badge")).to_have_text("Solution revealed")
         expect(self.page.get_by_role("button",name="Submit check",exact=True)).to_be_disabled()
         self.page.set_viewport_size({"width":390,"height":844})
         self.assertLessEqual(self.page.evaluate("document.documentElement.scrollWidth"),390)
@@ -144,7 +154,7 @@ class BrowserTests(unittest.TestCase):
         from playwright.sync_api import expect
         from backend.app.learning.lessons import CATALOG
         from backend.app.learning.profiles import PROFILES
-        self.page.goto(self.url)
+        self.page.goto(self.url+"/courses/sql-data-qa")
         self.page.locator(".lesson-card").first.wait_for()
         self.idle()
         self.page.get_by_label("Select language").select_option("ENG")
@@ -165,7 +175,7 @@ class BrowserTests(unittest.TestCase):
             self.page.locator("#conclusion").fill("Checked the documented contract on clean and defective data.")
             self.page.get_by_role("button",name="Submit check",exact=True).click()
             self.idle()
-            expect(self.page.locator(".lesson-heading .badge")).to_have_text("COMPLETED")
+            expect(self.page.locator(".lesson-heading .badge")).to_have_text("Completed")
             self.page.locator(".back").click()
         self.page.screenshot(path=str(self.artifacts/"v1-learning-catalog-desktop.png"),full_page=True)
 
@@ -184,23 +194,22 @@ class BrowserTests(unittest.TestCase):
         self.sql("SELECT COUNT(*) FROM source_orders")
         answer.fill("I will compare business keys in both directions.")
         crumb=self.page.get_by_role("navigation",name="Breadcrumb",exact=True)
-        crumb.get_by_role("link",name="Learning path",exact=True).click()
+        crumb.get_by_role("link",name="SQL for Data QA",exact=True).click()
         expect(self.page.locator(".lesson-card")).to_have_count(13)
         self.page.reload();self.idle()
         expect(self.page.locator(".lesson-card")).to_have_count(13)
         self.page.locator(".lesson-card[data-lab-id='lab_001_record_count'] button").click();self.idle()
         expect(self.page.get_by_label("SQL editor",exact=True)).to_have_text("SELECT COUNT(*) FROM source_orders")
         expect(self.page.get_by_label("Answer the challenge",exact=True)).to_have_value("I will compare business keys in both directions.")
-        self.page.get_by_role("navigation",name="Breadcrumb",exact=True).get_by_role("link",name="DATA QA",exact=True).click()
-        expect(self.page.locator(".lesson-card")).to_have_count(13)
-        self.page.get_by_role("button",name="Pipeline & QA",exact=False).click();self.idle()
+        self.page.get_by_role("navigation",name="Breadcrumb",exact=True).get_by_role("link",name="Data QA Lab",exact=True).click()
+        expect(self.page.locator(".catalog-hero")).to_be_visible()
+        self.page.get_by_role("navigation",name="Main navigation").get_by_role("link",name="Pipeline & QA",exact=True).click();self.idle()
         expect(self.page.get_by_role("heading",name="What is this pipeline for?",exact=True)).to_be_visible()
         expect(self.page.get_by_role("heading",name="How to test",exact=True)).to_be_visible()
         expect(self.page.locator(".pipeline-guide")).to_contain_text("Gold aggregates orders by UTC day")
         self.page.get_by_text("Time details",exact=True).click()
         run_id=self.page.locator(".run-selector select").input_value()
-        with urllib.request.urlopen(self.url+"/api/runs/"+run_id) as response:
-            run=json.load(response)
+        run=self.context.request.get(self.url+"/api/runs/"+run_id).json()
         instant=datetime.fromisoformat(run["started_at"])
         local=instant.astimezone(ZoneInfo("Asia/Bangkok"))
         selected=self.page.locator(".run-selector select option:checked")
@@ -218,11 +227,10 @@ class BrowserTests(unittest.TestCase):
 
     def test_incremental_simulation_filter_language_and_restart(self):
         from playwright.sync_api import expect
-        self.page.goto(self.url)
+        self.page.goto(self.url+"/courses/sql-data-qa")
         self.page.locator(".lesson-card").first.wait_for();self.idle()
         self.page.get_by_label("Select language").select_option("ENG")
-        self.page.get_by_role("button",name="Incremental loads",exact=True).click()
-        expect(self.page.locator(".lesson-card")).to_have_count(1)
+        expect(self.page.locator(".chapter")).to_have_count(5)
         self.page.locator(".lesson-card[data-lab-id='lab_010_incremental'] button").click()
         self.page.locator('.new-attempt, select[aria-label="Mode"]').first.wait_for()
         if self.page.locator(".new-attempt").count():self.page.locator(".new-attempt").click()

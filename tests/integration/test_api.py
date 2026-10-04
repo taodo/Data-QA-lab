@@ -22,7 +22,11 @@ class ApiIntegrationTests(unittest.TestCase):
         cls.run_id = str(run_orders_pipeline(DB).run_id)
 
     def setUp(self):
-        self.client = TestClient(create_app(DB))
+        from tests.auth_helpers import signed_client
+        from backend.app.persistence.database import transaction
+        self.client, user = signed_client(DB)
+        # One private run per account keeps every API check genuinely owner scoped.
+        self.run_id = self.client.post('/api/runs').json()['run_id']
 
     def test_real_http_learning_loop_and_language_switch(self):
         result = self.client.post("/api/sessions", json={"lab_id": LAB_ID, "run_id": self.run_id})

@@ -60,6 +60,11 @@ def build_parser() -> argparse.ArgumentParser:
             command.add_argument("--sql-file", type=Path, required=True)
         if name == "lab-submit":
             command.add_argument("--conclusion", required=True)
+    account_import = subparsers.add_parser("account-import", help="Preview or explicitly import unclaimed V1 history into a local account")
+    account_import.add_argument("--username", required=True)
+    account_import.add_argument("--confirm", action="store_true")
+    account_reset = subparsers.add_parser("account-reset", help="Operator password recovery with a hidden interactive prompt")
+    account_reset.add_argument("--username", required=True)
     return parser
 
 def main() -> None:
@@ -79,7 +84,17 @@ def main() -> None:
         return
 
     database_url = Settings.from_env().database_url
-    if args.command == "db-init":
+    if args.command == "account-import":
+        from backend.app.accounts import import_legacy
+        _print(import_legacy(database_url,args.username,args.confirm))
+    elif args.command == "account-reset":
+        from getpass import getpass
+        from backend.app.accounts import reset_password
+        password=getpass("New password (12–128 characters): ")
+        if password!=getpass("Repeat new password: "):
+            raise SystemExit("Passwords do not match")
+        _print(reset_password(database_url,args.username,password))
+    elif args.command == "db-init":
         from backend.app.persistence.database import initialize_database
         initialize_database(database_url)
         print("Database initialized.")

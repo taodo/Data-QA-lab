@@ -217,3 +217,48 @@ CREATE TABLE IF NOT EXISTS metadata.lab_queries (
 CREATE INDEX IF NOT EXISTS idx_lab_sessions_started ON metadata.lab_sessions(started_at DESC,session_id DESC);
 CREATE INDEX IF NOT EXISTS idx_lab_queries_session ON metadata.lab_queries(session_id,executed_at DESC,query_id DESC);
 CREATE INDEX IF NOT EXISTS idx_lab_submissions_session ON metadata.lab_submissions(session_id,submitted_at DESC,submission_id DESC);
+
+-- Task 9: ownership is nullable for retained, unclaimed operator/V1 history.
+-- No default account and no automatic first-signup import.
+CREATE TABLE IF NOT EXISTS metadata.accounts (
+    user_id UUID PRIMARY KEY,
+    username TEXT NOT NULL UNIQUE CHECK (username ~ '^[a-z0-9_]{3,32}$'),
+    display_name TEXT NOT NULL,
+    password_hash TEXT NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS metadata.account_sessions (
+    token_hash TEXT PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES metadata.accounts(user_id),
+    csrf_token TEXT NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_account_sessions_user ON metadata.account_sessions(user_id);
+CREATE TABLE IF NOT EXISTS metadata.auth_budgets (
+    budget_key TEXT PRIMARY KEY,
+    window_start TIMESTAMPTZ NOT NULL,
+    attempts INTEGER NOT NULL CHECK (attempts>0)
+);
+ALTER TABLE metadata.pipeline_runs ADD COLUMN IF NOT EXISTS owner_id UUID REFERENCES metadata.accounts(user_id);
+ALTER TABLE metadata.pipeline_runs ADD COLUMN IF NOT EXISTS is_shared BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE metadata.lab_sessions ADD COLUMN IF NOT EXISTS owner_id UUID REFERENCES metadata.accounts(user_id);
+ALTER TABLE metadata.fault_runs ADD COLUMN IF NOT EXISTS owner_id UUID REFERENCES metadata.accounts(user_id);
+CREATE INDEX IF NOT EXISTS idx_pipeline_owner ON metadata.pipeline_runs(owner_id,started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_lab_owner ON metadata.lab_sessions(owner_id,started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_fault_owner ON metadata.fault_runs(owner_id,applied_at DESC);
+CREATE TABLE IF NOT EXISTS metadata.course_enrollments (
+    user_id UUID NOT NULL REFERENCES metadata.accounts(user_id),
+    course_id TEXT NOT NULL CHECK (course_id='sql-data-qa'),
+    enrolled_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (user_id,course_id)
+);
+CREATE TABLE IF NOT EXISTS metadata.legacy_imports (
+    import_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES metadata.accounts(user_id),
+    run_count BIGINT NOT NULL,
+    session_count BIGINT NOT NULL,
+    fault_count BIGINT NOT NULL,
+    imported_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
