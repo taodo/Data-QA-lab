@@ -22,7 +22,7 @@ Compose starts PostgreSQL and the app. The dedicated database schemas/learner pr
 
 Select ENG or VIE. Open a lesson, read the concept/schema and guided steps. Challenge selects a hidden defect; Sandbox allows clean data or a named defect. Load practice SQL, Run SQL, inspect evidence, write a check returning the documented violation_count, enter a conclusion and Submit. Query SUCCESS is not grading PASS. Use progressive hints; reveal closes the attempt without credit. New attempt preserves earlier history.
 
-Six foundation lessons: SELECT/WHERE business rules, required-field NULLs, duplicate business keys, equal-count completeness, exact money calculations, composite order/day investigation. Task 8 adds seven advanced lessons (JOIN/grain, latest versions, UTC dates, incremental, freshness, SCD Type 1/2), currently on its review branch. Every lesson has both language versions. Progress/session/queries/submissions live in PostgreSQL; language and unsent drafts are browser-local. Use the same address/browser for drafts. Do not clear browser storage if you need unsent drafts.
+Six foundation lessons: SELECT/WHERE business rules, required-field NULLs, duplicate business keys, equal-count completeness, exact money calculations, composite order/day investigation. Task 8 adds seven advanced lessons (JOIN/grain, latest versions, UTC dates, incremental, freshness, SCD Type 1/2), approved and merged. Every lesson has both language versions. Progress/session/queries/submissions live in PostgreSQL; language and unsent drafts are browser-local. Use the same address/browser for drafts. Do not clear browser storage if you need unsent drafts.
 
 ## D-drive storage
 
@@ -44,7 +44,7 @@ docker compose up -d --wait
 docker compose logs --tail 100 app postgres
 ```
 
-Stopping retains database/history. Rebuild after updating code. App health failure: inspect logs; SQL_SECURITY_SETUP means permissions need initialization on the dedicated database. Docker pipe missing: start Docker Desktop. Port 8000 occupied: stop the conflicting app before starting. Keep one app process/worker for this single-user V1.
+Stopping retains database/history. Rebuild after updating code. App health failure: inspect logs; SQL_SECURITY_SETUP means permissions need initialization on the dedicated database. Docker pipe missing: start Docker Desktop. Port 8000 occupied: stop the conflicting app before starting. Keep one app process/worker for this local installation.
 
 ## Backup and deliberate reset
 
@@ -61,3 +61,18 @@ To start learning from scratch, back up, `docker compose down`, then rename the 
 ## Limits
 
 Local single-user V1; six focused lessons, not a full SQL certification course. Conclusions are retained, not AI-scored. No cloud/account integration. Trusted operators can inspect repo/DB solutions. The restricted SQL boundary is not OS isolation for hostile users. Query roles normally clean up and credentials expire after five minutes; an abrupt process crash may leave temporary query artifacts for operator cleanup. Failed API/SQL operations do not mean data quality FAIL unless a check produced that verdict.
+
+## Task 9 local course platform
+
+See [Task 9 update/import/recovery commands](TASK_9.md) before switching review
+branches. Browse courses publicly; signup/login saves your own progress. Create
+an account on this installation, add SQL to My Learning or start a lesson, then
+follow its instructions and answer the challenge. The other eight subject areas
+show planned courses honestly. Pipeline's shared sample is read-only; Run pipeline
+creates your private run for QA/fault testing.
+
+Previous history remains in PostgreSQL and is hidden from accounts until an
+operator explicitly imports it into the chosen account. Backup first. Do not
+replace `.env`, `data/postgres`, backups or `.venv` when updating source from ZIP.
+Account drafts are browser-local and separated by learner/session. Password reset
+is a masked local CLI procedure; no email service is connected.

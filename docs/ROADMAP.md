@@ -16,6 +16,13 @@
 | 8.2 — Incremental | Actual session batch/replay simulation, version-guarded merge | Prove idempotency and late-arrival handling | Replay/late-key/tied-update evidence |
 | 8.3 — Freshness | Fixed clock and per-dataset SLA | Separate SUCCESS and fresh data | Missing/NULL/future/boundary tests |
 | 8.4 — SCD | Type 1 current and Type 2 history lessons | Reconcile versions and half-open intervals | Current/overlap/history regression evidence |
-| 9 — Cloud adapter | Optional Fabric implementation | Transfer established concepts | Explicit separate planning checkpoint |
+| 9 — Learning platform | Course UI, subject/course/chapter routes, local accounts and personal evidence | Follow a guided course and resume personal progress | Two-account isolation, real signup/lesson flow, retained legacy history |
+| 10 — ETL / API curriculum | Separately planned runnable testing courses | Validate pipeline and ingestion contracts | Independent clean/fault graders and browser flow |
+| 11 — Cloud adapters | Separately planned Fabric/ADF/OneLake/Databricks/Synapse integrations | Transfer established concepts | Explicit environment, credentials and cost planning checkpoint |
 
-V1 scope is Tasks 0–7.2: a local single-user app with six foundation ENG/VIE lessons, real PostgreSQL SQL execution/grading and persistent learning history. Tasks 5–7.2 are merged. Task 8.1–8.4 implementation is approved together on one Task 8 branch; it adds seven advanced lessons and awaits completed-task review before merge. Task 9 remains optional future scope. See TASK_8.md. No fixed completion date or QA Sentinel integration.
+V1 scope is Tasks 0–7.2. Tasks 8.1–8.4 are approved and merged, bringing SQL to
+13 ENG/VIE lessons. Task 9 extends the approved scope to a local course platform
+with accounts and personal evidence; its implementation is approved and finished
+work remains on its review branch until user approval. Tasks 10–11 are future
+proposals, not implementation authorization. See TASK_8.md and TASK_9.md. No fixed
+completion date or QA Sentinel integration.

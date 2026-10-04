@@ -160,7 +160,7 @@ class AccountIntegrationTests(unittest.TestCase):
         from backend.app.learning.service import start_session,query_session
         from faults.service import apply_fault
         run=run_orders_pipeline(self.db)
-        old=start_session(self.db,run_id=run.run_id)
+        old=start_session(self.db,pipeline_run_id=run.run_id)
         query_session(self.db,old['session_id'],'SELECT COUNT(*) FROM source_orders')
         fault=apply_fault(self.db,'wrong_net_amount',run.run_id)
         self.assertEqual(self.a.get('/api/sessions/'+str(old['session_id'])).status_code,404)
