@@ -1,6 +1,6 @@
 # Task 4 — Deterministic fault injection
 
-Status: implemented on `feature/task-4-fault-injection`, awaiting review and merge into `feature/develop`.
+Status: approved and merged into `feature/develop`.
 
 ## Objectives
 

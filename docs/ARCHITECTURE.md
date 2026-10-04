@@ -25,6 +25,15 @@ Fault application copies one successful run's two Target datasets into `fault_wo
 
 Challenge mode conceals fault metadata/solutions from learner responses; sandbox mode can expose them. This boundary applies in API payloads, not only the UI.
 
+Task 5 implements this visibility boundary in transport-independent learning
+services and CLI serializers. Session snapshots are private and admin-owned;
+each query/grade uses another isolated copy with a fresh restricted PostgreSQL
+LOGIN. SQL never executes on the provisioning connection. PUBLIC privilege audits,
+read-only transactions, streamed bounded outputs and independent cancellation
+protect the local execution boundary. See SQL_SECURITY.md for the exact design.
+Behavioral grading is independent of both pipeline execution and quality status:
+it records a learner submission verdict without updating pipeline status.
+
 ## First pipeline grain
 
 Source, Bronze, Silver and order-detail Target: one row per order_id.

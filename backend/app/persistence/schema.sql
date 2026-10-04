@@ -173,3 +173,34 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_one_active_fault_per_pipeline
 
 CREATE INDEX IF NOT EXISTS idx_fault_runs_applied_at
     ON metadata.fault_runs(applied_at DESC);
+
+CREATE TABLE IF NOT EXISTS metadata.lab_sessions (
+    session_id UUID PRIMARY KEY,
+    lab_id TEXT NOT NULL,
+    pipeline_run_id UUID NOT NULL REFERENCES metadata.pipeline_runs(run_id),
+    mode TEXT NOT NULL CHECK (mode IN ('CHALLENGE','SANDBOX')),
+    status TEXT NOT NULL CHECK (status IN ('ACTIVE','COMPLETED','REVEALED')),
+    scenario_id TEXT NOT NULL CHECK (scenario_id IN ('missing_order','equal_count_swap')),
+    snapshot_schema TEXT NOT NULL UNIQUE,
+    hints_used INTEGER NOT NULL DEFAULT 0 CHECK (hints_used BETWEEN 0 AND 3),
+    started_at TIMESTAMPTZ NOT NULL,
+    completed_at TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS metadata.lab_submissions (
+    submission_id UUID PRIMARY KEY,
+    session_id UUID NOT NULL REFERENCES metadata.lab_sessions(session_id),
+    sql_text TEXT NOT NULL,
+    conclusion TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('PASS','FAIL','ERROR')),
+    private_results JSONB NOT NULL,
+    submitted_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS metadata.lab_queries (
+    query_id UUID PRIMARY KEY,
+    session_id UUID NOT NULL REFERENCES metadata.lab_sessions(session_id),
+    sql_text TEXT NOT NULL,
+    result JSONB NOT NULL,
+    executed_at TIMESTAMPTZ NOT NULL
+);

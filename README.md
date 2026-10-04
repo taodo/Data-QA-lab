@@ -2,7 +2,7 @@
 
 Interactive Data Pipeline Testing & Learning Platform. The local V1 runs a real PostgreSQL pipeline and preserves evidence for every run.
 
-**Current branch checkpoint: Task 4 — deterministic fault injection.**
+**Current branch checkpoint: Task 5 — secure learning labs.**
 
 Core principle: **Pipeline SUCCESS ≠ Data Quality PASS.** The quality engine evaluates basic checks plus source-to-target reconciliation independently as `PASS`, `FAIL`, `ERROR` or `NOT_RUN`.
 
@@ -28,7 +28,7 @@ Requirements: Python 3.11+ and Docker Desktop with Docker Compose.
 
 ```powershell
 Set-Location D:\Data-QA-Lab
-git switch feature/task-4-fault-injection
+git switch feature/task-5-learning-labs
 py -3 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -e .
 docker compose up -d postgres
@@ -62,6 +62,33 @@ $fault = .\.venv\Scripts\python.exe -m backend.app.main fault-apply wrong_net_am
 
 The fault quality run should report `FAIL` while pipeline execution remains `SUCCESS`; the final clean quality run should report `PASS`.
 
+## Learning Lab 001
+
+Use only the dedicated Data QA Lab database. `lab-sql-init` explicitly revokes
+PUBLIC database CREATE/TEMP and public-schema privileges; it refuses a populated
+public schema. The local provisioning login must be a superuser (the Compose
+default is suitable); learner queries use a separate restricted login.
+
+```powershell
+.\.venv\Scripts\python.exe -m backend.app.main db-init
+.\.venv\Scripts\python.exe -m backend.app.main lab-sql-init
+$lab = .\.venv\Scripts\python.exe -m backend.app.main lab-start lab_001_record_count | ConvertFrom-Json
+.\.venv\Scripts\python.exe -m backend.app.main lab-show --session-id $lab.session_id
+.\.venv\Scripts\python.exe -m backend.app.main lab-query --session-id $lab.session_id --sql-file examples\lab_001_count_only.sql
+.\.venv\Scripts\python.exe -m backend.app.main lab-hint --session-id $lab.session_id
+.\.venv\Scripts\python.exe -m backend.app.main lab-submit --session-id $lab.session_id --sql-file examples\lab_001_count_only.sql --conclusion "Counts cannot prove key identity."
+.\.venv\Scripts\python.exe -m backend.app.main lab-submit --session-id $lab.session_id --sql-file examples\lab_001_key_check.sql --conclusion "Compared missing and unexpected key sets."
+.\.venv\Scripts\python.exe -m backend.app.main lab-inspect --session-id $lab.session_id
+```
+
+The supplied examples are instructor smoke checks: count-only should FAIL grading;
+key-set comparison should PASS and complete the session. For your own exercise,
+write a SELECT query returning one integer `violation_count`. Grading tests clean
+data, a smaller clean fixture, missing keys and an equal-count key swap. It does
+not score the conclusion's prose. Challenge mode hides fault/solution metadata
+until completion or explicit `lab-reveal`; sandbox mode exposes scenario details.
+See [SQL security](docs/SQL_SECURITY.md) for limits, cancellation and boundaries.
+
 Stop PostgreSQL without deleting its D-drive data:
 
 ```powershell
@@ -80,4 +107,4 @@ The integration test initializes only Data QA Lab schemas, reseeds its source ta
 
 The Windows connection uses `127.0.0.1` because Compose publishes PostgreSQL on the IPv4 loopback interface. The database adapter also applies a five-second connection timeout so an unreachable host fails promptly instead of leaving a pipeline command waiting indefinitely.
 
-See `docs/TASK_1.md`, `docs/TASK_2.md`, `docs/TASK_3.md`, `docs/TASK_4.md`, `docs/ARCHITECTURE.md`, `docs/DATA_MODEL.md`, `docs/BRANCHING.md` and `docs/WINDOWS_D_DRIVE.md`.
+See `docs/TASK_1.md`, `docs/TASK_2.md`, `docs/TASK_3.md`, `docs/TASK_4.md`, `docs/TASK_5.md`, `docs/ARCHITECTURE.md`, `docs/DATA_MODEL.md`, `docs/BRANCHING.md` and `docs/WINDOWS_D_DRIVE.md`.
