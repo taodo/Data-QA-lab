@@ -140,6 +140,12 @@ def create_app(database_url=None):
             rows = connection.execute("SELECT session_id,lab_id,mode,status,hints_used,started_at,completed_at FROM metadata.lab_sessions ORDER BY started_at DESC LIMIT 200").fetchall()
         return response([dict(zip(("session_id", "lab_id", "mode", "status", "hints_used", "started_at", "completed_at"), row, strict=True)) for row in rows])
 
+    @app.get("/api/progress")
+    def progress():
+        with connect(db) as connection:
+            rows = connection.execute("SELECT lab_id,COUNT(*),BOOL_OR(status='COMPLETED') FROM metadata.lab_sessions GROUP BY lab_id").fetchall()
+        return [{"lab_id": row[0], "attempts": row[1], "completed": row[2]} for row in rows]
+
     @app.post("/api/sessions", status_code=201)
     def start(body: Start, language: Language = "VIE"):
         result = mutate(service.start_session, db, body.lab_id, body.run_id, body.mode, body.scenario)
