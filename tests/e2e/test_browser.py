@@ -140,7 +140,7 @@ class BrowserTests(unittest.TestCase):
         self.page.set_viewport_size({"width":390,"height":844})
         self.assertLessEqual(self.page.evaluate("document.documentElement.scrollWidth"),390)
 
-    def test_all_six_lessons_are_usable_through_the_browser(self):
+    def test_all_lessons_are_usable_through_the_browser(self):
         from playwright.sync_api import expect
         from backend.app.learning.lessons import CATALOG
         from backend.app.learning.profiles import PROFILES
@@ -148,7 +148,7 @@ class BrowserTests(unittest.TestCase):
         self.page.locator(".lesson-card").first.wait_for()
         self.idle()
         self.page.get_by_label("Select language").select_option("ENG")
-        expect(self.page.locator(".lesson-card")).to_have_count(6)
+        expect(self.page.locator(".lesson-card")).to_have_count(len(CATALOG))
         for lab_id in sorted(CATALOG, key=lambda key:CATALOG[key]["order"]):
             title=CATALOG[lab_id]["ENG"]["title"]
             self.page.locator(".lesson-card").filter(has_text=title).get_by_role("button").click()
@@ -160,7 +160,7 @@ class BrowserTests(unittest.TestCase):
             self.idle()
             self.page.get_by_role("button",name="Run SQL",exact=False).click()
             self.idle()
-            expect(self.page.locator(".work-column .panel").nth(1).locator(".badge")).to_have_text("SUCCESS")
+            expect(self.page.locator(".query-result .badge")).to_have_text("SUCCESS")
             self.sql(PROFILES[lab_id].solution)
             self.page.locator("#conclusion").fill("Checked the documented contract on clean and defective data.")
             self.page.get_by_role("button",name="Submit check",exact=True).click()
@@ -168,3 +168,35 @@ class BrowserTests(unittest.TestCase):
             expect(self.page.locator(".lesson-heading .badge")).to_have_text("COMPLETED")
             self.page.locator(".back").click()
         self.page.screenshot(path=str(self.artifacts/"v1-learning-catalog-desktop.png"),full_page=True)
+
+    def test_incremental_simulation_filter_language_and_restart(self):
+        from playwright.sync_api import expect
+        self.page.goto(self.url)
+        self.page.locator(".lesson-card").first.wait_for();self.idle()
+        self.page.get_by_label("Select language").select_option("ENG")
+        self.page.get_by_role("button",name="Incremental loads",exact=True).click()
+        expect(self.page.locator(".lesson-card")).to_have_count(1)
+        self.page.locator(".lesson-card[data-lab-id='lab_010_incremental'] button").click()
+        self.page.locator('.new-attempt, select[aria-label="Mode"]').first.wait_for()
+        if self.page.locator(".new-attempt").count():self.page.locator(".new-attempt").click()
+        self.page.get_by_label("Mode",exact=True).select_option("SANDBOX")
+        self.page.get_by_label("Scenario",exact=True).select_option("clean")
+        self.page.locator(".work-column .primary").click()
+        self.page.locator(".simulation").wait_for();self.idle()
+        self.page.get_by_role("button",name="Reset simulation",exact=True).click();self.idle()
+        expect(self.page.locator(".simulation tbody tr")).to_have_count(0)
+        self.page.get_by_role("button",name="Run next batch",exact=True).click();self.idle()
+        self.page.get_by_role("button",name="Replay current batch",exact=True).click();self.idle()
+        expect(self.page.locator(".simulation tbody tr")).to_have_count(2)
+        expect(self.page.locator(".simulation tbody tr td:nth-child(6)")).to_have_text(["2","2"])
+        self.sql("SELECT COUNT(*) AS rows FROM incremental_target")
+        self.page.get_by_role("button",name="Run SQL",exact=False).click();self.idle()
+        expect(self.page.locator(".query-result tbody td")).to_have_text("2")
+        self.page.get_by_label("Select language").select_option("VIE")
+        expect(self.page.get_by_role("button",name="Chạy batch kế tiếp",exact=True)).to_be_visible()
+        self.page.reload()
+        self.page.locator(".simulation").wait_for();self.idle()
+        expect(self.page.locator(".simulation tbody tr")).to_have_count(2)
+        expect(self.page.get_by_label("SQL editor",exact=True)).to_have_text("SELECT COUNT(*) AS rows FROM incremental_target")
+        self.page.set_viewport_size({"width":390,"height":844})
+        self.assertLessEqual(self.page.evaluate("document.documentElement.scrollWidth"),390)

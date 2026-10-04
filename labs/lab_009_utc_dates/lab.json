@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "id": "lab_009_utc_dates",
+  "title": "A timestamp, two calendar days",
+  "requirement": "Return violation_count: FULL JOIN rows between Source grouped by UTC date and target_utc_daily with a missing date or distinct COUNT(*) / SUM(net_amount). A day counts once even if both totals differ.",
+  "pipeline_id": "orders_v1",
+  "difficulty": "advanced",
+  "available_fault_ids": [],
+  "learning_objectives": [
+    "Distinguish instants from local date labels",
+    "Check daily counts and exact revenue"
+  ]
+}

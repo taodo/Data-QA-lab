@@ -48,3 +48,17 @@ NULLs, duplicate keys, exact amounts and combined order/day violations. Grading
 executes behavior, never compares SQL text. Learner or reference execution
 errors/timeouts are ERROR; inadequate checks are FAIL. Conclusions are required
 and retained, not semantically graded by an LLM.
+# Task 8 extension
+
+Advanced sessions contain only their lesson's explicit table allowlist. Snapshot
+discovery verifies the exact registered dataset set before copying/granting SELECT;
+old foundation sessions retain the original four-table contract. A non-secret
+`lab_context` stores lesson identity and a fixed evaluation clock, never scenario or
+grading variant. Each grading fixture is rebuilt inside a new query workspace.
+The UTC lesson also evaluates a clean fixture with a UTC+07 connection timezone to
+catch implicit date casts. All other query sessions explicitly use UTC.
+
+`POST /api/sessions/{id}/simulation` accepts only RESET/NEXT/REPLAY, uses the same
+Host/Origin/body/mutation guards, and requires an ACTIVE incremental SANDBOX. It
+never accepts learner DML, schema identifiers or an arbitrary batch. Simulation
+updates only the owned snapshot in one transaction and is bounded to 100 steps.

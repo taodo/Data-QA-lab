@@ -6,10 +6,10 @@ from backend.app.services.lab_catalog import load_labs
 
 
 class CurriculumTests(unittest.TestCase):
-    def test_six_complete_bilingual_lessons_match_executable_profiles(self):
+    def test_complete_bilingual_lessons_match_executable_profiles(self):
         self.assertEqual(set(CATALOG), set(PROFILES))
         self.assertEqual(set(CATALOG), {lab.id for lab in load_labs()})
-        self.assertEqual(sorted(item["order"] for item in CATALOG.values()), list(range(1,7)))
+        self.assertEqual(sorted(item["order"] for item in CATALOG.values()), list(range(1,14)))
         for lab_id, definition in CATALOG.items():
             profile = PROFILES[lab_id]
             self.assertLessEqual(set(profile.variants), VARIANTS)
@@ -21,6 +21,7 @@ class CurriculumTests(unittest.TestCase):
                 self.assertGreaterEqual(len(text["steps"]),4)
                 self.assertGreaterEqual(len(text["objectives"]),2)
                 public = lesson(lab_id,language)
+                self.assertEqual(set(public["schema"]),set(profile.datasets))
                 self.assertNotIn("solution_sql",public)
                 self.assertNotIn("hints",public)
             self.assertNotEqual(definition["ENG"]["theory"],definition["VIE"]["theory"])

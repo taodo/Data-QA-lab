@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "id": "lab_011_freshness",
+  "title": "SUCCESS but stale data",
+  "requirement": "Return violation_count: required datasets missing an observation, not SUCCESS, having NULL/future success or event times, or either age greater than sla_minutes * INTERVAL '1 minute'. Count each dataset once. Dataset IDs are unique; extra observations are outside this contract.",
+  "pipeline_id": "orders_v1",
+  "difficulty": "advanced",
+  "available_fault_ids": [],
+  "learning_objectives": [
+    "Separate load success from data freshness",
+    "Handle missing, NULL, future and boundary timestamps"
+  ]
+}

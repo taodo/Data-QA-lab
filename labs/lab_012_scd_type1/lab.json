@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "id": "lab_012_scd_type1",
+  "title": "SCD Type 1: overwrite current attributes",
+  "requirement": "Return violation_count: FULL JOIN rows between latest Source changes per customer and Target with missing/unexpected keys or distinct tier,effective_at,event_id. Count each customer once. Latest uses effective_at DESC,event_id DESC.",
+  "pipeline_id": "orders_v1",
+  "difficulty": "advanced",
+  "available_fault_ids": [],
+  "learning_objectives": [
+    "Explain Type 1 overwrite semantics",
+    "Reconcile the latest source change by customer key"
+  ]
+}

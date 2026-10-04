@@ -23,6 +23,7 @@ class Profile:
     scenarios: tuple[str, ...]
     variants: tuple[str, ...]
     solution: str
+    datasets: tuple[str, ...] = ("source_orders", "target_orders", "gold_daily_sales", "target_daily_sales")
 
 
 PROFILES = {
@@ -33,3 +34,6 @@ PROFILES = {
     "lab_005_calculations": Profile(("wrong_net_amount",), ("clean", "clean_subset", "clean_zero", "wrong_net_amount", "wrong_last", "wrong_two", "null_net_amount"), CALC_SQL),
     "lab_006_capstone": Profile(("mixed_order_faults", "daily_wrong"), ("clean", "clean_subset", "clean_zero", "missing", "swapped", "null_net_amount", "duplicate_order", "wrong_net_amount", "daily_wrong", "daily_missing", "mixed_order_faults"), CAPSTONE_SQL),
 }
+
+from backend.app.learning.advanced_profiles import SPECS
+PROFILES.update({key: Profile(*spec) for key, spec in SPECS.items()})

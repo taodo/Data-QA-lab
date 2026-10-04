@@ -2,7 +2,12 @@
 
 Interactive Data Pipeline Testing & Learning Platform. The local V1 runs a real PostgreSQL pipeline and preserves evidence for every run.
 
-**V1: local browser app with six complete ENG/VIE lessons, real SQL execution and deterministic grading.**
+**Local browser app: six foundation + seven advanced ENG/VIE lessons, real SQL execution and deterministic grading.**
+
+Task 8 review branch: `feature/task-8-advanced-labs`. Its seven new lessons cover
+JOIN grain, latest versions, UTC days, incremental/replay/late arrivals, freshness
+and SCD Type 1/2. See [Task 8](docs/TASK_8.md). Until task approval/merge, use that
+branch to review the extension; `feature/develop` remains the approved V1.
 
 ## Start V1 on D:\Data-QA-Lab
 
@@ -24,7 +29,10 @@ creates 1,000 deterministic orders; existing usable runs are retained. The first
 build needs internet; the built learning app uses local assets and no AI API.
 
 Lessons: SELECT/WHERE business rules, NULLs, duplicate keys, completeness,
-exact calculations and combined order/day reconciliation.
+exact calculations and combined order/day reconciliation, followed by JOIN/CTE/window
+checks, UTC boundaries, actual session batch simulation, freshness and SCD history.
+Filter the catalog by track. Incremental Sandbox offers reset/next/replay controls;
+its fixed-clock synthetic data and logs persist with the learning session.
 
 See [Windows/D-drive guide](docs/V1_GUIDE.md), [SQL boundary](docs/SQL_SECURITY.md)
 and [verification](docs/VERIFICATION.md). Docker images/cache follow Docker

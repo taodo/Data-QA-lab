@@ -12,7 +12,10 @@
 | 7 — UI | Lab browser, pipeline, SQL, faults, history | Complete the learning loop visually | End-to-end lab with actual backend |
 | 7.1 — V1 curriculum | Six bilingual ENG/VIE lessons, instructions, fixtures and graders | Learn SQL for data QA through guided practice and challenges | Every lesson evaluated against clean and faulty data |
 | 7.2 — V1 release | Local Compose app, Windows D-drive setup, recovery and E2E checks | Use and resume a complete learning app | Browser learning flow and reproducible startup |
-| 8 — Advanced | Incremental, joins, freshness, dates, SCD | Diagnose realistic data incidents | Scenarios and regression evidence |
+| 8.1 — Advanced SQL | JOIN/grain, CTE, ROW_NUMBER, UTC dates | Diagnose fanout, tied versions and date boundaries | Independent fixture counts and real grading |
+| 8.2 — Incremental | Actual session batch/replay simulation, version-guarded merge | Prove idempotency and late-arrival handling | Replay/late-key/tied-update evidence |
+| 8.3 — Freshness | Fixed clock and per-dataset SLA | Separate SUCCESS and fresh data | Missing/NULL/future/boundary tests |
+| 8.4 — SCD | Type 1 current and Type 2 history lessons | Reconcile versions and half-open intervals | Current/overlap/history regression evidence |
 | 9 — Cloud adapter | Optional Fabric implementation | Transfer established concepts | Explicit separate planning checkpoint |
 
-V1 scope is Tasks 0–7.2: a local single-user app with six complete ENG/VIE lessons, real PostgreSQL SQL execution/grading and persistent learning history. The user approved Tasks 5–7.2 and integration of each separate task branch after verification; PRs record the merge/CI evidence. Tasks 8–9 remain future scope. No promise of completion by a fixed calendar date. No QA Sentinel integration in this roadmap.
+V1 scope is Tasks 0–7.2: a local single-user app with six foundation ENG/VIE lessons, real PostgreSQL SQL execution/grading and persistent learning history. Tasks 5–7.2 are merged. Task 8.1–8.4 implementation is approved together on one Task 8 branch; it adds seven advanced lessons and awaits completed-task review before merge. Task 9 remains optional future scope. See TASK_8.md. No fixed completion date or QA Sentinel integration.
