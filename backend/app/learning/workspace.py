@@ -3,10 +3,13 @@ import re
 from decimal import Decimal
 
 from backend.app.learning.contracts import LabStateError
+from backend.app.learning.advanced_profiles import ADVANCED_TABLES, ADVANCED_VARIANTS, SPECS
 
 
-TABLES = ("source_orders", "target_orders", "gold_daily_sales", "target_daily_sales")
+FOUNDATION_TABLES = ("source_orders", "target_orders", "gold_daily_sales", "target_daily_sales")
+TABLES = FOUNDATION_TABLES + ADVANCED_TABLES
 VARIANTS = {"current", "clean", "clean_subset", "clean_zero", "missing", "swapped", "invalid_customer", "invalid_customer_last", "invalid_customer_two", "null_net_amount", "null_last", "null_two", "duplicate_order", "duplicate_last", "duplicate_twice", "duplicate_triple", "wrong_net_amount", "wrong_last", "wrong_two", "daily_wrong", "daily_missing", "mixed_order_faults"}
+VARIANTS |= ADVANCED_VARIANTS
 
 
 def require_schema(schema: str):
@@ -14,9 +17,12 @@ def require_schema(schema: str):
         raise ValueError("Not an owned learner workspace identifier")
 
 
-def create_session_snapshot(connection, schema, run_id, scenario):
+def create_session_snapshot(connection, schema, run_id, scenario, lab_id="lab_001_record_count"):
     from psycopg import sql
     require_schema(schema)
+    if lab_id in SPECS:
+        from backend.app.learning.advanced_workspace import create_snapshot
+        return create_snapshot(connection, schema, lab_id, scenario)
     connection.execute(sql.SQL("CREATE SCHEMA {};").format(sql.Identifier(schema)))
     connection.execute(sql.SQL(
         "CREATE TABLE {}.source_orders AS SELECT order_id, customer_id, ordered_at, "
@@ -96,6 +102,24 @@ def mutate_keys(connection, schema, scenario):
         ).format(sql.Identifier(schema), sql.Identifier(schema), sql.Identifier(schema)))
 
 
+def snapshot_tables(connection, schema):
+    """Discover only operator-owned allowlisted tables; old four-table sessions remain valid."""
+    from backend.app.learning.contracts import SqlSecurityError
+    require_schema(schema)
+    names = tuple(row[0] for row in connection.execute(
+        "SELECT tablename FROM pg_tables WHERE schemaname=%s ORDER BY tablename", (schema,)).fetchall())
+    if not names or not set(names) <= set(TABLES):
+        raise SqlSecurityError("Workspace table allowlist does not match")
+    if "lab_context" in names:
+        from psycopg import sql
+        rows = connection.execute(sql.SQL("SELECT lab_id FROM {}.lab_context").format(sql.Identifier(schema))).fetchall()
+        if len(rows)!=1 or rows[0][0] not in SPECS or set(names)!=set(SPECS[rows[0][0]][3]):
+            raise SqlSecurityError("Advanced workspace does not match its lesson")
+    elif set(names)!=set(FOUNDATION_TABLES):
+        raise SqlSecurityError("Foundation workspace does not match")
+    return names
+
+
 def populate_query_snapshot(connection, destination, snapshot, variant):
     from psycopg import sql
     require_schema(destination)
@@ -103,12 +127,17 @@ def populate_query_snapshot(connection, destination, snapshot, variant):
     if variant not in VARIANTS:
         raise ValueError("Unknown grading fixture")
     connection.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(destination)))
-    for table in TABLES:
+    for table in snapshot_tables(connection, snapshot):
         connection.execute(sql.SQL("CREATE TABLE {}.{} AS TABLE {}.{}").format(
             sql.Identifier(destination), sql.Identifier(table),
             sql.Identifier(snapshot), sql.Identifier(table)))
     if variant == "current":
         return
+    tables = snapshot_tables(connection, destination)
+    if "lab_context" in tables:
+        from backend.app.learning.advanced_workspace import populate
+        lab_id=connection.execute(sql.SQL("SELECT lab_id FROM {}.lab_context").format(sql.Identifier(destination))).fetchone()[0]
+        return populate(connection,destination,lab_id,variant)
     if variant == "clean_subset":
         connection.execute(sql.SQL(
             "DELETE FROM {}.source_orders WHERE order_id NOT IN "

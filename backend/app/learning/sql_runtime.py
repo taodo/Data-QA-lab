@@ -8,7 +8,7 @@ from uuid import uuid4
 
 from backend.app.persistence.database import connect, transaction
 from backend.app.learning.contracts import QueryLimits, QueryResult, SqlSecurityError, normalize_sql
-from backend.app.learning.workspace import TABLES, populate_query_snapshot
+from backend.app.learning.workspace import TABLES, populate_query_snapshot, snapshot_tables
 
 
 def initialize_sql_security(database_url):
@@ -96,7 +96,7 @@ def restricted_workspace(database_url, snapshot, variant="current", limits=Query
                  sql.Literal((datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat())))
         admin.execute(sql.SQL("GRANT USAGE ON SCHEMA {} TO {}").format(
             sql.Identifier(schema), sql.Identifier(role)))
-        for table in TABLES:
+        for table in snapshot_tables(admin, schema):
             admin.execute(sql.SQL("GRANT SELECT ON {}.{} TO {}").format(
                 sql.Identifier(schema), sql.Identifier(table), sql.Identifier(role)))
         admin.execute(sql.SQL("ALTER ROLE {} SET temp_file_limit = '16MB'").format(sql.Identifier(role)))
@@ -106,7 +106,8 @@ def restricted_workspace(database_url, snapshot, variant="current", limits=Query
             database_url, user=role, password=password, connect_timeout=5,
             options=f"-c search_path={schema},pg_catalog -c default_transaction_read_only=on "
                     f"-c statement_timeout={limits.timeout_ms} -c lock_timeout=500 "
-                    "-c idle_in_transaction_session_timeout=5000 -c work_mem=1MB",
+                    "-c idle_in_transaction_session_timeout=5000 -c work_mem=1MB "
+                    f"-c timezone={'Asia/Bangkok' if variant=='utc_connection_zone' else 'UTC'}",
         )
         learner.execute("SET TRANSACTION READ ONLY")
         _audit_permissions(learner, schema)

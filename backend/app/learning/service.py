@@ -39,7 +39,8 @@ def _public(session):
         "started_at", "completed_at",
     )}
     payload.update(title=text["title"], requirement=text["requirement"],
-                   learning_objectives=text["objectives"], datasets=TABLES,
+                   practice_sql=text["practice_sql"],
+                   learning_objectives=text["objectives"], datasets=profile.datasets,
                    result_contract="one non-negative integer column: violation_count",
                    hints=text["hints"][:session["hints_used"]])
     if session["mode"] == "SANDBOX" or session["status"] == "REVEALED":
@@ -71,7 +72,7 @@ def start_session(database_url, lab_id=LAB_ID, pipeline_run_id=None, mode="CHALL
             ).fetchone()
         if row is None:
             raise LabStateError("Run the orders pipeline successfully before starting a lab")
-        create_session_snapshot(connection, schema, row[0], scenario)
+        create_session_snapshot(connection, schema, row[0], scenario, lab_id)
         connection.execute(
             """INSERT INTO metadata.lab_sessions
                (session_id, lab_id, pipeline_run_id, mode, status, scenario_id, snapshot_schema, started_at)
@@ -93,6 +94,15 @@ def inspect_session(database_url, session_id):
                WHERE session_id=%s ORDER BY executed_at DESC,query_id DESC LIMIT 20""", (session_id,)
         ).fetchall()
         counts = connection.execute("SELECT (SELECT COUNT(*) FROM metadata.lab_queries WHERE session_id=%s), (SELECT COUNT(*) FROM metadata.lab_submissions WHERE session_id=%s)", (session_id,session_id)).fetchone()
+        simulation = None
+        if session["lab_id"]=="lab_010_incremental":
+            from backend.app.learning.advanced_workspace import execute
+            schema=session["snapshot_schema"]
+            as_of=execute(connection,schema,"SELECT as_of FROM {s}.lab_context").fetchone()[0]
+            steps=execute(connection,schema,"SELECT step_no,batch_no,operation,execution_status,selected_events,target_rows,watermark FROM {s}.incremental_steps ORDER BY step_no DESC LIMIT 20").fetchall()
+            totals=execute(connection,schema,"SELECT COUNT(*),COALESCE(MAX(batch_no),0) FROM {s}.incremental_steps").fetchone()
+            simulation={"as_of":as_of,"step_count":totals[0],"batch_no":totals[1],
+                        "steps":[dict(zip(("step_no","batch_no","operation","execution_status","selected_events","target_rows","watermark"),row,strict=True)) for row in reversed(steps)]}
     payload = _public(session)
     payload["submissions"] = [dict(zip(
         ("submission_id", "sql", "conclusion", "status", "submitted_at"), row, strict=True
@@ -100,6 +110,8 @@ def inspect_session(database_url, session_id):
     payload["queries"] = [dict(zip(("query_id", "sql", "result", "executed_at"), row, strict=True))
                           for row in reversed(queries)]
     payload["query_count"],payload["submission_count"] = counts
+    if simulation is not None:
+        payload["simulation"]=simulation
     return payload
 
 
@@ -213,3 +225,17 @@ def reveal_solution(database_url, session_id):
                WHERE session_id=%s AND status='ACTIVE'""", (_now(), session_id)
         )
     return inspect_session(database_url, session_id)
+
+
+def simulate_session(database_url, session_id, action):
+    """Trusted batch actions only; never accept learner DML or arbitrary parameters."""
+    from backend.app.learning.advanced_workspace import advance_simulation, execute
+    with transaction(database_url) as connection:
+        session = _get(connection, session_id)
+        if session["lab_id"]!="lab_010_incremental" or session["mode"]!="SANDBOX" or session["status"]!="ACTIVE":
+            raise LabStateError("Simulation needs an active incremental SANDBOX")
+        step=execute(connection,session["snapshot_schema"],"SELECT COALESCE(MAX(step_no),0) FROM {s}.incremental_steps").fetchone()[0]
+        if step>=100 and action!="RESET":
+            raise LabStateError("Reset the simulation after 100 steps")
+        advance_simulation(connection,session["snapshot_schema"],session["scenario_id"],action)
+    return inspect_session(database_url,session_id)

@@ -75,3 +75,21 @@ Windows Docker verification exposed a loopback mismatch: Compose publishes Postg
 - Local integration tests skip when no database URL is configured; GitHub Actions
   runs all integration tests against PostgreSQL 16. Read the pushed commit's CI
   result before treating these coverage claims as observed passes.
+# Task 8 coverage
+
+The extension adds independent exact expectations for every advanced oracle fixture,
+including valid zero amounts, shifted keys/time/event IDs, timestamp ties, UTC+07
+connections, SLA equality and touching SCD windows. Wrong DISTINCT sums, reversed
+ties, implicit date casts, inclusive SLA failure and inclusive overlap checks must
+fail behavioral grading. Existing constants, permission, timeout and history tests
+now also exercise the extended catalog.
+
+Incremental tests execute reset/next/replay against actual PostgreSQL, verify four
+latest-state keys after late arrivals, isolate another session and the original run,
+deny actions on Challenge/closed/wrong lessons, reject extra API fields, and bound
+the timeline while preserving query history. Browser tests cover thirteen lessons
+and incremental filters/actions/ENG-VIE/reload/mobile. The packaged container smoke
+checks completed history plus an incremental timeline across restart.
+
+Final CI results are recorded in TASK_8.md; local PostgreSQL/browser execution is
+unavailable in the remote editor environment, so those results must come from CI.

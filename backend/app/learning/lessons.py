@@ -163,6 +163,14 @@ CATALOG.update({
 })
 
 
+from backend.app.learning.advanced_lessons import CATALOG as ADVANCED_CATALOG, SCHEMA as ADVANCED_SCHEMA
+from backend.app.learning.advanced_profiles import SPECS
+CATALOG.update(ADVANCED_CATALOG)
+SCHEMA.update(ADVANCED_SCHEMA)
+for key, definition in ADVANCED_CATALOG.items():
+    definition["scenarios"] = ["clean", *SPECS[key][0]]
+
+
 def lesson(lab_id, language="VIE"):
     if language not in LANGUAGES:
         raise ValueError("Unsupported language")
@@ -170,7 +178,9 @@ def lesson(lab_id, language="VIE"):
     text = definition[language]
     return {"id": lab_id, "language": language, "order": definition["order"],
             "level": definition["level"], "minutes": definition["minutes"],
-            "scenarios": definition["scenarios"], "schema": SCHEMA,
+            "track": definition.get("track", "FOUNDATION"),
+            "scenarios": definition["scenarios"],
+            "schema": {key:SCHEMA[key] for key in (SPECS[lab_id][3] if lab_id in SPECS else ("source_orders","target_orders","gold_daily_sales","target_daily_sales"))},
             **{key: value for key, value in text.items() if key not in {"hints", "explanation"}}}
 
 

@@ -47,6 +47,10 @@ class Fault(Input):
     run_id: UUID
 
 
+class Simulation(Input):
+    action: Literal["RESET", "NEXT", "REPLAY"]
+
+
 def response(data, status=200):
     return JSONResponse(jsonable_encoder(data, custom_encoder={Decimal: str}), status_code=status)
 
@@ -76,7 +80,7 @@ class BodyLimit:
 
 
 def create_app(database_url=None):
-    app = FastAPI(title="Data QA Lab", version="1.0.0")
+    app = FastAPI(title="Data QA Lab", version="1.1.0")
     db = database_url or Settings.from_env().database_url
     gate = Lock()
     app.add_middleware(BodyLimit)
@@ -177,6 +181,10 @@ def create_app(database_url=None):
     @app.post("/api/sessions/{session_id}/query")
     def query(session_id: UUID, body: Query):
         return response(mutate(service.query_session, db, session_id, body.sql))
+
+    @app.post("/api/sessions/{session_id}/simulation")
+    def simulation(session_id: UUID, body: Simulation, language: Language = "VIE"):
+        return response(localize_session(mutate(service.simulate_session, db, session_id, body.action),language))
 
     @app.post("/api/sessions/{session_id}/submit")
     def submit(session_id: UUID, body: Submit, language: Language = "VIE"):

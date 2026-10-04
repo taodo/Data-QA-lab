@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "id": "lab_010_incremental",
+  "title": "Incremental loads: replay and late arrivals",
+  "requirement": "Return violation_count = mismatched FULL JOIN rows plus duplicated order_id groups. Expected is the latest (event_at,event_id) per key from incremental_events WHERE arrived_at <= lab_context.as_of. A mismatch is a missing/unexpected key or distinct event_id,event_at,net_amount. This is a sum of rule violations, not unique bad orders. Grading rebuilds independent fully processed fixtures regardless of your current simulation step.",
+  "pipeline_id": "orders_v1",
+  "difficulty": "advanced",
+  "available_fault_ids": [],
+  "learning_objectives": [
+    "Distinguish event time from arrival time",
+    "Prove replay safety and correct latest-state upserts"
+  ]
+}

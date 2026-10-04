@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "id": "lab_008_latest_version",
+  "title": "Pick the latest version deterministically",
+  "requirement": "Return violation_count: FULL JOIN rows between each latest Source event and target_current_orders with missing/unexpected keys or unequal event_id, updated_at or net_amount (NULL-safe). Each key counts once.",
+  "pipeline_id": "orders_v1",
+  "difficulty": "advanced",
+  "available_fault_ids": [],
+  "learning_objectives": [
+    "Partition versions by business key",
+    "Resolve timestamp ties with event_id"
+  ]
+}

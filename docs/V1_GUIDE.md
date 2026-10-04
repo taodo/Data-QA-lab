@@ -22,7 +22,7 @@ Compose starts PostgreSQL and the app. The dedicated database schemas/learner pr
 
 Select ENG or VIE. Open a lesson, read the concept/schema and guided steps. Challenge selects a hidden defect; Sandbox allows clean data or a named defect. Load practice SQL, Run SQL, inspect evidence, write a check returning the documented violation_count, enter a conclusion and Submit. Query SUCCESS is not grading PASS. Use progressive hints; reveal closes the attempt without credit. New attempt preserves earlier history.
 
-Six lessons: SELECT/WHERE business rules, required-field NULLs, duplicate business keys, equal-count completeness, exact money calculations, composite order/day investigation. Every lesson has both language versions. Progress/session/queries/submissions live in PostgreSQL; language and unsent drafts are browser-local. Use the same address/browser for drafts. Do not clear browser storage if you need unsent drafts.
+Six foundation lessons: SELECT/WHERE business rules, required-field NULLs, duplicate business keys, equal-count completeness, exact money calculations, composite order/day investigation. Task 8 adds seven advanced lessons (JOIN/grain, latest versions, UTC dates, incremental, freshness, SCD Type 1/2), currently on its review branch. Every lesson has both language versions. Progress/session/queries/submissions live in PostgreSQL; language and unsent drafts are browser-local. Use the same address/browser for drafts. Do not clear browser storage if you need unsent drafts.
 
 ## D-drive storage
 

@@ -48,3 +48,20 @@ the API exposes older pages without private grading results. Session list pages
 are limited to 50. Progress aggregates all persisted sessions, independent of
 history pages. Indexes support run/session time ordering. Browser language and
 unsent drafts are local browser state; completed progress/history is in PostgreSQL.
+# Task 8 session datasets
+
+Advanced lessons keep a fixed evaluation clock in `lab_context` and a lesson-specific
+subset of operator-owned tables. JOIN fixtures use line/payment/order grains; event
+fixtures have an event ID and a deterministic time/ID version ordering; UTC fixtures
+have instant-grain orders and date-grain totals. Incremental fixtures add arrival time,
+three batch numbers, a current Target and persisted `incremental_steps` with execution
+status, selected-event count, Target count and watermark. These are synthetic learning
+data attached to a run/session, not new rows in the original pipeline schemas.
+
+Freshness separates per-dataset requirements/as_of/SLA from load/event observations.
+SCD fixtures separate source changes from either current Type 1 rows or Type 2
+versions with half-open validity ranges. Startup transactionally expands the existing
+scenario CHECK allowlist; no new metadata columns are needed. Existing session rows
+already store lab ID, run ID and owned snapshot schema. Foundation
+sessions retain their original tables; query copies discover and validate the exact
+dataset set before granting SELECT.

@@ -25,10 +25,19 @@ class BootstrapTests(unittest.TestCase):
             session=start_session(isolated)
             sid=session["session_id"]
             query_session(isolated,sid,"SELECT COUNT(*) FROM source_orders")
+            # Emulate the approved V1 scenario constraint before upgrading in place.
+            with connect(isolated) as connection:
+                connection.execute("ALTER TABLE metadata.lab_sessions DROP CONSTRAINT lab_sessions_scenario_id_check")
+                connection.execute("ALTER TABLE metadata.lab_sessions ADD CONSTRAINT lab_sessions_scenario_id_check CHECK (scenario_id IN ('clean','missing_order','equal_count_swap','invalid_customer','null_net_amount','duplicate_order','wrong_net_amount','mixed_order_faults','daily_wrong'))")
             second=prepare_local(isolated)
             self.assertFalse(second["created_baseline"])
             self.assertEqual(initial["run_id"],second["run_id"])
             self.assertEqual(inspect_session(isolated,sid)["queries"][0]["result"]["rows"],[["1000"]])
+            advanced=start_session(isolated,"lab_010_incremental",initial["run_id"],"SANDBOX","inc_append")
+            third=prepare_local(isolated)
+            self.assertEqual(third["run_id"],initial["run_id"])
+            self.assertEqual(inspect_session(isolated,advanced["session_id"])["simulation"]["step_count"],4)
+            self.assertEqual(inspect_session(isolated,sid)["query_count"],1)
         finally:
             with connect(DB) as admin:
                 admin.autocommit=True
