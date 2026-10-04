@@ -77,6 +77,7 @@ class BrowserTests(unittest.TestCase):
         card = self.page.locator(".lesson-card").filter(has_text="Equal counts, different orders")
         card.wait_for()
         card.get_by_role("button").click()
+        self.page.locator('.new-attempt, select[aria-label="Mode"]').first.wait_for()
         if self.page.locator(".new-attempt").count():
             self.page.locator(".new-attempt").click()
         self.page.get_by_label("Mode", exact=True).select_option("SANDBOX")
@@ -151,6 +152,7 @@ class BrowserTests(unittest.TestCase):
         for lab_id in sorted(CATALOG, key=lambda key:CATALOG[key]["order"]):
             title=CATALOG[lab_id]["ENG"]["title"]
             self.page.locator(".lesson-card").filter(has_text=title).get_by_role("button").click()
+            self.page.locator('.new-attempt, select[aria-label="Mode"]').first.wait_for()
             if self.page.locator(".new-attempt").count():
                 self.page.locator(".new-attempt").click()
             self.page.locator(".work-column .primary").click()
