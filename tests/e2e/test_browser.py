@@ -137,6 +137,11 @@ class BrowserTests(unittest.TestCase):
         self.page.get_by_role("button",name="Chạy bộ QA",exact=True).click()
         self.idle()
         expect(self.page.locator(".run-status .badge").nth(1)).to_have_text("PASS")
+        self.page.get_by_role("button",name="Tạo lỗi",exact=True).click();self.idle()
+        self.page.get_by_role("button",name="Kiểm tra lỗi",exact=True).click();self.idle()
+        expect(self.page.locator(".json").last).to_contain_text('"status": "FAIL"')
+        self.page.get_by_role("button",name="Reset lỗi",exact=True).click();self.idle()
+        expect(self.page.locator(".history-item .badge").last).to_have_text("RESET")
         self.page.set_viewport_size({"width":390,"height":844})
         self.assertLessEqual(self.page.evaluate("document.documentElement.scrollWidth"), 390)
 
