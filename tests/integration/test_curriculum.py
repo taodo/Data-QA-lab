@@ -64,3 +64,18 @@ class CurriculumIntegrationTests(unittest.TestCase):
             self.session("lab_003_nulls","CHALLENGE","null_net_amount")
         with self.assertRaises(ValueError):
             self.session("lab_003_nulls","SANDBOX","duplicate_order")
+
+    def test_oracle_execution_errors_do_not_fail_the_learner(self):
+        from unittest.mock import patch
+        from backend.app.learning.contracts import QueryResult
+        from backend.app.learning.sql_runtime import run_sql
+        lab_id="lab_003_nulls"
+        sid=self.session(lab_id)["session_id"]
+        def failing_oracle(database_url,snapshot,query,variant="current"):
+            if query==PROFILES[lab_id].solution:
+                return QueryResult("ERROR",error="TIMEOUT")
+            return run_sql(database_url,snapshot,query,variant)
+        with patch("backend.app.learning.service.run_sql",side_effect=failing_oracle):
+            result=submit_solution(DB,sid,"SELECT 1 AS violation_count","A reference evaluation error is not a learner defect.")
+        self.assertEqual(result["status"],"ERROR")
+        self.assertEqual(inspect_session(DB,sid)["status"],"ACTIVE")

@@ -1,6 +1,6 @@
 # Task 5 — Secure learning labs
 
-Status: implemented on feature/task-5-learning-labs, awaiting review.
+Status: approved and merged through PR #5 into feature/develop. Tasks 6–7.2 build the bilingual browser V1 on this restricted SQL/session foundation.
 
 Engineering: provide persistent lab sessions, bounded read-only learner SQL,
 progressive hints, visibility-aware responses and behavioral grading.

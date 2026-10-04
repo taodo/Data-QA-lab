@@ -210,3 +210,7 @@ CREATE TABLE IF NOT EXISTS metadata.lab_queries (
     result JSONB NOT NULL,
     executed_at TIMESTAMPTZ NOT NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_lab_sessions_started ON metadata.lab_sessions(started_at DESC,session_id DESC);
+CREATE INDEX IF NOT EXISTS idx_lab_queries_session ON metadata.lab_queries(session_id,executed_at DESC,query_id DESC);
+CREATE INDEX IF NOT EXISTS idx_lab_submissions_session ON metadata.lab_submissions(session_id,submitted_at DESC,submission_id DESC);

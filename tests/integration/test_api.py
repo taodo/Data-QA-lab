@@ -58,3 +58,17 @@ class ApiIntegrationTests(unittest.TestCase):
         self.assertEqual(result.json()["status"], "PASS")
         self.assertEqual(self.client.get(f"/api/runs/{self.run_id}").json()["execution_status"], "SUCCESS")
         self.assertEqual(self.client.get(f"/api/runs/{self.run_id}/quality").json()["status"], "PASS")
+
+    def test_bounded_query_history_can_be_paged_without_private_cases(self):
+        from backend.app.persistence.database import transaction
+        sid=self.client.post("/api/sessions",json={"lab_id":LAB_ID,"run_id":self.run_id}).json()["session_id"]
+        with transaction(DB) as connection:
+            for index in range(25):
+                connection.execute("INSERT INTO metadata.lab_queries (query_id,session_id,sql_text,result,executed_at) VALUES (%s,%s,%s,'{}',NOW()+(%s * interval '1 second'))",(uuid4(),sid,f"SELECT {index}",index))
+        recent=self.client.get(f"/api/sessions/{sid}").json()
+        self.assertEqual(recent["query_count"],25)
+        self.assertEqual(len(recent["queries"]),20)
+        older=self.client.get(f"/api/sessions/{sid}/history/queries?offset=20").json()
+        self.assertEqual(len(older),5)
+        self.assertEqual(older[0]["sql"],"SELECT 0")
+        self.assertNotIn("private_results",str(older))

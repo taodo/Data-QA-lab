@@ -15,4 +15,4 @@
 | 8 — Advanced | Incremental, joins, freshness, dates, SCD | Diagnose realistic data incidents | Scenarios and regression evidence |
 | 9 — Cloud adapter | Optional Fabric implementation | Transfer established concepts | Explicit separate planning checkpoint |
 
-Current state: Tasks 1–5 are approved and merged into `feature/develop`. The user approved implementing Tasks 6, 7, 7.1 and 7.2 consecutively and merging each after passing verification. Task 6 is in progress. V1 means a local single-user app with six complete ENG/VIE lessons, real PostgreSQL SQL execution/grading and persistent learning history. Tasks 8–9 remain future scope. No promise of completion by a fixed calendar date. No QA Sentinel integration in this roadmap.
+V1 scope is Tasks 0–7.2: a local single-user app with six complete ENG/VIE lessons, real PostgreSQL SQL execution/grading and persistent learning history. The user approved Tasks 5–7.2 and integration of each separate task branch after verification; PRs record the merge/CI evidence. Tasks 8–9 remain future scope. No promise of completion by a fixed calendar date. No QA Sentinel integration in this roadmap.

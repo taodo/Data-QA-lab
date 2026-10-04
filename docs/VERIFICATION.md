@@ -1,5 +1,20 @@
 # Verification
 
+## V1 release verification
+
+- Task 6: 36 unit + 27 live PostgreSQL integration checks passed before merge.
+- Task 7: the same checks plus two Chromium browser tests passed before merge.
+- Task 7.1: six lesson profiles, every scenario and browser completion of all six
+  lessons passed before merge (37 unit, 30 integration, three browser tests).
+- Task 7.2 required checks: fresh database bootstrap and repeated startup without
+  reseeding/history loss; bounded history pagination; reference errors classified
+  ERROR; production frontend build; real browser loop; actual Docker Compose
+  startup and app restart preserving completed session and query/submission history.
+- CI `tests` runs PostgreSQL 16 and Chromium, and uploads browser screenshots.
+  `packaged-v1` independently builds/starts the containers and verifies retention.
+- Windows on the user's own machine remains unverified while GitHub is unreachable.
+  Linux CI and container evidence do not substitute for that machine-specific check.
+
 ## Task 0
 
 Python 3.12: 10 unit tests passed and Lab 001 loaded.
