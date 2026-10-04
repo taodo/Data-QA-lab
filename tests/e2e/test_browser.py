@@ -140,8 +140,11 @@ class BrowserTests(unittest.TestCase):
         self.page.get_by_role("button",name="Tạo lỗi",exact=True).click();self.idle()
         self.page.get_by_role("button",name="Kiểm tra lỗi",exact=True).click();self.idle()
         expect(self.page.locator(".json").last).to_contain_text('"status": "FAIL"')
+        expect(self.page.locator(".run-status .badge").nth(1)).to_have_text("FAIL")
         self.page.get_by_role("button",name="Reset lỗi",exact=True).click();self.idle()
         expect(self.page.locator(".history-item .badge").last).to_have_text("RESET")
+        self.page.get_by_role("button",name="Chạy bộ QA",exact=True).click();self.idle()
+        expect(self.page.locator(".run-status .badge").nth(1)).to_have_text("PASS")
         self.page.set_viewport_size({"width":390,"height":844})
         self.assertLessEqual(self.page.evaluate("document.documentElement.scrollWidth"), 390)
 
@@ -296,7 +299,7 @@ class BrowserTests(unittest.TestCase):
         self.page.get_by_label('Difficulty',exact=True).select_option('FOUNDATION')
         expect(self.page.locator('.lesson-card')).to_have_count(6)
         self.page.get_by_label('Difficulty',exact=True).select_option('ALL')
-        self.page.get_by_role('button',name='Start learning',exact=True).click()
+        self.page.get_by_role('button',name='Start learning',exact=False).click()
         self.page.locator('.auth-form').wait_for()
         self.page.screenshot(path=str(self.artifacts/'task9-signup.png'),full_page=True)
         username='signup_'+uuid4().hex[:12]
