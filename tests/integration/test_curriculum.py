@@ -17,10 +17,10 @@ class CurriculumIntegrationTests(unittest.TestCase):
         initialize_database(DB)
         initialize_sql_security(DB)
         seed_source(DB, 40)
-        cls.run = run_orders_pipeline(DB)
+        cls.pipeline = run_orders_pipeline(DB)
 
     def session(self, lab_id, mode="CHALLENGE", scenario=None):
-        return start_session(DB,lab_id,self.run.run_id,mode,scenario)
+        return start_session(DB,lab_id,self.pipeline.run_id,mode,scenario)
 
     def test_all_lessons_reject_constants_and_accept_real_checks(self):
         from backend.app.persistence.database import connect
@@ -36,7 +36,7 @@ class CurriculumIntegrationTests(unittest.TestCase):
                 self.assertEqual(passed["status"],"PASS",passed)
                 self.assertEqual(inspect_session(DB,session["session_id"])["status"],"COMPLETED")
         with connect(DB) as connection:
-            self.assertEqual(connection.execute("SELECT COUNT(*) FROM target.orders_report WHERE run_id=%s",(self.run.run_id,)).fetchone()[0],40)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM target.orders_report WHERE run_id=%s",(self.pipeline.run_id,)).fetchone()[0],40)
 
     def test_valid_zero_wrong_null_and_duplicate_metric_traps(self):
         cases=(
