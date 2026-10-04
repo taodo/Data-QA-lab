@@ -1,0 +1,32 @@
+import unittest
+from decimal import Decimal
+from fastapi.testclient import TestClient
+from backend.app.api import create_app, response
+from backend.app.learning.lessons import CATALOG, lesson
+
+
+class ApiContractTests(unittest.TestCase):
+    def setUp(self):
+        self.client = TestClient(create_app("postgresql://invalid"))
+
+    def test_bilingual_content_does_not_publish_solutions(self):
+        for language in ("ENG", "VIE"):
+            result = self.client.get("/api/lessons", params={"language": language})
+            self.assertEqual(result.status_code, 200)
+            for item in result.json():
+                self.assertNotIn("hints", item)
+                self.assertNotIn("solution_sql", item)
+                self.assertNotIn("explanation", item)
+                self.assertEqual(item["language"], language)
+        self.assertEqual(self.client.get("/api/lessons?language=FR").status_code, 422)
+
+    def test_input_origin_host_and_body_limits(self):
+        self.assertEqual(self.client.post("/api/sessions", json={"lab_id": "x", "admin": True}).status_code, 422)
+        self.assertEqual(self.client.post("/api/sessions", json={"lab_id": "x"}, headers={"Origin": "https://evil.example"}).status_code, 403)
+        self.assertEqual(self.client.get("/api/lessons", headers={"Host": "evil.example"}).status_code, 400)
+        self.assertEqual(self.client.post("/api/sessions", content=b"x" * 65537).status_code, 413)
+        self.assertEqual(self.client.get("/api/sessions/not-a-uuid").status_code, 422)
+        self.assertEqual(self.client.get("/api/lessons/unknown").status_code, 404)
+
+    def test_exact_decimal_encoding(self):
+        self.assertIn(b'"12345678901234.01"', response({"amount": Decimal("12345678901234.01")}).body)
