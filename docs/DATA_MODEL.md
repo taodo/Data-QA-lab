@@ -41,3 +41,10 @@ Per-execution `learner_query_<uuid>` schemas and `learner_role_<uuid>` logins ar
 created and dropped around each query. Schemas are admin-owned; roles receive only
 USAGE and SELECT. Results are text/null cells so money remains an exact string.
 Lab 001 grades key sets; it does not replace the separate 26-rule quality suite.
+
+V1 has six lesson-specific profiles and additional isolated fixture scenarios.
+Session inspection returns the latest 20 queries/submissions plus total counts;
+the API exposes older pages without private grading results. Session list pages
+are limited to 50. Progress aggregates all persisted sessions, independent of
+history pages. Indexes support run/session time ordering. Browser language and
+unsent drafts are local browser state; completed progress/history is in PostgreSQL.

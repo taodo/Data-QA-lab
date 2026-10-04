@@ -40,7 +40,11 @@ real defects without false positives.
 ## Grading contract
 
 A submission returns exactly one non-negative integer cell named violation_count.
-It must return zero for two clean snapshots and a positive count for missing-key
-and equal-count-swapped-key snapshots. Grading executes behavior, never compares
-SQL text. SQL errors/timeouts are ERROR, inadequate detection is FAIL. Conclusions
-are required and retained, not semantically graded by an LLM.
+Each V1 lesson defines the metric precisely and has its own allowlisted reference
+SQL and clean/defective snapshots. Grading requires the exact reference count,
+including clean subsets, valid zero amounts and different defect locations as
+appropriate. Lab 001 compares key sets; other profiles cover business filters,
+NULLs, duplicate keys, exact amounts and combined order/day violations. Grading
+executes behavior, never compares SQL text. Learner or reference execution
+errors/timeouts are ERROR; inadequate checks are FAIL. Conclusions are required
+and retained, not semantically graded by an LLM.

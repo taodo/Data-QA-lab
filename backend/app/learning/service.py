@@ -194,8 +194,8 @@ def submit_solution(database_url, session_id, query, conclusion):
             )
     payload = {"submission_id": submission_id, "session_id": session_id, "status": status,
                "feedback": {
-                   "PASS": "Your check accepts clean data and detects completeness defects.",
-                   "FAIL": "Check the result contract, false positives and missed key differences.",
+                   "PASS": "Your check accepts clean data and detects the documented violations.",
+                   "FAIL": "Check the result contract, false positives, missed violations and the exact metric.",
                    "ERROR": "The SQL could not be evaluated. Test syntax, permissions and runtime limits.",
                }[status], "conclusion_grading": "retained_only"}
     if session["mode"] == "SANDBOX":
