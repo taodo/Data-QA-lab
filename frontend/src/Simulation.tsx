@@ -9,6 +9,6 @@ export function Simulation({state,enabled,busy,t,onAction}:{state:SimulationStat
  <button className="secondary" disabled={busy||state.batch_no===0||state.step_count>=100} onClick={()=>onAction('REPLAY')}>{t('replayBatch')}</button>
  </div>}
  <div className="table-scroll"><table><thead><tr><th>{t('step')}</th><th>{t('batch')}</th><th>{t('operation')}</th><th>{t('execution')}</th><th>{t('events')}</th><th>{t('rowCount')}</th><th>Watermark</th></tr></thead>
- <tbody>{state.steps.map(row=><tr key={row.step_no}><td>{row.step_no}</td><td>{row.batch_no}</td><td>{t(row.operation)}</td><td>{row.execution_status}</td><td>{row.applied_events}</td><td>{row.target_rows}</td><td>{row.watermark}</td></tr>)}</tbody></table></div>
+ <tbody>{state.steps.map(row=><tr key={row.step_no}><td>{row.step_no}</td><td>{row.batch_no}</td><td>{t(row.operation)}</td><td>{row.execution_status}</td><td>{row.selected_events}</td><td>{row.target_rows}</td><td>{row.watermark}</td></tr>)}</tbody></table></div>
  <p className="muted">{t('simulationHistory')} {state.steps.length}/{state.step_count}</p></section>;
 }

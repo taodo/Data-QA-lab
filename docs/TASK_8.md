@@ -26,7 +26,7 @@ runs independent clean/faulty fixtures, including shifted keys/times/event IDs.
 Incremental Sandbox starts fully loaded. Reset clears only this session's simulated
 target/step timeline; it retains query/submission history and does not change the
 original pipeline. Run Next for batches 1 and 2, Replay batch 2, then Next for batch 3.
-Replay does not consume a new batch. The fixed `lab_context.as_of` advances with
+Replay does not consume a new batch. The deterministic `lab_context.as_of` advances with
 arrival cutoff. Read `incremental_steps`, `incremental_events` and
 `incremental_target` with learner SQL. Completed/revealed sessions cannot mutate;
 Challenge cannot invoke simulation actions. A timeline retains 100 steps (latest
@@ -62,7 +62,9 @@ cross-session isolation. Browser tests cover all thirteen lessons, track selecti
 simulation replay, ENG/VIE switch, reload and mobile width. Container restart verifies
 both completed foundation history and an in-progress incremental timeline.
 
-Local unit/build results and final CI evidence will be recorded before handoff.
+Local verification passed all 43 unit tests, TypeScript checking and the Vite
+production build. Real PostgreSQL, browser and container restart evidence is
+available in the [Task 8 PR checks](https://github.com/taodo/Data-QA-lab/pull/10/checks).
 
 ## Limits and interpretation
 

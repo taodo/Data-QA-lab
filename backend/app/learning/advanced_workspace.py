@@ -20,7 +20,7 @@ DDL = {
  "target_utc_daily": "order_date date, order_count bigint, net_revenue numeric(18,2)",
  "incremental_events": "event_id bigint, order_id bigint, event_at timestamptz, arrived_at timestamptz, net_amount numeric(14,2), batch_no integer",
  "incremental_target": "event_id bigint, order_id bigint, event_at timestamptz, net_amount numeric(14,2)",
- "incremental_steps": "step_no integer, batch_no integer, operation text, execution_status text, applied_events integer, target_rows integer, watermark timestamptz",
+ "incremental_steps": "step_no integer, batch_no integer, operation text, execution_status text, selected_events integer, target_rows integer, watermark timestamptz",
  "freshness_requirements": "dataset_id text, as_of timestamptz, sla_minutes integer",
  "freshness_observations": "dataset_id text, last_success_at timestamptz, last_event_at timestamptz, execution_status text",
  "source_customer_changes": "event_id bigint, customer_id bigint, effective_at timestamptz, tier text",

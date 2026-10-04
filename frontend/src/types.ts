@@ -6,4 +6,4 @@ export interface Session {practice_sql:string; simulation?:SimulationState; sess
 export interface Run {run_id:string;execution_status:string;data_quality_status:string;started_at:string;stages?:{name:string;execution_status:string;row_count:number;metrics:Record<string,unknown>}[]}
 export interface Quality {status:string;results:{rule_id:string;status:string;expected:unknown;actual:unknown;evidence:unknown;error?:string}[]}
 export interface Fault {fault_run_id:string;pipeline_run_id:string;scenario_id:string;status:string;mutation_evidence:unknown}
-export interface SimulationState {as_of:string; step_count:number; batch_no:number; steps:{step_no:number;batch_no:number;operation:string;execution_status:string;applied_events:number;target_rows:number;watermark:string}[]}
+export interface SimulationState {as_of:string; step_count:number; batch_no:number; steps:{step_no:number;batch_no:number;operation:string;execution_status:string;selected_events:number;target_rows:number;watermark:string}[]}

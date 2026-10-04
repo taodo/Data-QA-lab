@@ -99,10 +99,10 @@ def inspect_session(database_url, session_id):
             from backend.app.learning.advanced_workspace import execute
             schema=session["snapshot_schema"]
             as_of=execute(connection,schema,"SELECT as_of FROM {s}.lab_context").fetchone()[0]
-            steps=execute(connection,schema,"SELECT step_no,batch_no,operation,execution_status,applied_events,target_rows,watermark FROM {s}.incremental_steps ORDER BY step_no DESC LIMIT 20").fetchall()
+            steps=execute(connection,schema,"SELECT step_no,batch_no,operation,execution_status,selected_events,target_rows,watermark FROM {s}.incremental_steps ORDER BY step_no DESC LIMIT 20").fetchall()
             totals=execute(connection,schema,"SELECT COUNT(*),COALESCE(MAX(batch_no),0) FROM {s}.incremental_steps").fetchone()
             simulation={"as_of":as_of,"step_count":totals[0],"batch_no":totals[1],
-                        "steps":[dict(zip(("step_no","batch_no","operation","execution_status","applied_events","target_rows","watermark"),row,strict=True)) for row in reversed(steps)]}
+                        "steps":[dict(zip(("step_no","batch_no","operation","execution_status","selected_events","target_rows","watermark"),row,strict=True)) for row in reversed(steps)]}
     payload = _public(session)
     payload["submissions"] = [dict(zip(
         ("submission_id", "sql", "conclusion", "status", "submitted_at"), row, strict=True
