@@ -46,7 +46,17 @@ already contains that base. Existing learner PostgreSQL data and accounts remain
   only on expected label (UI says 'Solution revealed'); correcting assertion.
 - Native Windows deep-link fallback fixed by normalizing path separators. Test
   dependencies were missing locally and have now been installed from declarations.
-- Pending: complete full PostgreSQL/browser regression, Docker packaging/restart,
+- Docker build/start/restart smoke PASS. Read-only hashes prove the existing
+  account, 11 sessions, 16 queries, 2 submissions and 66,246 Target rows were
+  retained exactly through the upgrade, before smoke-test data was added.
+- Added shifted faulty keys/alternate schema fields/copy metrics so hardcoded
+  checks cannot pass using only unshifted faults. Re-running cloud tests.
+- Quality guard now rejects truncated/non-integer/out-of-range result contracts;
+  import validation messages are ENG/VIE, and simulator actions require reset
+  after import. These final changes are under verification.
+- Reveal test corrected to check the actual backend completion flag: zero
+  progress intentionally has no progress bar. Full browser suite is re-running.
+- Pending: complete final PostgreSQL/browser regression, final Docker smoke,
   source ZIP verification, push final code and open PR. Do not merge.
 - Pre-approval evidence: data/generated/task11-review-20261005/REVIEW.md.
 

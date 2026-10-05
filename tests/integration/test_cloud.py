@@ -43,12 +43,12 @@ class CloudIntegrationTests(unittest.TestCase):
                 'cloud_reference_stale':1,'cloud_reference_missing':1,'cloud_reference_null':1,'cloud_reference_future':1}
         for key in cloud.IDS:
             session=self.session(key);schema=self.schema(session['session_id'])
-            for variant in ('cloud_clean','cloud_shifted','cloud_zero','cloud_sla_boundary',*cloud.SCENARIOS[key]):
+            for variant in ('cloud_clean','cloud_shifted','cloud_zero','cloud_sla_boundary',*cloud.SCENARIOS[key],*(cloud.SHIFTED_PREFIX+v for v in cloud.SCENARIOS[key])):
                 with self.subTest(key=key,variant=variant):
                     result=run_sql(DB,schema,cloud.SOLUTIONS[key],variant)
                     self.assertEqual(result.status,'SUCCESS',result)
-                    self.assertEqual(violation_count(result),counts.get(variant,0))
-                    self.assertEqual(cloud.expected_count(variant),counts.get(variant,0))
+                    self.assertEqual(violation_count(result),counts.get(variant.removeprefix(cloud.SHIFTED_PREFIX),0))
+                    self.assertEqual(cloud.expected_count(variant),counts.get(variant.removeprefix(cloud.SHIFTED_PREFIX),0))
 
     def test_submission_accepts_real_checks_rejects_constants_and_retains_workspace(self):
         for key in cloud.IDS:

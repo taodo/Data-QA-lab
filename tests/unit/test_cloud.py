@@ -69,3 +69,19 @@ class CloudFileTests(unittest.TestCase):
                     self.assertNotIn('solution_sql',l);self.assertNotIn('hints',l)
                     self.assertEqual(set(l['schema']),set(cloud.TABLES))
         self.assertIn('NUMERIC',lesson(cloud.IDS[1],'ENG')['theory'])
+
+    def test_quality_requires_a_complete_check_and_known_evidence(self):
+        from backend.app.learning.service import _cloud_quality
+        good={'status':'SUCCESS','columns':['violation_count'],'rows':[['0']],'truncated':False}
+        self.assertEqual(_cloud_quality('AVAILABLE',good),'PASS')
+        self.assertEqual(_cloud_quality('NOT_VERIFIED',good),'NOT_VERIFIED')
+        self.assertEqual(_cloud_quality('AVAILABLE',{**good,'rows':[['2']]}),'FAIL')
+        self.assertEqual(_cloud_quality('NOT_VERIFIED',{**good,'status':'ERROR'}),'ERROR')
+        for patch in ({'truncated':True},{'columns':['rows']},{'rows':[['-1']]},{'rows':[['NaN']]},
+                      {'rows':[['1.5']]},{'rows':[['9223372036854775808']]},{'rows':[]}):
+            self.assertEqual(_cloud_quality('AVAILABLE',{**good,**patch}),'NOT_RUN')
+
+    def test_import_validation_feedback_is_bilingual(self):
+        self.assertEqual(cc.localized_error('Unsupported evidence version','ENG'),'Unsupported evidence version')
+        self.assertIn('version 1',cc.localized_error('Unsupported evidence version','VIE'))
+        self.assertIn('100 dòng',cc.localized_error('Dataset exceeds 100 rows','VIE'))

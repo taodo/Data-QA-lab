@@ -325,7 +325,8 @@ def create_app(database_url=None):
         except LabStateError:
             raise
         except ValueError as exc:
-            return response({"error": {"code": "EVIDENCE_INVALID", "detail": str(exc)}}, 422)
+            from backend.app.learning.cloud_contracts import localized_error
+            return response({"error": {"code": "EVIDENCE_INVALID", "detail": localized_error(str(exc), language)}}, 422)
         return response(localize_session(result, language))
 
     @app.post("/api/sessions/{session_id}/submit")

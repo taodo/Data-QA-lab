@@ -9,7 +9,7 @@ from backend.app.learning.content import LAB_ID
 from backend.app.learning.lessons import CATALOG, course_id
 from backend.app.learning import etl, http_exercises, cloud
 from backend.app.learning.profiles import PROFILES
-from backend.app.learning.contracts import LabStateError, normalize_sql, violation_count
+from backend.app.learning.contracts import LabStateError, QueryResult, normalize_sql, violation_count
 from backend.app.learning.sql_runtime import run_sql
 from backend.app.learning.workspace import create_session_snapshot, TABLES
 from backend.app.persistence.database import connect, transaction
@@ -18,6 +18,20 @@ from backend.app.services.lab_catalog import load_labs
 
 def _now():
     return datetime.now(timezone.utc)
+
+
+def _cloud_quality(evidence_status, data):
+    if data["status"] == "ERROR":
+        return "ERROR"
+    if evidence_status == "NOT_VERIFIED":
+        return "NOT_VERIFIED"
+    try:
+        count = violation_count(QueryResult(data["status"], tuple(data.get("columns", [])),
+                                tuple(tuple(row) for row in data.get("rows", [])),
+                                data.get("truncated", False), data.get("error")))
+    except ValueError:
+        return "NOT_RUN"  # exploration output cannot establish a check result
+    return "PASS" if count == 0 else "FAIL"
 
 
 def _get(connection, session_id):
@@ -122,18 +136,7 @@ def inspect_session(database_url, session_id):
         latest_step = cloud_evidence["runs"][-1].get("ended_at") if cloud_evidence["runs"] else None
         changed_at = max(cloud_evidence["captured_at"], latest_step or cloud_evidence["captured_at"])
         if queries and queries[0][3] >= changed_at:
-            data = queries[0][2]
-            if data["status"] == "ERROR":
-                cloud_evidence["quality_status"] = "ERROR"
-            elif cloud_evidence["evidence_status"] == "NOT_VERIFIED":
-                cloud_evidence["quality_status"] = "NOT_VERIFIED"
-            elif data.get("columns") == ["violation_count"] and len(data.get("rows", [])) == 1:
-                try:
-                    value = int(data["rows"][0][0])
-                    if value >= 0:
-                        cloud_evidence["quality_status"] = "PASS" if value == 0 else "FAIL"
-                except (ValueError, TypeError):
-                    pass
+            cloud_evidence["quality_status"] = _cloud_quality(cloud_evidence["evidence_status"], queries[0][2])
         cloud_evidence["quality_scope"] = "learner_check"
         payload["cloud_evidence"] = cloud_evidence
     if etl_simulation is not None:

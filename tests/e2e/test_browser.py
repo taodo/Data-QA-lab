@@ -508,4 +508,8 @@ class BrowserTests(unittest.TestCase):
         expect(self.page.locator('.lesson-heading .badge')).to_have_text('Solution revealed')
         expect(self.page.locator('.solution')).to_be_visible()
         self.page.goto(self.url+'/my-learning');self.idle()
-        expect(self.page.locator('[data-course-id="fabric-testing"] progress')).to_have_attribute('value','0')
+        # Zero progress is deliberately omitted by CourseCard; inspect real progress too.
+        expect(self.page.locator('[data-course-id="fabric-testing"] progress')).to_have_count(0)
+        progress=self.context.request.get(self.url+'/api/progress').json()
+        self.assertTrue(progress)
+        self.assertFalse(any(entry['completed'] for entry in progress))

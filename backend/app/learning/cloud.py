@@ -38,6 +38,8 @@ SCENARIOS = {
     IDS[7]: ("cloud_reference_stale", "cloud_reference_missing", "cloud_reference_null", "cloud_reference_future"),
 }
 VARIANTS = {"cloud_clean", "cloud_shifted", "cloud_zero", "cloud_sla_boundary", *(v for vs in SCENARIOS.values() for v in vs)}
+SHIFTED_PREFIX = "shifted__"
+VARIANTS |= {SHIFTED_PREFIX + v for vs in SCENARIOS.values() for v in vs}
 
 LATEST = """SELECT DISTINCT ON (order_id) order_id,customer_id,amount,updated_at,event_id,batch_no,run_id
  FROM cloud_source WHERE batch_no<=(SELECT batch_no FROM cloud_context)
@@ -98,6 +100,7 @@ EXPECTED = dict(zip((v for vs in SCENARIOS.values() for v in vs),
 
 
 def expected_count(variant):
+    variant = variant.removeprefix(SHIFTED_PREFIX)
     return 0 if variant in {"cloud_clean", "cloud_shifted", "cloud_zero", "cloud_sla_boundary"} else EXPECTED[variant]
 
 
@@ -141,10 +144,12 @@ def _source(shift, zero=False):
 def populate(c, s, lab_id, variant):
     if lab_id not in IDS or variant not in VARIANTS:
         raise ValueError("Unsupported cloud fixture")
+    shifted = variant == "cloud_shifted" or variant.startswith(SHIFTED_PREFIX)
+    variant = variant.removeprefix(SHIFTED_PREFIX)
     for table in TABLES:
         c.execute(sql.SQL("TRUNCATE {}.{}").format(sql.Identifier(s), sql.Identifier(table)))
     provider = "Fabric" if lab_id in IDS[:3] else "ADF" if lab_id in IDS[3:6] else "OneLake"
-    shift = 700 if variant == "cloud_shifted" else 0
+    shift = 700 if shifted else 0
     as_of = AS_OF
     batch = 2 if lab_id == IDS[4] else 1
     insert(c, s, "cloud_context", [(lab_id, batch, as_of, provider, "local-workspace", "SIMULATED", datetime.now(timezone.utc), 1)])
@@ -187,8 +192,11 @@ def populate(c, s, lab_id, variant):
         "cloud_reference_future": "UPDATE {s}.cloud_references SET observed_at=observed_at+INTERVAL '61 minutes'",
     }
     if variant in mutations:
+        statement = mutations[variant]
+        if shifted:
+            statement = statement.replace("column_name='amount'", "column_name='customer_id'").replace("'debug'", "'new_field'").replace("rows_read=99", "rows_read=123")
         # JSON braces must be escaped for psycopg's SQL identifier formatting.
-        execute(c, s, mutations[variant].replace("'{}'", "'{{}}'"))
+        execute(c, s, statement.replace("'{}'", "'{{}}'"))
     if variant in {"cloud_layer_swap", "cloud_copy_swap"}:
         execute(c, s, "UPDATE {s}.cloud_target SET order_id=order_id+5000 WHERE order_id=(SELECT MIN(order_id) FROM {s}.cloud_target)")
         if variant == "cloud_layer_swap":
@@ -306,6 +314,8 @@ def state(c, s, lab_id):
         gaps.append("Source or Target snapshot is empty; completeness is not established")
     if lab_id in IDS[:6] and (not result["activities"] or any(a["execution_status"] == "UNKNOWN" or a["rows_read"] is None or a["rows_written"] is None for a in result["activities"])):
         gaps.append("Activity state or copy metrics are unknown")
+    if lab_id == IDS[1] and not result["schema"]:
+        gaps.append("Reported schema evidence is missing")
     if lab_id == IDS[6] and (not result["manifest"] or any(m["row_count"] is None or m["snapshot_at"] is None for m in result["manifest"])):
         gaps.append("File manifest evidence is incomplete")
     if lab_id == IDS[7] and (not result["references"] or any(r["observed_at"] is None for r in result["references"])):

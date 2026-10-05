@@ -33,7 +33,8 @@ Gold orders, not daily aggregates. Latest events are bounded by arrived batch an
 fixed UTC as_of, then ranked by event_id. A diagnostic score sums rule violations;
 one underlying defect can contribute to multiple rules. Instructor SQL examples
 are in examples/lab_023_*.sql through examples/lab_030_*.sql. Submission rebuilds
-independent clean/shifted/zero/boundary/fault fixtures and compares against separately
+independent clean/shifted/zero/boundary/fault fixtures (including shifted faulty
+keys and alternate drifted fields) and compares against separately
 specified counts; it does not use the imported file or learner workspace as truth.
 
 ## Runtime and file contracts

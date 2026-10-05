@@ -18,6 +18,44 @@ STATE_MAP = {"Succeeded": "SUCCESS", "Completed": "SUCCESS", "Failed": "FAILED",
              "InProgress": "RUNNING", "Cancelled": "CANCELLED", **{s: s for s in STATES}}
 
 
+def localized_error(message, language):
+    if language == "ENG":
+        return message
+    messages = {
+        "Invalid evidence fields": "Field evidence thiếu hoặc không nằm trong contract được hỗ trợ.",
+        "Evidence identifiers must be 1–128 printable characters": "ID evidence cần 1–128 ký tự, không chứa ký tự điều khiển.",
+        "Expected a non-negative integer": "Giá trị cần là số nguyên không âm; không dùng boolean.",
+        "Expected an ISO timestamp with a UTC offset": "Timestamp cần theo ISO và có UTC offset.",
+        "Invalid evidence timestamp": "Timestamp evidence không hợp lệ.",
+        "Naive timestamps are not evidence": "Timestamp cần có timezone/UTC offset.",
+        "Money must be an exact decimal string within NUMERIC(14,2)": "Amount cần là chuỗi decimal chính xác trong giới hạn NUMERIC(14,2).",
+        "Dataset exceeds 100 rows": "Dataset vượt giới hạn 100 dòng.",
+        "Evidence array exceeds its limit": "Danh sách metadata vượt giới hạn số phần tử.",
+        "Duplicate JSON field": "JSON có field bị lặp.",
+        "Use a plain filename without a path": "Dùng tên file đơn, không chứa đường dẫn.",
+        "Choose a .json or .csv evidence file": "Chọn file evidence .json hoặc .csv.",
+        "Evidence file must be at most 48 KiB UTF-8": "File evidence cần tối đa 48 KiB UTF-8 và không rỗng.",
+        "Invalid evidence JSON": "JSON evidence không hợp lệ.",
+        "Non-finite JSON number": "JSON không được chứa NaN hoặc Infinity.",
+        "Unsupported evidence version": "Version evidence không được hỗ trợ; dùng version 1.",
+        "Unsupported evidence provider": "Provider không được hỗ trợ; chọn Fabric, ADF hoặc OneLake.",
+        "Duplicate run ID": "Run ID bị lặp trong metadata.",
+        "Unknown activity dataset": "Dataset của activity không được hỗ trợ.",
+        "Evidence exceeds 400 data rows": "Evidence vượt tổng 400 dòng dữ liệu.",
+        "Unknown schema dataset": "Dataset của schema không được hỗ trợ.",
+        "Malformed CSV evidence": "CSV evidence sai định dạng hoặc dấu nháy.",
+        "Invalid or oversized CSV row": "Dòng CSV sai số cột hoặc vượt giới hạn số dòng.",
+        "Unknown CSV dataset": "Dataset CSV cần là source, bronze, silver hoặc target.",
+        "Invalid CSV integer": "Cột số nguyên của CSV không hợp lệ.",
+        "CSV contains no snapshot rows": "CSV không chứa dòng snapshot.",
+        "At most 8 imports per session; start a new session": "Mỗi session tối đa 8 import; hãy bắt đầu session mới.",
+        "Evidence provider does not match this lesson": "Provider của evidence không khớp khóa học này.",
+    }
+    if message.startswith("CSV header must be: "):
+        return "Header CSV cần là: " + ",".join(CSV_FIELDS)
+    return messages.get(message, "Evidence không hợp lệ; kiểm tra version, field, kiểu dữ liệu và giới hạn file.")
+
+
 def fields(value, allowed, required=()):
     if not isinstance(value, dict) or set(value) - set(allowed) or set(required) - set(value):
         raise ValueError("Invalid evidence fields")
