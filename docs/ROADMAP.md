@@ -18,13 +18,15 @@
 | 8.4 — SCD | Type 1 current and Type 2 history lessons | Reconcile versions and half-open intervals | Current/overlap/history regression evidence |
 | 9 — Learning platform | Course UI, subject/course/chapter routes, local accounts and personal evidence | Follow a guided course and resume personal progress | Two-account isolation, real signup/lesson flow, retained legacy history |
 | 10 — ETL / API curriculum | Five ETL and four API lessons, real PostgreSQL and HTTP execution | Validate pipeline and ingestion contracts | Approved and merged; independent clean/fault graders, browser flow and Docker restart |
-| 11 — Cloud QA (proposed) | Fabric/ADF/OneLake foundations, local simulations and imported evidence; separate live-adapter pilot | Transfer established concepts to cloud run and data evidence | Eight proposed lessons; explicit environment/credentials/cost checkpoint for live access |
+| 11 — Cloud QA | Approved 11.1–11.4: Fabric/ADF/OneLake foundations, local simulations and imported evidence | Transfer established concepts to cloud run and data evidence | Eight implemented lessons under review; live-adapter stage 11.5 remains proposed |
 
 V1 scope is Tasks 0–7.2. Tasks 8–10 are approved and merged into
 `feature/develop`, providing 22 lessons across SQL (13), ETL (5) and API (4),
 local accounts and a course platform. Task 10 includes actual session PostgreSQL
 batches/ingestion and loopback HTTP exercises. See TASK_10.md.
-Task 11 is proposed on `feature/task-11-cloud-qa`; see TASK_11_PLAN.md for the
-recommended Fabric/ADF/OneLake core and separate live-cloud checkpoint.
-Implementation awaits plan review. Databricks, Synapse and broader Azure courses
+Task 11.1–11.4 was approved on 2026-10-05 and implemented on
+`feature/task-11-cloud-qa`, increasing the branch catalog to 30 lessons across six
+courses. It has not been merged; see TASK_11.md and TASK_11_PROGRESS.md for scope,
+verification and remaining review. Live-cloud stage 11.5 requires separate approval.
+Databricks, Synapse and broader Azure courses
 are proposed for a following phase. No fixed completion date or QA Sentinel integration.

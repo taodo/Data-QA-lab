@@ -70,3 +70,59 @@ Read this file and TASK_11_PLAN.md, inspect git status/log, then continue Task 1
 only. Use a dedicated PostgreSQL test database; never run integration fixtures
 against the learner database. Record observed commands/results and pending work
 at each milestone. Merge requires the user's explicit review approval.
+
+## Verification checkpoint after the interrupted session (2026-10-05)
+
+Implementation checkpoint: bee78f4. This section supersedes intermediate test
+counts and pending verification notes above; those notes retain the audit trail.
+Core 11.1–11.4 is implemented. Review in the separate ChatGPT chat has not been
+reported here. No merge or next-task work is authorized.
+
+Observed commands and results (logs on D under
+`data/generated/task11-review-20261005`):
+
+- `python -m unittest discover -s tests/unit -v`: 55 PASS on Windows and Linux
+  (`unit-final.log`, `linux-final/linux-unit.log`).
+- `npm run build --prefix frontend`: PASS (`frontend-build.log`).
+- `python -m unittest discover -s tests/integration -v` with a dedicated test DB:
+  latest Linux full run reported 57 PASS and one cleanup failure out of 58
+  (`linux-final/linux-integration.log`). All six cloud methods passed, including
+  final metadata-only import coverage. The cleanup assertion counts cluster-wide
+  temporary roles. A deliberately stopped earlier verification container left
+  one expired role in `data_qa_task11_linux_test`; it had no active connections
+  and no dependencies in the learner database. Only its exact matching temporary
+  query schema and role were removed. The failing method then PASS on rerun:
+  `PYTHONPATH=/app/tests/integration:$PYTHONPATH python -m unittest
+  test_learning_labs.LearningLabTests.test_read_queries_ctes_and_cleanup -v`
+  (`linux-final/linux-cleanup-rerun.log`). The full suite was not rerun after that
+  environmental cleanup; report the full result and targeted rerun separately.
+- The earlier Windows full integration run had one obsolete planned-course
+  assertion (Fabric became available). That assertion now targets Synapse and
+  passed with metadata import retention in the two-test final-fixes rerun
+  (`final-fixes.log`).
+- `python -m unittest discover -s tests/e2e -v`: 10 PASS in native Chromium
+  (`browser-final.log`), covering all 30 lessons, eight cloud lessons, imports,
+  ENG/VIE, challenge/reveal, mobile, course resume and account isolation. Linux
+  browser tests were not reached by the interrupted full verification script.
+- Docker build, startup, smoke and restart/resume: PASS, including imported
+  cloud evidence and personal progress (`container-head-resume.log` and other
+  container logs). Existing PostgreSQL bind mount stays on D.
+- Read-only retention hashes before/after upgrade: existing account, 11 sessions,
+  16 queries, two submissions and 66,246 Target rows preserved exactly. Smoke
+  tests subsequently added their own accounts/evidence.
+- Source ZIP at bee78f4: CRC validation PASS; 30 lab definitions and runtime
+  included; PostgreSQL data, environment secrets and virtualenv excluded.
+
+Limitations: all cloud evidence is local SIMULATED or file IMPORTED. Live cloud
+stage 11.5 is unimplemented. No Spark/Delta engine or live shortcut resolution.
+Written explanations are retained rather than semantically graded. A hard-killed
+process can leave expired temporary SQL roles requiring scoped administrator
+cleanup; normal SQL cleanup and timeout/watchdog tests pass.
+
+Learning explanation: run/activity success is a provider claim. Independent
+key-based reconciliation, explicit schema/partition contracts, exact decimals and
+UTC boundaries establish whether the data is correct. Unknown evidence and
+unexecuted checks cannot imply PASS.
+
+Remaining: push the task branch, open the PR into feature/develop, inspect CI and
+record its result. Do not merge; user review/approval remains the gate.
