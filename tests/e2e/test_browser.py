@@ -266,6 +266,72 @@ class BrowserTests(unittest.TestCase):
         self.page.set_viewport_size({"width":390,"height":844})
         self.assertLessEqual(self.page.evaluate("document.documentElement.scrollWidth"),390)
 
+    def test_course_introductions_all_courses_language_keyboard_mobile(self):
+        from playwright.sync_api import expect
+        for language in ('ENG', 'VIE'):
+            catalog = self.context.request.get(self.url+'/api/courses?language='+language).json()
+            self.page.goto(self.url+'/courses/sql-data-qa')
+            expect(self.page.locator('.account-menu')).to_be_visible()
+            self.page.get_by_label('Select language').select_option(language)
+            for course in catalog:
+                with self.subTest(language=language, course=course['id']):
+                    self.page.goto(self.url+'/courses/'+course['id'])
+                    # Authentication changes the course owner key on initial load.
+                    # Wait for the signed-in page before testing focus/state.
+                    expect(self.page.locator('.account-menu')).to_be_visible()
+                    intro = self.context.request.get(self.url+'/api/courses/'+course['id']+'?language='+language).json()['introduction']
+                    area = self.page.locator('.course-introduction')
+                    buttons = area.get_by_role('button')
+                    expect(buttons).to_have_count(2)
+                    first, second = buttons.nth(0), buttons.nth(1)
+                    expect(first).to_have_text(intro['what_title']+('Collapse' if language=='ENG' else 'Thu gọn')+'−')
+                    expect(first).to_have_attribute('aria-expanded', 'true')
+                    expect(second).to_have_attribute('aria-expanded', 'false')
+                    expect(area.get_by_text(intro['definition'], exact=True)).to_be_visible()
+                    expect(area.get_by_text(intro['qa'], exact=True)).to_be_hidden()
+                    for button in (first, second):
+                        panel = self.page.locator('[id="'+button.get_attribute('aria-controls')+'"]')
+                        expect(panel).to_have_attribute('aria-labelledby', button.get_attribute('id'))
+                    first.focus()
+                    first.press('Enter')
+                    expect(first).to_have_attribute('aria-expanded', 'false')
+                    expect(area.get_by_text(intro['definition'], exact=True)).to_be_hidden()
+                    first.press('Space')
+                    expect(first).to_have_attribute('aria-expanded', 'true')
+                    first.press('Tab')
+                    expect(second).to_be_focused()
+                    self.assertEqual(second.evaluate('(e)=>getComputedStyle(e).outlineStyle'), 'solid')
+                    second.press('Space')
+                    expect(second).to_have_attribute('aria-expanded', 'true')
+                    expect(area.get_by_text(intro['qa'], exact=True)).to_be_visible()
+                    expect(area.get_by_text(intro['course_connection'], exact=True)).to_be_visible()
+                    # Click the far edge, not only the title text.
+                    box = second.bounding_box()
+                    second.click(position={'x':box['width']-8, 'y':box['height']/2})
+                    expect(second).to_have_attribute('aria-expanded', 'false')
+                    second.press('Enter')
+                    expect(second).to_have_attribute('aria-expanded', 'true')
+                    if course['available']:
+                        self.assertTrue(self.page.evaluate("document.querySelector('.course-introduction').compareDocumentPosition(document.querySelector('.curriculum')) & Node.DOCUMENT_POSITION_FOLLOWING"))
+                    else:
+                        expect(self.page.locator('.curriculum, .lesson-card')).to_have_count(0)
+                        expect(self.page.locator('.course-detail-hero button')).to_have_count(0)
+                    self.page.set_viewport_size({'width':390,'height':844})
+                    self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),390)
+                    self.page.screenshot(path=str(self.artifacts/f'introduction-{course["id"]}-{language}-mobile.png'), full_page=True)
+                    self.page.set_viewport_size({'width':1440,'height':1000})
+        # Switching in place replaces body content, not just the headings.
+        self.page.goto(self.url+'/courses/sql-data-qa')
+        expect(self.page.locator('.account-menu')).to_be_visible()
+        self.page.get_by_label('Select language').select_option('ENG')
+        expect(self.page.get_by_role('button',name='What is SQL?',exact=True)).to_be_visible()
+        self.page.get_by_label('Select language').select_option('VIE')
+        expect(self.page.get_by_role('button',name='SQL là gì?',exact=True)).to_be_visible()
+        expect(self.page.locator('.course-intro-content').nth(0)).to_contain_text('là ngôn ngữ')
+        self.page.get_by_label('Select language').select_option('ENG')
+        expect(self.page.locator('.course-intro-content').nth(0)).to_contain_text('is a language')
+        self.page.screenshot(path=str(self.artifacts/'course-introduction-desktop.png'), full_page=True)
+
     def test_public_courses_search_routes_and_real_signup_login(self):
         from playwright.sync_api import expect
         self.context.clear_cookies()

@@ -128,3 +128,40 @@ Task branch pushed; PR #13 is open into feature/develop:
 https://github.com/taodo/Data-QA-lab/pull/13. CI is running; final CI diagnostics
 are retained under the D-drive evidence directory and in the PR. Do not merge;
 user review/approval remains the gate. No next-task work.
+
+## Course introduction follow-up
+
+Approved in this chat: add two ENG/VIE beginner accordions to every course on the
+existing Task 11 branch. Nine distinct introduction datasets and accessible,
+responsive UI are implemented; planned courses keep their existing lab lock.
+56 unit tests PASS; production frontend build PASS after Windows sandbox denied
+Vite's realpath operation and the build was rerun outside the sandbox. Browser
+verification PASS (one E2E method, 18 course/language subcases, 13.232 seconds):
+all nine courses in both languages, mouse/full-header clicks, Enter/Space/Tab,
+visible focus, panel ARIA relationships, language switching and 390px layout.
+Planned pages have no curriculum or start/enroll buttons. Logs:
+`introduction-unit.log`, `introduction-build.log`, `introduction-browser-final.log`.
+Mobile screenshots for all 18 variants and a desktop screenshot are under
+`e2e-artifacts` on D; inspected SQL desktop and Databricks VIE mobile visually.
+
+Native browser startup initially timed out because PostgreSQL `localhost`
+connections took about five seconds while health probes allow one second.
+Explicit `127.0.0.1` reduced connection time to 0.057 seconds. The browser command
+uses that address and the dedicated `data_qa_task11_e2e` database. An early test
+attempt also raced initial account hydration (which remounts the owned course
+page); the final test waits for the signed-in page before keyboard interaction.
+No runtime dependency, SQL permission, account or availability changes.
+
+Local Docker rebuild/start PASS (`introduction-docker-build.log`). Read-only
+packaged API smoke PASS: READY, 18 distinct introductions and six planned
+course/language variants with empty curriculum (`introduction-packaged-api.log`).
+The existing PostgreSQL container/bind mount and accounts are retained.
+Targeted PostgreSQL/API account/CSRF/bounds test PASS (7.408 seconds), including
+planned-course enrollment rejection (`introduction-planned-lock.log`).
+
+Previous checkpoint bd7e64e now has successful GitHub CI for both test and
+packaged-v1 jobs, including full integration and Linux browser runs:
+https://github.com/taodo/Data-QA-lab/actions/runs/37281206389.
+That success precedes the introduction follow-up and does not verify these edits.
+Next: push this follow-up to existing PR #13, inspect updated-head CI and report
+results. No merge or next task.

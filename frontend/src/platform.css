@@ -11,3 +11,20 @@
 .platform button.primary:hover:enabled{background:#5027a9}.platform button.secondary:hover:enabled{background:var(--soft)}.platform .challenge-box{background:var(--soft);border-left-color:#b193e7}.platform .example,.platform .solution pre,.platform .json{background:#f8f6fc;color:#55466a}.platform .lesson-heading p:last-child{color:var(--muted)}.platform .lesson-number{background:#f4f1f9;border-color:var(--line)}
 
 .cloud-statuses {display:flex;gap:1rem;flex-wrap:wrap}.cloud-workspace details {margin-top:1rem}.cloud-workspace summary {cursor:pointer}.cloud-import input {display:block;max-width:100%;margin:.6rem 0}.import-record {overflow-wrap:anywhere}.cloud-workspace {min-width:0}.cloud-workspace pre {max-width:100%;overflow:auto}
+
+.course-introduction {margin:2rem 0;display:grid;gap:1rem;min-width:0}
+.course-intro-item {border:1px solid var(--line);border-radius:10px;min-width:0}
+.course-intro-item>h2 {margin:0;font-size:1.15rem}
+.course-intro-toggle {display:flex;align-items:center;gap:1rem;width:100%;box-sizing:border-box;min-height:64px;padding:1rem 1.3rem;border:0;border-radius:10px;background:#faf9fc;color:var(--ink);text-align:left;font-weight:650}
+.course-intro-toggle:hover {background:var(--soft)}
+.course-intro-toggle[aria-expanded=true] {background:var(--soft);border-radius:10px 10px 0 0;color:var(--purple)}
+.course-intro-title {flex:1;min-width:0;overflow-wrap:anywhere;line-height:1.5}
+.course-intro-state {font-size:.75rem;font-weight:500;color:var(--muted);white-space:nowrap}
+.course-intro-icon {display:grid;place-items:center;width:28px;height:28px;flex-shrink:0;border:1px solid #c9c3d6;border-radius:50%;color:var(--purple);font-size:1.3rem;line-height:1}
+.course-intro-content {padding:.25rem 1.3rem 1.3rem;overflow-wrap:anywhere}
+.course-intro-content h3 {font-size:.95rem;margin:1.2rem 0 .5rem}
+.course-intro-content p,.course-intro-content li {font-size:.92rem;line-height:1.75}
+.course-intro-content ul {padding-left:1.25rem;margin:.75rem 0}
+.course-intro-content li+li {margin-top:.55rem}
+.course-intro-example {padding:.1rem 1rem;background:#faf9fc;border-left:3px solid #b193e7;border-radius:4px}
+@media(max-width:600px){.course-intro-toggle {padding:.85rem 1rem;gap:.6rem}.course-intro-item>h2 {font-size:1rem}.course-intro-state {font-size:.65rem}.course-intro-content {padding:.1rem 1rem 1rem}.course-intro-example {padding:.1rem .75rem}}

@@ -135,3 +135,31 @@ Learning explanation: metadata tells you what a job reported. Keyed reconciliati
 independent contracts and fixed-clock boundaries tell you whether the evidence
 supports correct data. Unknown evidence, errors and unrun checks are distinct
 from data defects and must never be silently converted into success.
+
+## Course introductions (approved follow-up)
+
+Engineering objective: expose distinct ENG/VIE beginner introductions on all nine
+course detail pages, including planned courses, before the curriculum. Learning
+objective: understand what each subject is, what problem it solves, and how Data
+QA applies before opening a lab.
+
+`backend/app/course_introductions.py` holds separately authored content for SQL,
+ETL/ELT, API, Fabric, ADF, OneLake, Azure Data Platform, Databricks and Synapse.
+Each entry includes a definition, three explained concepts, a practical example,
+uses, the QA role and a connection to current or intended course lessons. Planned
+courses explicitly describe future learning; no enrollment/lab availability is
+changed. Only course-detail responses include the introduction.
+
+The two independent accordions use full-width native buttons, Enter/Space/Tab,
+visible focus and translated expand/collapse labels, plus/minus indicators,
+`aria-expanded`, `aria-controls` and labelled panel regions. The first defaults
+open, the second closed. Content wraps within the existing mobile layout.
+
+Editorial references checked against primary documentation:
+[Fabric](https://learn.microsoft.com/en-us/fabric/fundamentals/microsoft-fabric-overview),
+[ADF](https://learn.microsoft.com/en-us/azure/data-factory/introduction),
+[OneLake](https://learn.microsoft.com/en-us/fabric/onelake/onelake-overview),
+[ETL/ELT](https://learn.microsoft.com/en-us/azure/architecture/data-guide/relational-data/etl),
+[Databricks](https://learn.microsoft.com/en-us/azure/databricks/introduction/),
+[Synapse](https://learn.microsoft.com/en-us/azure/synapse-analytics/overview-what-is).
+Examples and course/QA explanations are specific to this curriculum.

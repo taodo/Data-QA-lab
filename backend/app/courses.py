@@ -1,5 +1,6 @@
 """Public curriculum taxonomy; availability reflects implemented executable labs."""
 from backend.app.learning.lessons import CATALOG, lesson, course_id as lesson_course
+from backend.app.course_introductions import introduction
 
 # Subject, course and chapter are distinct; only executable courses are available.
 SUBJECTS = (
@@ -60,6 +61,8 @@ def course(course_id, language="VIE"):
     item = next((item for item in courses(language) if item["id"] == course_id), None)
     if item is None:
         return None
+    subject_title = next(s["title"] for s in subjects(language) if s["id"] == item["subject_id"])
+    item["introduction"] = introduction(course_id, subject_title, language)
     item["chapters"] = []
     if item["available"]:
         chapters=list(CHAPTERS) if course_id=="sql-data-qa" else (

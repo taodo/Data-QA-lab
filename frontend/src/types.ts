@@ -14,6 +14,7 @@ export interface Account {user_id:string;username:string;display_name:string}
 export interface AuthState {user:Account|null;csrf_token:string|null}
 export interface Subject {id:string;title:string;summary:string;family:string;course_id:string;available:boolean}
 export interface Chapter {id:string;title:string;minutes:number;lessons:Lesson[]}
-export interface Course {id:string;subject_id:string;title:string;summary:string;available:boolean;level:string;lesson_count:number;minutes:number;objectives:string[];prerequisites:string[];chapters?:Chapter[]}
+export interface CourseIntroductionContent {what_title:string;uses_title:string;definition:string;concepts:string[];example:string;uses:string[];qa:string;course_connection:string}
+export interface Course {id:string;subject_id:string;title:string;summary:string;available:boolean;level:string;lesson_count:number;minutes:number;objectives:string[];prerequisites:string[];chapters?:Chapter[];introduction?:CourseIntroductionContent}
 export interface Progress {course_id:string;lab_id:string;attempts:number;completed:boolean}
 export interface Enrollment {course_id:string;enrolled_at:string}
