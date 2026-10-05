@@ -9,3 +9,6 @@
 @media(min-width:901px) and (max-width:1350px){.header-primary{flex-wrap:wrap;gap:1rem}.header-links{padding-bottom:0}.site-header .header-account{position:static;margin-left:auto}.header-search{min-width:180px}}
 .site-header details{border-top:0;padding:0}.site-header summary{color:var(--ink)}.site-header .header-subjects[open]>summary,.site-header .account-menu[open]>summary{color:var(--purple)}
 .platform button.primary:hover:enabled{background:#5027a9}.platform button.secondary:hover:enabled{background:var(--soft)}.platform .challenge-box{background:var(--soft);border-left-color:#b193e7}.platform .example,.platform .solution pre,.platform .json{background:#f8f6fc;color:#55466a}.platform .lesson-heading p:last-child{color:var(--muted)}.platform .lesson-number{background:#f4f1f9;border-color:var(--line)}
+
+.cloud-statuses {display:flex;gap:1rem;flex-wrap:wrap}.cloud-workspace details {margin-top:1rem}.cloud-workspace summary {cursor:pointer}.cloud-import input {display:block;max-width:100%;margin:.6rem 0}.import-record {overflow-wrap:anywhere}.cloud-workspace {min-width:0}.cloud-workspace pre {max-width:100%;overflow:auto}
+

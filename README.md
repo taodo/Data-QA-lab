@@ -146,7 +146,7 @@ See `docs/TASK_1.md`, `docs/TASK_2.md`, `docs/TASK_3.md`, `docs/TASK_4.md`, `doc
 
 ## Task 10: ETL and API courses (v1.3.0)
 
-The platform now offers 22 ENG/VIE guided labs: 13 SQL, 5 ETL and 4 API.
+Task 10 added 22 ENG/VIE guided labs: 13 SQL, 5 ETL and 4 API.
 ETL exercises use isolated PostgreSQL Source/Target/reject tables with batch,
 replay and recovery controls. API exercises run real local HTTP requests, JSON
 contract checks, pagination/retries and PostgreSQL ingestion replay. Course
@@ -154,3 +154,20 @@ progress, history and resume routes remain account scoped.
 
 See [Task 10 review instructions](docs/TASK_10.md) for Windows/D-drive commands,
 lesson contracts, limits and verification evidence.
+
+## Task 11: local cloud QA foundations (v1.4.0)
+
+Thirty ENG/VIE lessons across six executable courses now include three Fabric,
+three ADF and two OneLake lessons. Run/activity lineage, schema contracts,
+Source/Bronze/Silver/Gold snapshots, replay/recovery, partitions and fixed-clock
+reference freshness are observable in isolated PostgreSQL workspaces.
+
+Evidence is labelled SIMULATED or IMPORTED. Import ordinary JSON/CSV files
+(48 KiB/file, 100 rows/dataset, 400 rows total, eight imports/session), preserving
+raw supported fields, SHA-256 and run IDs. No cloud account or credentials are
+needed. These exercises do not emulate Microsoft services or resolve real
+OneLake shortcuts. Live cloud access (11.5) remains a separate unimplemented scope.
+
+See [Task 11 instructions](docs/TASK_11.md) and the
+[implementation checkpoint](docs/TASK_11_PROGRESS.md). Existing PostgreSQL data,
+local accounts and session history remain on D and are preserved by the additive upgrade.

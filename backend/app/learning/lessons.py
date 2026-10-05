@@ -175,6 +175,10 @@ from backend.app.learning.task10_content import CATALOG as TASK10_CATALOG, SCHEM
 CATALOG.update(TASK10_CATALOG)
 SCHEMA.update(TASK10_SCHEMA)
 
+from backend.app.learning.cloud_content import CATALOG as CLOUD_CATALOG, SCHEMA as CLOUD_SCHEMA
+CATALOG.update(CLOUD_CATALOG)
+SCHEMA.update(CLOUD_SCHEMA)
+
 
 def course_id(lab_id):
     return CATALOG[lab_id].get("course_id", "sql-data-qa")
@@ -186,7 +190,8 @@ def lesson(lab_id, language="VIE"):
     from backend.app.learning.profiles import PROFILES
     definition = CATALOG[lab_id]
     text = definition[language]
-    position=definition["order"] - (13 if course_id(lab_id)=="etl-testing" else 18 if course_id(lab_id)=="api-testing" else 0)
+    offsets={"etl-testing":13,"api-testing":18,"fabric-testing":22,"adf-testing":25,"onelake-testing":28}
+    position=definition["order"] - offsets.get(course_id(lab_id),0)
     return {"id": lab_id, "language": language, "order": position,
             "level": definition["level"], "minutes": definition["minutes"],
             "track": definition.get("track", "FOUNDATION"), "course_id": course_id(lab_id), "exercise_type": definition.get("exercise_type", "SQL"),

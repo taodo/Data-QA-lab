@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "lab_024_fabric_schema",
+  "title": "Detect schema drift before publication",
+  "requirement": "Return one non-negative integer column named violation_count. The reported provider schema is evidence, separate from the local typed snapshot. cloud_expected_schema is the independently defined contract. FULL JOIN on dataset and column_name catches missing and unexpected fields; compare data_type exactly. Add the number of duplicate dataset/column groups. A float declaration for exact money violates the contract even if the current local NUMERIC rows look correct. Reported types are data; the importer never executes DDL from them.",
+  "difficulty": "intermediate",
+  "pipeline_id": "orders_v1",
+  "available_fault_ids": [
+    "cloud_schema_type",
+    "cloud_schema_missing",
+    "cloud_schema_extra"
+  ],
+  "learning_objectives": [
+    "Detect schema drift before publication",
+    "Separate execution, quality and incomplete evidence."
+  ]
+}

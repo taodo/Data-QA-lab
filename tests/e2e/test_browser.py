@@ -283,8 +283,8 @@ class BrowserTests(unittest.TestCase):
         expect(self.page.locator('.course-library .course-card')).to_have_count(1)
         self.page.locator('.course-library .course-card-link').click()
         expect(self.page.locator('.course-detail-hero h1')).to_have_text('Microsoft Fabric')
-        expect(self.page.locator('.course-detail-hero')).to_contain_text('not available yet')
-        expect(self.page.get_by_role('button',name='Start learning')).to_have_count(0)
+        expect(self.page.locator('.lesson-card')).to_have_count(3)
+        expect(self.page.get_by_role('button',name='Start learning',exact=False)).to_be_visible()
         self.page.reload()
         expect(self.page.locator('.course-detail-hero h1')).to_have_text('Microsoft Fabric')
         self.page.go_back();expect(self.page.locator('.course-library .course-card')).to_have_count(1)
@@ -426,3 +426,86 @@ class BrowserTests(unittest.TestCase):
         self.page.locator('.session-row .secondary').first.click()
         expect(self.page).to_have_url(__import__('re').compile('/courses/api-testing/lessons/'))
         self.page.reload();self.idle();expect(self.page.locator('.lesson-heading .badge')).to_have_text('Completed')
+
+    def test_task11_eight_lessons_grading_imports_language_and_resume(self):
+        from playwright.sync_api import expect
+        from backend.app.learning import cloud
+        from backend.app.learning.cloud_content import CATALOG
+        self.page.goto(self.url+'/courses/fabric-testing')
+        self.page.get_by_label('Select language').select_option('ENG')
+        expect(self.page.locator('.lesson-card')).to_have_count(3)
+        for key,definition in CATALOG.items():
+            course=definition['course_id']
+            self.page.goto(self.url+f'/courses/{course}/lessons/{key}?new=1')
+            self.page.get_by_label('Mode',exact=True).wait_for();self.idle()
+            self.page.get_by_label('Mode',exact=True).select_option('SANDBOX')
+            self.page.get_by_label('Scenario',exact=True).select_option('clean')
+            self.page.locator('.work-column .primary').click()
+            editor=self.page.get_by_label('SQL editor',exact=True);editor.wait_for();self.idle()
+            expect(self.page.locator('.cloud-workspace')).to_contain_text('SIMULATED')
+            expect(self.page.locator('.cloud-statuses')).to_contain_text('NOT_RUN')
+            if key==cloud.IDS[0]:
+                self.page.get_by_text('Import JSON/CSV evidence',exact=True).click()
+                input=self.page.get_by_label('Evidence file',exact=True)
+                input.set_input_files({'name':'invalid.json','mimeType':'application/json','buffer':b'{"version":99}'})
+                self.page.get_by_role('button',name='Validate and import',exact=True).click();self.idle()
+                expect(self.page.locator('.notice.error').first).to_contain_text('Evidence validation')
+                input.set_input_files(ROOT/'examples/cloud-evidence-v1.json')
+                self.page.get_by_role('button',name='Validate and import',exact=True).click();self.idle()
+                expect(self.page.locator('.cloud-workspace > .section-title .badge')).to_have_text('IMPORTED')
+                expect(self.page.locator('.import-record')).to_have_count(1)
+                input.set_input_files(ROOT/'examples/cloud-snapshots-v1.csv')
+                self.page.get_by_role('button',name='Validate and import',exact=True).click();self.idle()
+                expect(self.page.locator('.import-record')).to_have_count(2)
+                self.page.get_by_role('button',name='Reset simulator',exact=True).click();self.idle()
+                expect(self.page.locator('.import-record')).to_have_count(2)
+            if key==cloud.IDS[4]:
+                for action in ('Reset simulator','Next batch','Next batch','Replay batch'):
+                    self.page.get_by_role('button',name=action,exact=True).click();self.idle()
+            if key==cloud.IDS[5]:
+                self.page.get_by_role('button',name='Recover publication',exact=True).click();self.idle()
+            editor.click();editor.press('ControlOrMeta+a');editor.fill(cloud.SOLUTIONS[key])
+            self.page.locator('#conclusion').fill('Reconciled actual run, data and contract evidence.')
+            if key==cloud.IDS[0]:
+                draft=editor.inner_text();route=self.page.url
+                self.page.get_by_label('Select language').select_option('VIE');self.idle()
+                expect(self.page.locator('.cloud-workspace h2')).to_have_text('Không gian evidence cloud')
+                self.page.reload();editor.wait_for();self.idle();self.assertEqual(editor.inner_text(),draft)
+                self.assertEqual(self.page.url,route)
+                self.page.get_by_label('Select language').select_option('ENG');self.idle()
+                self.page.screenshot(path=str(self.artifacts/'task11-evidence-desktop.png'),full_page=True)
+                self.page.set_viewport_size({'width':390,'height':844})
+                self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),390)
+                self.page.screenshot(path=str(self.artifacts/'task11-evidence-mobile.png'),full_page=True)
+                self.page.set_viewport_size({'width':1440,'height':1000})
+            self.page.get_by_role('button',name='Run SQL',exact=False).click();self.idle()
+            expect(self.page.locator('.query-result .badge').first).to_have_text('SUCCESS')
+            expect(self.page.locator('.cloud-statuses')).to_contain_text('PASS')
+            self.page.get_by_role('button',name='Submit check',exact=True).click();self.idle()
+            expect(self.page.locator('.lesson-heading .badge')).to_have_text('Completed')
+        self.page.goto(self.url+'/my-learning');self.idle()
+        expect(self.page.locator('.course-card')).to_have_count(3)
+        for course,count in [('fabric-testing',3),('adf-testing',3),('onelake-testing',2)]:
+            expect(self.page.locator(f'[data-course-id="{course}"] progress')).to_have_attribute('value',str(count))
+        self.page.goto(self.url+'/history');self.idle()
+        self.page.locator('.session-row .secondary').first.click()
+        expect(self.page).to_have_url(__import__('re').compile('/courses/onelake-testing/lessons/'))
+        self.page.reload();self.idle();expect(self.page.locator('.lesson-heading .badge')).to_have_text('Completed')
+
+    def test_task11_challenge_hints_reveal_and_no_completion(self):
+        from playwright.sync_api import expect
+        self.page.goto(self.url+'/courses/fabric-testing/lessons/lab_024_fabric_schema?new=1')
+        self.page.get_by_label('Select language').select_option('ENG');self.idle()
+        self.page.locator('.work-column .primary').click()
+        self.page.get_by_label('SQL editor',exact=True).wait_for();self.idle()
+        expect(self.page.get_by_label('Evidence file',exact=True)).to_be_disabled()
+        expect(self.page.get_by_role('button',name='Reset simulator',exact=True)).to_be_disabled()
+        expect(self.page.locator('.solution')).to_have_count(0)
+        self.page.get_by_role('button',name='Get a hint',exact=False).click();self.idle()
+        expect(self.page.locator('.challenge-answer')).to_contain_text('Compare field identity')
+        self.page.on('dialog',lambda dialog:dialog.accept())
+        self.page.get_by_role('button',name='Reveal',exact=False).click();self.idle()
+        expect(self.page.locator('.lesson-heading .badge')).to_have_text('Solution revealed')
+        expect(self.page.locator('.solution')).to_be_visible()
+        self.page.goto(self.url+'/my-learning');self.idle()
+        expect(self.page.locator('[data-course-id="fabric-testing"] progress')).to_have_attribute('value','0')

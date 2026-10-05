@@ -53,6 +53,12 @@ class Simulation(Input):
     action: Literal["RESET", "NEXT", "REPLAY", "RUN", "RECOVER"]
 
 
+class EvidenceImport(Input):
+    filename: str = Field(min_length=1, max_length=80)
+    file_format: Literal["json", "csv"]
+    content: str = Field(min_length=1, max_length=49152)
+
+
 class Login(Input):
     username: str = Field(min_length=3,max_length=32,pattern=r"^[A-Za-z0-9_]+$")
     password: str = Field(min_length=12,max_length=128)
@@ -96,7 +102,7 @@ class BodyLimit:
 
 
 def create_app(database_url=None):
-    app = FastAPI(title="Data QA Lab", version="1.3.0")
+    app = FastAPI(title="Data QA Lab", version="1.4.0")
     db = database_url or Settings.from_env().database_url
     gate = Lock()
     app.add_middleware(BodyLimit)
@@ -310,6 +316,17 @@ def create_app(database_url=None):
     def simulation(session_id: UUID, body: Simulation,user=Depends(writer), language: Language = "VIE"):
         owned("lab_sessions","session_id",session_id,user)
         return response(localize_session(mutate(service.simulate_session, db, session_id, body.action),language))
+
+    @app.post("/api/sessions/{session_id}/evidence-import")
+    def evidence_import(session_id: UUID, body: EvidenceImport,user=Depends(writer), language: Language = "VIE"):
+        owned("lab_sessions", "session_id", session_id, user)
+        try:
+            result = mutate(service.import_cloud_evidence, db, session_id, body.filename, body.file_format, body.content)
+        except LabStateError:
+            raise
+        except ValueError as exc:
+            return response({"error": {"code": "EVIDENCE_INVALID", "detail": str(exc)}}, 422)
+        return response(localize_session(result, language))
 
     @app.post("/api/sessions/{session_id}/submit")
     def submit(session_id: UUID, body: Submit,user=Depends(writer), language: Language = "VIE"):

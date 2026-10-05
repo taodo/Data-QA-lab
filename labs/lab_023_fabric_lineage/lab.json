@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "lab_023_fabric_lineage",
+  "title": "Trace Fabric runs and dataset lineage",
+  "requirement": "Return one non-negative integer column named violation_count. A run ID connects execution evidence to published data. Activity dependency IDs must resolve inside the same run. A successful activity with an orphaned Target run ID is not traceable. This lesson scores activities without a known run/state/source/target, unresolved or unsuccessful dependencies, and Target rows whose run ID is absent. Each activity or Target row counts once in each applicable rule; UNKNOWN is an evidence gap, not a fabricated success.",
+  "difficulty": "intermediate",
+  "pipeline_id": "orders_v1",
+  "available_fault_ids": [
+    "cloud_orphan_run",
+    "cloud_dependency_missing",
+    "cloud_unknown_run"
+  ],
+  "learning_objectives": [
+    "Trace Fabric runs and dataset lineage",
+    "Separate execution, quality and incomplete evidence."
+  ]
+}

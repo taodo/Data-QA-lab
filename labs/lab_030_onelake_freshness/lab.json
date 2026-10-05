@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "lab_030_onelake_freshness",
+  "title": "Check shortcut reference freshness at a fixed clock",
+  "requirement": "Return one non-negative integer column named violation_count. This lesson models referenced-dataset evidence, not real shortcut resolution. FULL JOIN required and observed references by dataset_id/reference_id. Count missing/unexpected references, NULL observed_at, future timestamps or age strictly greater than SLA minutes; one joined row counts once. Exactly 60 minutes is fresh for a 60-minute SLA; one microsecond older is stale. Use context.as_of, never NOW(). A completed run can reference stale data, and missing capture time cannot establish freshness.",
+  "difficulty": "intermediate",
+  "pipeline_id": "orders_v1",
+  "available_fault_ids": [
+    "cloud_reference_stale",
+    "cloud_reference_missing",
+    "cloud_reference_null",
+    "cloud_reference_future"
+  ],
+  "learning_objectives": [
+    "Check shortcut reference freshness at a fixed clock",
+    "Separate execution, quality and incomplete evidence."
+  ]
+}

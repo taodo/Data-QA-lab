@@ -34,7 +34,20 @@ already contains that base. Existing learner PostgreSQL data and accounts remain
 
 - Repository/branch/runtime checked; declared project test/e2e dependencies installed
   in D:\Data-QA-Lab\.venv. Pip cache and test temp directories are on D.
-- Implementation pending; no implementation checks claimed yet.
+- 11.1–11.3 runtime/contracts, eight bilingual lessons and independent graders
+  implemented. 11.4 evidence/import UI and release regression are implemented;
+  final verification continues.
+- Observed: 53 unit tests PASS; six real PostgreSQL cloud integration tests PASS
+  (356 seconds); production frontend build PASS. Logs under the pre-approval
+  evidence directory below. Later fixture/NULL/Windows reload changes are covered
+  by the ongoing full regression run, not assumed verified by the earlier run.
+- Browser flow completed all eight lessons including JSON/CSV imports, ENG/VIE,
+  drafts, mobile and correct-course resume. Separate challenge/reveal test failed
+  only on expected label (UI says 'Solution revealed'); correcting assertion.
+- Native Windows deep-link fallback fixed by normalizing path separators. Test
+  dependencies were missing locally and have now been installed from declarations.
+- Pending: complete full PostgreSQL/browser regression, Docker packaging/restart,
+  source ZIP verification, push final code and open PR. Do not merge.
 - Pre-approval evidence: data/generated/task11-review-20261005/REVIEW.md.
 
 ## Resume

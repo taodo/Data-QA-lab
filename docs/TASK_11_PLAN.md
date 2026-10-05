@@ -1,6 +1,7 @@
 # Task 11 proposal — Microsoft cloud data QA foundations
 
-Status: proposed; implementation awaits review of this plan. The user's approval
+Status: core 11.1–11.4 approved on 2026-10-05 and implementation in progress;
+see TASK_11.md and TASK_11_PROGRESS.md. Stage 11.5 remains proposed. The user's approval
 of Task 10 authorizes its merge and preparation of this next plan, not deployment
 or provisioning of cloud services.
 

@@ -7,7 +7,7 @@ from uuid import UUID, uuid4
 
 from backend.app.learning.content import LAB_ID
 from backend.app.learning.lessons import CATALOG, course_id
-from backend.app.learning import etl, http_exercises
+from backend.app.learning import etl, http_exercises, cloud
 from backend.app.learning.profiles import PROFILES
 from backend.app.learning.contracts import LabStateError, normalize_sql, violation_count
 from backend.app.learning.sql_runtime import run_sql
@@ -101,6 +101,7 @@ def inspect_session(database_url, session_id):
         counts = connection.execute("SELECT (SELECT COUNT(*) FROM metadata.lab_queries WHERE session_id=%s), (SELECT COUNT(*) FROM metadata.lab_submissions WHERE session_id=%s)", (session_id,session_id)).fetchone()
         simulation = None
         etl_simulation = etl.state(connection,session["snapshot_schema"]) if session["lab_id"] in etl.SPECS else None
+        cloud_evidence = cloud.state(connection, session["snapshot_schema"], session["lab_id"]) if session["lab_id"] in cloud.IDS else None
         if session["lab_id"]=="lab_010_incremental":
             from backend.app.learning.advanced_workspace import execute
             schema=session["snapshot_schema"]
@@ -116,6 +117,25 @@ def inspect_session(database_url, session_id):
     payload["queries"] = [dict(zip(("query_id", "sql", "result", "executed_at"), row, strict=True))
                           for row in reversed(queries)]
     payload["query_count"],payload["submission_count"] = counts
+    if cloud_evidence is not None:
+        # An evidence import/action invalidates earlier checks. Do not reuse their PASS.
+        latest_step = cloud_evidence["runs"][-1].get("ended_at") if cloud_evidence["runs"] else None
+        changed_at = max(cloud_evidence["captured_at"], latest_step or cloud_evidence["captured_at"])
+        if queries and queries[0][3] >= changed_at:
+            data = queries[0][2]
+            if data["status"] == "ERROR":
+                cloud_evidence["quality_status"] = "ERROR"
+            elif cloud_evidence["evidence_status"] == "NOT_VERIFIED":
+                cloud_evidence["quality_status"] = "NOT_VERIFIED"
+            elif data.get("columns") == ["violation_count"] and len(data.get("rows", [])) == 1:
+                try:
+                    value = int(data["rows"][0][0])
+                    if value >= 0:
+                        cloud_evidence["quality_status"] = "PASS" if value == 0 else "FAIL"
+                except (ValueError, TypeError):
+                    pass
+        cloud_evidence["quality_scope"] = "learner_check"
+        payload["cloud_evidence"] = cloud_evidence
     if etl_simulation is not None:
         payload["etl_simulation"]=etl_simulation
     if simulation is not None:
@@ -200,9 +220,14 @@ def submit_solution(database_url, session_id, query, conclusion):
                 cases.append({"case":variant,"status":"ERROR","count":None})
             continue
         result = run_sql(database_url, session["snapshot_schema"], query, variant)
-        oracle = run_sql(database_url, session["snapshot_schema"], profile.solution, variant)
+        if session["lab_id"] in cloud.IDS:
+            expected = cloud.expected_count(variant)
+            oracle = None
+        else:
+            oracle = run_sql(database_url, session["snapshot_schema"], profile.solution, variant)
         try:
-            expected = violation_count(oracle)
+            if oracle is not None:
+                expected = violation_count(oracle)
         except ValueError:
             cases.append({"case":variant,"status":"ERROR","count":None,"result":asdict(result)})
             continue
@@ -259,7 +284,11 @@ def simulate_session(database_url, session_id, action):
     from backend.app.learning.advanced_workspace import advance_simulation, execute
     with transaction(database_url) as connection:
         session = _get(connection, session_id)
-        if session["lab_id"] in etl.SPECS:
+        if session["lab_id"] in cloud.IDS:
+            if session["mode"] != "SANDBOX" or session["status"] != "ACTIVE":
+                raise LabStateError("Cloud controls need an active SANDBOX")
+            cloud.advance(connection, session["snapshot_schema"], session["scenario_id"], action)
+        elif session["lab_id"] in etl.SPECS:
             if session["mode"]!="SANDBOX" or session["status"]!="ACTIVE":
                 raise LabStateError("ETL controls need an active SANDBOX")
             etl.advance(connection,session["snapshot_schema"],session["scenario_id"],action)
@@ -271,3 +300,12 @@ def simulate_session(database_url, session_id, action):
                 raise LabStateError("Reset the simulation after 100 steps")
             advance_simulation(connection,session["snapshot_schema"],session["scenario_id"],action)
     return inspect_session(database_url,session_id)
+
+
+def import_cloud_evidence(database_url, session_id, filename, file_format, content):
+    with transaction(database_url) as connection:
+        session = _get(connection, session_id)
+        if session["lab_id"] not in cloud.IDS or session["mode"] != "SANDBOX" or session["status"] != "ACTIVE":
+            raise LabStateError("Import needs an active cloud SANDBOX")
+        cloud.import_file(connection, session["snapshot_schema"], filename, file_format, content)
+    return inspect_session(database_url, session_id)

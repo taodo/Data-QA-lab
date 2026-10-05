@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "lab_027_adf_watermark",
+  "title": "Watermarks, late arrivals and idempotent replay",
+  "requirement": "Return one non-negative integer column named violation_count. Source events arrive in persisted batches. A late update has an older updated_at but greater event_id; a timestamp-only watermark loses it. Visibility uses batch_no <= context.batch_no and updated_at <= fixed UTC as_of, including the exact boundary and excluding a future event. Select the greatest visible event_id per order. Return differing Source/Target FULL JOIN rows plus duplicated Target key groups. RESET starts batch 0; NEXT exposes batches; REPLAY repeats publication without duplicates under the clean policy.",
+  "difficulty": "intermediate",
+  "pipeline_id": "orders_v1",
+  "available_fault_ids": [
+    "cloud_skip_late",
+    "cloud_replay_duplicate",
+    "cloud_boundary_skip"
+  ],
+  "learning_objectives": [
+    "Watermarks, late arrivals and idempotent replay",
+    "Separate execution, quality and incomplete evidence."
+  ]
+}

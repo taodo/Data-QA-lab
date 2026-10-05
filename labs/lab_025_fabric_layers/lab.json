@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "lab_025_fabric_layers",
+  "title": "Reconcile Bronze, Silver and Gold snapshots",
+  "requirement": "Return one non-negative integer column named violation_count. cloud_target represents the published Gold order snapshot, at order_id grain. Source has event grain: choose the greatest event_id for each order among arrived batches and updated_at <= as_of. Compare Source→Bronze, Bronze→Silver and Silver→Target by key, customer, exact amount, timestamp and event ID. Sum each edge's differing FULL JOIN rows plus duplicated order-key groups in the three outputs. An equal-count key swap remains a defect; the score counts rule violations, not unique bad orders.",
+  "difficulty": "intermediate",
+  "pipeline_id": "orders_v1",
+  "available_fault_ids": [
+    "cloud_layer_swap",
+    "cloud_layer_amount",
+    "cloud_layer_duplicate"
+  ],
+  "learning_objectives": [
+    "Reconcile Bronze, Silver and Gold snapshots",
+    "Separate execution, quality and incomplete evidence."
+  ]
+}
