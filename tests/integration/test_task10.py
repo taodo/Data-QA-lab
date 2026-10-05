@@ -86,6 +86,16 @@ class Task10IntegrationTests(unittest.TestCase):
                         DB, s["session_id"], "SELECT * FROM metadata.accounts"
                     )
                     self.assertEqual(denied["status"], "ERROR")
+                    if key in {
+                        "lab_014_etl_mapping",
+                        "lab_015_etl_transform",
+                        "lab_016_etl_quarantine",
+                    }:
+                        simulate_session(DB, s["session_id"], "RUN")
+                        self.assertEqual(
+                            query_session(DB, s["session_id"], solution)["rows"],
+                            (("0",),),
+                        )
 
     def test_recovery_replay_and_other_session_are_actual_and_isolated(self):
         a = self.session("lab_018_etl_recovery", "etl_failed")
@@ -122,6 +132,7 @@ class Task10IntegrationTests(unittest.TestCase):
                         q["rows"], [[str(http.expected_count(key, scenario))]]
                     )
                     self.assertGreater(q["http"]["request_count"], 0)
+                    self.assertEqual(len(q["http"]["expected"]), 5)
                     if key == http.IDS[2] and scenario == "clean":
                         self.assertEqual(
                             [r["status"] for r in q["http"]["trace"]],

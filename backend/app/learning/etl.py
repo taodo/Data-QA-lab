@@ -233,6 +233,18 @@ def advance(c, s, policy, action):
             execute(c, s, "UPDATE {s}.etl_context SET batch_no=LEAST(batch_no+1,3)")
         _load(c, s, policy)
     elif action in ("RUN", "RECOVER"):
+        if action == "RUN" and lab_id in {
+            "lab_014_etl_mapping",
+            "lab_015_etl_transform",
+            "lab_016_etl_quarantine",
+        }:
+            # Rebuild outputs from Source while retaining earlier step evidence.
+            for table in ("etl_target", "etl_rejects"):
+                c.execute(
+                    sql.SQL("TRUNCATE {}.{}").format(
+                        sql.Identifier(s), sql.Identifier(table)
+                    )
+                )
         execute(
             c,
             s,

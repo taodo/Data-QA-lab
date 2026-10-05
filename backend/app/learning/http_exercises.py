@@ -434,6 +434,7 @@ def run(c, s, lab_id, text, variant="clean", persist=False):
             "path": "/orders",
             "trace": trace,
             "records": records,
+            "expected": expected,
             "target": target,
             "request_count": len(trace),
             "execution_status": "SUCCESS"
