@@ -62,3 +62,19 @@ catch implicit date casts. All other query sessions explicitly use UTC.
 Host/Origin/body/mutation guards, and requires an ACTIVE incremental SANDBOX. It
 never accepts learner DML, schema identifiers or an arbitrary batch. Simulation
 updates only the owned snapshot in one transaction and is bounded to 100 steps.
+
+## Task 9 account boundary
+
+Learner HTTP access additionally requires a live cookie session and ownership of
+its session/run/fault. Mutations verify a per-session CSRF header and same origin;
+pre-login JSON actions require a custom intent header. The shared teaching run
+is read-only; personal lesson snapshots and private pipeline runs retain the same
+restricted SQL roles, allowlists, watchdog and result bounds. Account tables are
+never granted to learner SQL roles. CLI initialization/import/recovery and direct
+DB credentials are trusted operator capabilities, not learner endpoints.
+
+argon2-cffi supplies Argon2id hashing and verification; opaque cookie tokens are
+random and only their digest is persisted. Password changes/recovery revoke login
+sessions. Local HTTP cookies use HttpOnly/SameSite=Lax, with Secure on HTTPS.
+Do not expose this local installation publicly without a separately reviewed
+hosting/TLS/operator-access plan. No online deployment is part of Task 9.

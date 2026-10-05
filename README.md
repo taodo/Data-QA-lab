@@ -4,10 +4,11 @@ Interactive Data Pipeline Testing & Learning Platform. The local V1 runs a real 
 
 **Local browser app: six foundation + seven advanced ENG/VIE lessons, real SQL execution and deterministic grading.**
 
-Task 8 review branch: `feature/task-8-advanced-labs`. Its seven new lessons cover
-JOIN grain, latest versions, UTC days, incremental/replay/late arrivals, freshness
-and SCD Type 1/2. See [Task 8](docs/TASK_8.md). Until task approval/merge, use that
-branch to review the extension; `feature/develop` remains the approved V1.
+Task 8 is approved and merged. Task 9 review branch:
+`feature/task-9-learning-platform` — course browsing, subject pages, personal My
+Learning and real local signup/login. See [Task 9](docs/TASK_9.md) for updating,
+retaining legacy history and operator password recovery. Keep this branch until
+Task 9 is approved for merge; `feature/develop` contains the approved Task 8.
 
 ## Start V1 on D:\Data-QA-Lab
 
@@ -22,7 +23,7 @@ docker compose up -d --build --wait --wait-timeout 180
 Start-Process 'http://127.0.0.1:8000'
 ```
 
-Select ENG/VIE, open a lesson, follow instructions, run SQL, inspect evidence,
+On Task 9, select ENG/VIE, browse the SQL course, sign up or log in, open a lesson, follow instructions, run SQL, inspect evidence,
 request hints and submit. Challenge hides the defect; Sandbox offers clean and
 faulty data. Sessions, grades and history persist through restart. A fresh setup
 creates 1,000 deterministic orders; existing usable runs are retained. The first
@@ -31,7 +32,7 @@ build needs internet; the built learning app uses local assets and no AI API.
 Lessons: SELECT/WHERE business rules, NULLs, duplicate keys, completeness,
 exact calculations and combined order/day reconciliation, followed by JOIN/CTE/window
 checks, UTC boundaries, actual session batch simulation, freshness and SCD history.
-Filter the catalog by track. Incremental Sandbox offers reset/next/replay controls;
+The course syllabus groups lessons into five chapters with topic/level/search filters. Incremental Sandbox offers reset/next/replay controls;
 its fixed-clock synthetic data and logs persist with the learning session.
 
 See [Windows/D-drive guide](docs/V1_GUIDE.md), [SQL boundary](docs/SQL_SECURITY.md)

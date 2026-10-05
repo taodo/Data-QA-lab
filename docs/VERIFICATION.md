@@ -93,3 +93,17 @@ checks completed history plus an incremental timeline across restart.
 
 Final CI results are recorded in TASK_8.md; local PostgreSQL/browser execution is
 unavailable in the remote editor environment, so those results must come from CI.
+
+## Task 9 verification coverage
+
+44 unit tests include honest public course availability and authentication gates.
+46 PostgreSQL scenarios cover the earlier grading/permissions checks plus durable
+local accounts, two-account authorization, CSRF/origin/intent checks, password
+rotation/recovery, expiry, throttling and explicit legacy import with retained SQL.
+The first complete PostgreSQL run on Task 9 passed at commit `c635e69`.
+
+Seven browser scenarios retain all 13 real lesson completions and add public course
+search/routes/filters, real signup/login/My Learning, two-account drafts and cross-tab
+account changes. Docker smoke also authenticates and creates private runs, then
+verifies account/progress/history and simulation retention after restart. Final
+browser/CI result is recorded in TASK_9.md after the latest commit passes.

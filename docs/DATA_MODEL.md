@@ -65,3 +65,18 @@ scenario CHECK allowlist; no new metadata columns are needed. Existing session r
 already store lab ID, run ID and owned snapshot schema. Foundation
 sessions retain their original tables; query copies discover and validate the exact
 dataset set before granting SELECT.
+
+## Task 9 local accounts and ownership
+
+`metadata.accounts` holds UUID, normalized unique username, display name, Argon2id
+hash, active flag and creation time. `account_sessions` holds SHA-256 cookie-token
+digest, account FK, CSRF token and UTC expiry. `auth_budgets` persists hashed IP/name
+budget keys and attempt windows; `course_enrollments` links accounts to the one
+currently runnable SQL course. `legacy_imports` records explicit operator imports.
+
+Nullable owner FKs on pipeline_runs/lab_sessions/fault_runs preserve earlier rows.
+NULL is unassigned operator/legacy work, not a public learner. API principals are
+required and owner checks precede inspection or mutation. pipeline_runs.is_shared
+marks the read-only teaching baseline. Child stage/validation/query/submission
+history follows parent ownership; per-account progress covers all owned sessions.
+Browser drafts use account/session keys, without persisting credentials or cookies.

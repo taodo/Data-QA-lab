@@ -3,15 +3,29 @@ import json
 from pathlib import Path
 import sys
 import urllib.request
+import http.cookiejar
+from uuid import uuid4
 
 BASE = "http://127.0.0.1:8000"
 STATE = Path(".container-smoke-state.json")
+OPENER = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+CSRF = ''
+PASSWORD = 'container-smoke-test-passphrase'
+
+
+def authenticate(name, signup=False):
+    global CSRF
+    body={'username':name,'password':PASSWORD}
+    if signup: body['display_name']='Container smoke learner'
+    state=api('/auth/signup' if signup else '/auth/login',body)
+    CSRF=state['csrf_token']
+    assert api('/auth/me')['user']['username']==name
 
 
 def api(path, data=None):
     body = None if data is None else json.dumps(data).encode()
-    request = urllib.request.Request(BASE+"/api"+path,data=body,headers={"Content-Type":"application/json"} if body else {})
-    with urllib.request.urlopen(request,timeout=60) as response:
+    request = urllib.request.Request(BASE+"/api"+path,data=body,headers={"Content-Type":"application/json","X-DQA-Intent":"1","X-CSRF-Token":CSRF} if body is not None else {})
+    with OPENER.open(request,timeout=60) as response:
         return json.load(response)
 
 
@@ -25,17 +39,25 @@ def main():
         assert all("solution_sql" not in lesson and "hints" not in lesson for lesson in lessons)
     if len(sys.argv)>1 and sys.argv[1]=="resume":
         previous=json.loads(STATE.read_text())
+        authenticate(previous["username"])
         session=api("/sessions/"+previous["session_id"])
         assert session["status"]=="COMPLETED"
         assert session["pipeline_run_id"]==previous["pipeline_run_id"]
         assert len(session["queries"])==1 and len(session["submissions"])==1
         assert len(api("/runs"))==previous["run_count"]
+        assert api("/enrollments")[0]["course_id"]=="sql-data-qa"
+        assert any(p["lab_id"]=="lab_001_record_count" and p["completed"] for p in api("/progress"))
         incremental=api("/sessions/"+previous["incremental_id"])
         assert incremental["simulation"]["step_count"]==2
         assert incremental["simulation"]["steps"][-1]["target_rows"]==2
         assert incremental["simulation"]["as_of"]==previous["as_of"]
         print("Container restart retained completed session, SQL history and baseline.")
         return
+    name="smoke_"+uuid4().hex[:16]
+    authenticate(name,True)
+    assert api("/progress")==[]
+    own=api("/runs",{})
+    assert own["execution_status"]=="SUCCESS"
     session=api("/sessions",{"lab_id":"lab_001_record_count","mode":"CHALLENGE"})
     assert "scenario_id" not in session and "solution_sql" not in session
     sid=session["session_id"]
@@ -50,7 +72,7 @@ def main():
         incremental=api(f"/sessions/{inc}/simulation",{"action":action})
     assert incremental["simulation"]["step_count"]==2
     assert incremental["simulation"]["steps"][-1]["target_rows"]==2
-    STATE.write_text(json.dumps({"session_id":sid,"pipeline_run_id":session["pipeline_run_id"],"run_count":len(api("/runs")),"incremental_id":inc,"as_of":incremental["simulation"]["as_of"]}))
+    STATE.write_text(json.dumps({"username":name,"session_id":sid,"pipeline_run_id":session["pipeline_run_id"],"run_count":len(api("/runs")),"incremental_id":inc,"as_of":incremental["simulation"]["as_of"]}))
     print("Packaged UI/API, thirteen bilingual lessons and restricted SQL grading passed.")
 
 

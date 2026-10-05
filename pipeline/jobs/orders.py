@@ -30,13 +30,13 @@ class PipelineStageError(RuntimeError):
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
-def _record_run_start(database_url: str, run_id: UUID) -> None:
+def _record_run_start(database_url: str, run_id: UUID, owner_id=None) -> None:
     with transaction(database_url) as connection:
         connection.execute(
             """INSERT INTO metadata.pipeline_runs
-               (run_id, pipeline_id, execution_status, data_quality_status, started_at)
-               VALUES (%s, %s, 'RUNNING', 'NOT_RUN', %s)""",
-            (run_id, PIPELINE_ID, _utcnow()),
+               (run_id, pipeline_id, execution_status, data_quality_status, started_at, owner_id)
+               VALUES (%s, %s, 'RUNNING', 'NOT_RUN', %s, %s)""",
+            (run_id, PIPELINE_ID, _utcnow(), owner_id),
         )
 
 def _record_stage(database_url: str, run_id: UUID, name: str, status: str,
@@ -124,9 +124,9 @@ STAGE_FUNCTIONS: tuple[tuple[str, Callable], ...] = (
     ("GOLD", _gold), ("TARGET", _target),
 )
 
-def run_orders_pipeline(database_url: str, run_id: UUID | None = None) -> RunSummary:
+def run_orders_pipeline(database_url: str, run_id: UUID | None = None, owner_id=None) -> RunSummary:
     current_run_id = run_id or uuid4()
-    _record_run_start(database_url, current_run_id)
+    _record_run_start(database_url, current_run_id, owner_id)
     outcomes = []
     for name, stage in STAGE_FUNCTIONS:
         started_at = _utcnow()

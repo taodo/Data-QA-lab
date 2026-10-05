@@ -1,9 +1,9 @@
 # Task 9 proposal — Learning platform UI and local accounts
 
-Status: proposed for user review, not approved for implementation. Task 8 remains
-on its review branch. After Task 8 approval, merge it into `feature/develop`.
-After this plan is approved, create `feature/task-9-learning-platform` from the
-updated develop branch. All four parts below belong to that Task 9 branch.
+Status: approved for implementation on 2026-10-04. Task 8 merged into
+`feature/develop` at `973fed8e5cbc10551c2b274b49fcddf88fea06c9`.
+All four parts are implemented on `feature/task-9-learning-platform` and await
+completed-task review before merge. See [delivery and operation](TASK_9.md).
 
 ## Goal and user flow
 

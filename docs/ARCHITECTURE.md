@@ -40,3 +40,17 @@ it records a learner submission verdict without updating pipeline status.
 Source, Bronze, Silver and order-detail Target: one row per order_id.
 Gold and daily-sales Target: one row per UTC order_date.
 Gold count checks compare SUM(order_count); revenue checks compare decimal daily totals. Never compare aggregated row counts to source order counts.
+
+## Task 9 learning platform
+
+Public subject/course/chapter content is projected from the existing bilingual
+lesson catalog. Native browser history supplies reloadable routes; no routing
+package is added. AccountProvider discovers the server cookie session, keeps the
+CSRF token in memory and synchronizes account changes between tabs. Course pages,
+My Learning and the lesson player consume the same real API and PostgreSQL graders.
+
+Server session principals and ownership checks protect every private API before
+calling trusted pipeline/fault/learning services. Shared baseline reads are distinct
+from private learner mutations. Password hashing uses argon2-cffi; PostgreSQL owns
+session expiry/revocation, enrollments and history. The packaged app remains one
+local process with the existing mutation gate and SQL restriction boundary.

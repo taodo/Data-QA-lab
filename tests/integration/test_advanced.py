@@ -88,7 +88,13 @@ class AdvancedIntegrationTests(unittest.TestCase):
         sid=sandbox["session_id"]
         for query in ("SELECT * FROM metadata.lab_sessions","SELECT * FROM source_orders",f"SELECT * FROM {self.schema(other['session_id'])}.freshness_observations","DELETE FROM incremental_target","SELECT * FROM target_customer_history"):
             self.assertEqual(query_session(DB,sid,query)["status"],"ERROR",query)
-        with TestClient(create_app(DB)) as client:
+        from tests.auth_helpers import signed_client
+        from backend.app.persistence.database import transaction
+        client, user = signed_client(DB)
+        with transaction(DB) as connection:
+            for item in (sandbox, challenge, other):
+                connection.execute('UPDATE metadata.lab_sessions SET owner_id=%s WHERE session_id=%s',(user['user_id'],item['session_id']))
+        with client:
             path=f"/api/sessions/{sid}/simulation"
             self.assertEqual(client.post(path,json={"action":"NEXT","sql":"DELETE FROM incremental_target"}).status_code,422)
             self.assertEqual(client.post(path,json={"action":"DROP"}).status_code,422)
