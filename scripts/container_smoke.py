@@ -77,14 +77,14 @@ def main():
         incremental=api(f"/sessions/{inc}/simulation",{"action":action})
     assert incremental["simulation"]["step_count"]==2
     assert incremental["simulation"]["steps"][-1]["target_rows"]==2
-    from backend.app.learning.profiles import PROFILES
     new_sessions=[]
     for lab_id in ('lab_018_etl_recovery','lab_022_api_ingestion'):
+        check_plan=(Path(__file__).resolve().parents[1]/'examples'/(lab_id+('.json' if lab_id=='lab_022_api_ingestion' else '.sql'))).read_text()
         created=api('/sessions',{'lab_id':lab_id,'mode':'SANDBOX','scenario':'clean'})
         new_id=created['session_id'];new_sessions.append(new_id)
-        query=api('/sessions/'+new_id+'/query',{'sql':PROFILES[lab_id].solution})
+        query=api('/sessions/'+new_id+'/query',{'sql':check_plan})
         assert query['status']=='SUCCESS' and query['rows']==[['0']]
-        assert api('/sessions/'+new_id+'/submit',{'sql':PROFILES[lab_id].solution,'conclusion':'Verified actual execution and data.'})['status']=='PASS'
+        assert api('/sessions/'+new_id+'/submit',{'sql':check_plan,'conclusion':'Verified actual execution and data.'})['status']=='PASS'
     STATE.write_text(json.dumps({'new_sessions':new_sessions,"username":name,"session_id":sid,"pipeline_run_id":session["pipeline_run_id"],"run_count":len(api("/runs")),"incremental_id":inc,"as_of":incremental["simulation"]["as_of"]}))
     print("Packaged UI/API, twenty-two bilingual lessons and restricted SQL grading passed.")
 
