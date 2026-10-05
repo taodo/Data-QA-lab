@@ -143,3 +143,14 @@ The integration test initializes only Data QA Lab schemas, reseeds its source ta
 The Windows connection uses `127.0.0.1` because Compose publishes PostgreSQL on the IPv4 loopback interface. The database adapter also applies a five-second connection timeout so an unreachable host fails promptly instead of leaving a pipeline command waiting indefinitely.
 
 See `docs/TASK_1.md`, `docs/TASK_2.md`, `docs/TASK_3.md`, `docs/TASK_4.md`, `docs/TASK_5.md`, `docs/ARCHITECTURE.md`, `docs/DATA_MODEL.md`, `docs/BRANCHING.md` and `docs/WINDOWS_D_DRIVE.md`.
+
+## Task 10: ETL and API courses (v1.3.0)
+
+The platform now offers 22 ENG/VIE guided labs: 13 SQL, 5 ETL and 4 API.
+ETL exercises use isolated PostgreSQL Source/Target/reject tables with batch,
+replay and recovery controls. API exercises run real local HTTP requests, JSON
+contract checks, pagination/retries and PostgreSQL ingestion replay. Course
+progress, history and resume routes remain account scoped.
+
+See [Task 10 review instructions](docs/TASK_10.md) for Windows/D-drive commands,
+lesson contracts, limits and verification evidence.

@@ -17,7 +17,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from backend.app.config import Settings
 from faults.contracts import FaultStateError
 from backend.app.learning.contracts import LabStateError, SqlSecurityError
-from backend.app.learning.lessons import CATALOG, lesson, localize_session
+from backend.app.learning.lessons import CATALOG, lesson, localize_session, course_id
 from backend.app.learning import service
 from backend.app.persistence.database import connect, transaction
 from backend.app import accounts, courses as curriculum
@@ -50,7 +50,7 @@ class Fault(Input):
 
 
 class Simulation(Input):
-    action: Literal["RESET", "NEXT", "REPLAY"]
+    action: Literal["RESET", "NEXT", "REPLAY", "RUN", "RECOVER"]
 
 
 class Login(Input):
@@ -96,7 +96,7 @@ class BodyLimit:
 
 
 def create_app(database_url=None):
-    app = FastAPI(title="Data QA Lab", version="1.2.0")
+    app = FastAPI(title="Data QA Lab", version="1.3.0")
     db = database_url or Settings.from_env().database_url
     gate = Lock()
     app.add_middleware(BodyLimit)
@@ -248,7 +248,7 @@ def create_app(database_url=None):
 
     @app.post("/api/courses/{course_id}/enroll")
     def enroll(course_id: str,user=Depends(writer)):
-        if course_id!="sql-data-qa":
+        if not (curriculum.course(course_id) or {}).get("available"):
             raise HTTPException(409,"COURSE_PLANNED")
         def save_enrollment():
             with transaction(db) as connection:
@@ -278,13 +278,13 @@ def create_app(database_url=None):
             raise HTTPException(404,"NOT_FOUND")
         with connect(db) as connection:
             rows = connection.execute("SELECT session_id,lab_id,mode,status,hints_used,started_at,completed_at FROM metadata.lab_sessions WHERE owner_id=%s AND (%s::text IS NULL OR lab_id=%s) ORDER BY started_at DESC,session_id DESC LIMIT %s OFFSET %s",(user["user_id"],lab_id,lab_id,limit,offset)).fetchall()
-        return response([{**dict(zip(("session_id", "lab_id", "mode", "status", "hints_used", "started_at", "completed_at"), row, strict=True)),"title":CATALOG[row[1]][language]["title"]} for row in rows])
+        return response([{**dict(zip(("session_id", "lab_id", "mode", "status", "hints_used", "started_at", "completed_at"), row, strict=True)),"title":CATALOG[row[1]][language]["title"],"course_id":curriculum.lesson_course(row[1])} for row in rows])
 
     @app.get("/api/progress")
     def progress(user=Depends(principal)):
         with connect(db) as connection:
             rows = connection.execute("SELECT lab_id,COUNT(*),BOOL_OR(status='COMPLETED') FROM metadata.lab_sessions WHERE owner_id=%s GROUP BY lab_id",(user["user_id"],)).fetchall()
-        return [{"lab_id": row[0], "attempts": row[1], "completed": row[2]} for row in rows]
+        return [{"lab_id": row[0], "course_id":curriculum.lesson_course(row[0]), "attempts": row[1], "completed": row[2]} for row in rows]
 
     @app.post("/api/sessions", status_code=201)
     def start(body: Start,user=Depends(writer), language: Language = "VIE"):

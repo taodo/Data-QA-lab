@@ -203,7 +203,9 @@ ALTER TABLE metadata.lab_sessions ADD CONSTRAINT lab_sessions_scenario_id_check 
                     'duplicate_order','wrong_net_amount','mixed_order_faults','daily_wrong',
                     'join_fanout','join_missing','latest_stale','latest_tie','utc_local_day','utc_missing',
                     'inc_append','inc_event_watermark','fresh_stale','fresh_missing','fresh_failed',
-                    'scd1_stale','scd1_tie','scd2_overlap','scd2_two_current','scd2_missing')
+                    'scd1_stale','scd1_tie','scd2_overlap','scd2_two_current','scd2_missing',
+                    'etl_wrong_mapping','etl_missing','etl_rounding','etl_null_amount','etl_drop_reject','etl_accept_invalid','etl_append','etl_skip_late','etl_failed','etl_partial_publish',
+                    'api_missing_field','api_wrong_type','api_wrong_status','api_missing_page','api_duplicate_page','api_exhausted','api_timeout','api_ingest_missing','api_ingest_wrong','api_ingest_duplicate')
 );
 
 CREATE TABLE IF NOT EXISTS metadata.lab_queries (
@@ -262,3 +264,6 @@ CREATE TABLE IF NOT EXISTS metadata.legacy_imports (
     fault_count BIGINT NOT NULL,
     imported_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE metadata.course_enrollments DROP CONSTRAINT IF EXISTS course_enrollments_course_id_check;
+ALTER TABLE metadata.course_enrollments ADD CONSTRAINT course_enrollments_course_id_check CHECK (course_id IN ('sql-data-qa','etl-testing','api-testing'));

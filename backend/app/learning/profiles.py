@@ -37,3 +37,6 @@ PROFILES = {
 
 from backend.app.learning.advanced_profiles import SPECS
 PROFILES.update({key: Profile(*spec) for key, spec in SPECS.items()})
+from backend.app.learning import etl, http_exercises
+PROFILES.update({key:Profile(scenarios, ("etl_clean","etl_shifted",*scenarios), solution, etl.TABLES) for key,(scenarios,solution) in etl.SPECS.items()})
+PROFILES.update({key:Profile(scenarios,("api_clean","api_shifted",*scenarios),http_exercises.SOLUTIONS[key],http_exercises.TABLES) for key,scenarios in http_exercises.SCENARIOS.items()})

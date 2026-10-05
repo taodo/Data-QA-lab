@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "id": "lab_021_api_retry",
+  "title": "Bounded retries: 429, 503 and timeout",
+  "requirement": "The local service returns 429 then 503 before succeeding on attempt 3 for each page. Retry GET at most three times; transient attempts are evidence, not final defects. A permanent failure or timeout counts one final status violation plus missing keys. Inspect Retry-After and attempt evidence. Limits are fixed: 10 pages, 3 attempts/page, 50\u2013300 ms/request.",
+  "difficulty": "intermediate",
+  "pipeline_id": "orders_v1",
+  "available_fault_ids": [
+    "api_exhausted",
+    "api_timeout"
+  ],
+  "learning_objectives": [
+    "Bounded retries: 429, 503 and timeout",
+    "Use actual HTTP evidence to distinguish transport and data defects."
+  ]
+}

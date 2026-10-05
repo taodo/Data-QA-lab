@@ -1,6 +1,8 @@
 import os
 import unittest
-from backend.app.learning.profiles import PROFILES
+from backend.app.learning.profiles import PROFILES as ALL_PROFILES
+from backend.app.learning.http_exercises import IDS
+PROFILES={key:value for key,value in ALL_PROFILES.items() if key not in IDS}
 from backend.app.learning.service import start_session, submit_solution, inspect_session, query_session
 
 DB = os.getenv("DATA_QA_TEST_DATABASE_URL")

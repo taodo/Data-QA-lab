@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "id": "lab_020_api_pagination",
+  "title": "Pagination: prove every key arrived once",
+  "requirement": "A single successful page is not a complete dataset. Follow next_page to the end and compare distinct keys to api_expected; do not trust the API total alone. Count missing/unexpected keys plus duplicated response-key groups. Changing page_size must not change completeness.",
+  "difficulty": "intermediate",
+  "pipeline_id": "orders_v1",
+  "available_fault_ids": [
+    "api_missing_page",
+    "api_duplicate_page"
+  ],
+  "learning_objectives": [
+    "Pagination: prove every key arrived once",
+    "Use actual HTTP evidence to distinguish transport and data defects."
+  ]
+}

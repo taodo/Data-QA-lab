@@ -171,23 +171,34 @@ for key, definition in ADVANCED_CATALOG.items():
     definition["scenarios"] = ["clean", *SPECS[key][0]]
 
 
+from backend.app.learning.task10_content import CATALOG as TASK10_CATALOG, SCHEMA as TASK10_SCHEMA
+CATALOG.update(TASK10_CATALOG)
+SCHEMA.update(TASK10_SCHEMA)
+
+
+def course_id(lab_id):
+    return CATALOG[lab_id].get("course_id", "sql-data-qa")
+
+
 def lesson(lab_id, language="VIE"):
     if language not in LANGUAGES:
         raise ValueError("Unsupported language")
+    from backend.app.learning.profiles import PROFILES
     definition = CATALOG[lab_id]
     text = definition[language]
-    return {"id": lab_id, "language": language, "order": definition["order"],
+    position=definition["order"] - (13 if course_id(lab_id)=="etl-testing" else 18 if course_id(lab_id)=="api-testing" else 0)
+    return {"id": lab_id, "language": language, "order": position,
             "level": definition["level"], "minutes": definition["minutes"],
-            "track": definition.get("track", "FOUNDATION"),
+            "track": definition.get("track", "FOUNDATION"), "course_id": course_id(lab_id), "exercise_type": definition.get("exercise_type", "SQL"),
             "scenarios": definition["scenarios"],
-            "schema": {key:SCHEMA[key] for key in (SPECS[lab_id][3] if lab_id in SPECS else ("source_orders","target_orders","gold_daily_sales","target_daily_sales"))},
+            "schema": {key:SCHEMA[key] for key in PROFILES[lab_id].datasets},
             **{key: value for key, value in text.items() if key not in {"hints", "explanation"}}}
 
 
 def localize_session(payload, language):
     """Keep private fields excluded; translate only already-visible learner content."""
     definition = CATALOG[payload["lab_id"]][language]
-    result = {**payload, "language": language, "title": definition["title"],
+    result = {**payload, "language": language, "course_id":course_id(payload["lab_id"]), "exercise_type":CATALOG[payload["lab_id"]].get("exercise_type","SQL"), "title": definition["title"],
               "requirement": definition["requirement"], "learning_objectives": definition["objectives"],
               "hints": definition["hints"][:payload["hints_used"]]}
     if "explanation" in result:

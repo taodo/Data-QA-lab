@@ -7,9 +7,10 @@ from backend.app.learning.advanced_profiles import ADVANCED_TABLES, ADVANCED_VAR
 
 
 FOUNDATION_TABLES = ("source_orders", "target_orders", "gold_daily_sales", "target_daily_sales")
-TABLES = FOUNDATION_TABLES + ADVANCED_TABLES
+from backend.app.learning import etl, http_exercises
+TABLES = FOUNDATION_TABLES + ADVANCED_TABLES + etl.TABLES + http_exercises.TABLES
 VARIANTS = {"current", "clean", "clean_subset", "clean_zero", "missing", "swapped", "invalid_customer", "invalid_customer_last", "invalid_customer_two", "null_net_amount", "null_last", "null_two", "duplicate_order", "duplicate_last", "duplicate_twice", "duplicate_triple", "wrong_net_amount", "wrong_last", "wrong_two", "daily_wrong", "daily_missing", "mixed_order_faults"}
-VARIANTS |= ADVANCED_VARIANTS
+VARIANTS |= ADVANCED_VARIANTS | etl.VARIANTS | {"api_clean","api_shifted"} | {v for values in http_exercises.SCENARIOS.values() for v in values}
 
 
 def require_schema(schema: str):
@@ -20,6 +21,10 @@ def require_schema(schema: str):
 def create_session_snapshot(connection, schema, run_id, scenario, lab_id="lab_001_record_count"):
     from psycopg import sql
     require_schema(schema)
+    if lab_id in etl.SPECS:
+        return etl.create(connection,schema,lab_id,scenario)
+    if lab_id in http_exercises.IDS:
+        return http_exercises.create(connection,schema,lab_id)
     if lab_id in SPECS:
         from backend.app.learning.advanced_workspace import create_snapshot
         return create_snapshot(connection, schema, lab_id, scenario)
@@ -110,7 +115,16 @@ def snapshot_tables(connection, schema):
         "SELECT tablename FROM pg_tables WHERE schemaname=%s ORDER BY tablename", (schema,)).fetchall())
     if not names or not set(names) <= set(TABLES):
         raise SqlSecurityError("Workspace table allowlist does not match")
-    if "lab_context" in names:
+    if "etl_context" in names:
+        lab_id=etl.execute(connection,schema,"SELECT lab_id FROM {s}.etl_context").fetchall()
+        if len(lab_id)!=1 or lab_id[0][0] not in etl.SPECS or set(names)!=set(etl.TABLES):
+            raise SqlSecurityError("ETL workspace does not match")
+    elif "api_context" in names:
+        from psycopg import sql
+        rows=connection.execute(sql.SQL("SELECT lab_id FROM {}.api_context").format(sql.Identifier(schema))).fetchall()
+        if len(rows)!=1 or rows[0][0] not in http_exercises.IDS or set(names)!=set(http_exercises.TABLES):
+            raise SqlSecurityError("API workspace does not match")
+    elif "lab_context" in names:
         from psycopg import sql
         rows = connection.execute(sql.SQL("SELECT lab_id FROM {}.lab_context").format(sql.Identifier(schema))).fetchall()
         if len(rows)!=1 or rows[0][0] not in SPECS or set(names)!=set(SPECS[rows[0][0]][3]):
@@ -134,6 +148,11 @@ def populate_query_snapshot(connection, destination, snapshot, variant):
     if variant == "current":
         return
     tables = snapshot_tables(connection, destination)
+    if "etl_context" in tables:
+        lab_id=etl.execute(connection,destination,"SELECT lab_id FROM {s}.etl_context").fetchone()[0]
+        return etl.populate(connection,destination,lab_id,variant)
+    if "api_context" in tables:
+        raise ValueError("Use the HTTP grader for API exercises")
     if "lab_context" in tables:
         from backend.app.learning.advanced_workspace import populate
         lab_id=connection.execute(sql.SQL("SELECT lab_id FROM {}.lab_context").format(sql.Identifier(destination))).fetchone()[0]

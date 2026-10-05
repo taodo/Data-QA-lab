@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "id": "lab_017_etl_replay",
+  "title": "Run batches and prove replay is idempotent",
+  "requirement": "Sum latest-visible-version FULL JOIN differences (event_id and exact net_amount) and duplicated Target-key groups. Filter Source by current batch before ranking.",
+  "difficulty": "intermediate",
+  "pipeline_id": "orders_v1",
+  "available_fault_ids": [
+    "etl_append",
+    "etl_skip_late"
+  ],
+  "learning_objectives": [
+    "Observe actual Target changes across three batches and replay.",
+    "Design a reusable check that accepts clean data and finds defects."
+  ]
+}

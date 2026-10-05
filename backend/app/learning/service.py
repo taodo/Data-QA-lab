@@ -6,7 +6,8 @@ import secrets
 from uuid import UUID, uuid4
 
 from backend.app.learning.content import LAB_ID
-from backend.app.learning.lessons import CATALOG
+from backend.app.learning.lessons import CATALOG, course_id
+from backend.app.learning import etl, http_exercises
 from backend.app.learning.profiles import PROFILES
 from backend.app.learning.contracts import LabStateError, normalize_sql, violation_count
 from backend.app.learning.sql_runtime import run_sql
@@ -38,7 +39,7 @@ def _public(session):
         "session_id", "lab_id", "pipeline_run_id", "mode", "status", "hints_used",
         "started_at", "completed_at",
     )}
-    payload.update(title=text["title"], requirement=text["requirement"],
+    payload.update(course_id=course_id(session["lab_id"]), exercise_type=CATALOG[session["lab_id"]].get("exercise_type","SQL"), title=text["title"], requirement=text["requirement"],
                    practice_sql=text["practice_sql"],
                    learning_objectives=text["objectives"], datasets=profile.datasets,
                    result_contract="one non-negative integer column: violation_count",
@@ -82,7 +83,7 @@ def start_session(database_url, lab_id=LAB_ID, pipeline_run_id=None, mode="CHALL
             (session_id, lab_id, row[0], mode, scenario, schema, _now(),owner_id),
         )
         if owner_id is not None:
-            connection.execute("INSERT INTO metadata.course_enrollments (user_id,course_id) VALUES (%s,'sql-data-qa') ON CONFLICT DO NOTHING",(owner_id,))
+            connection.execute("INSERT INTO metadata.course_enrollments (user_id,course_id) VALUES (%s,%s) ON CONFLICT DO NOTHING",(owner_id,course_id(lab_id)))
     return inspect_session(database_url, session_id)
 
 
@@ -99,6 +100,7 @@ def inspect_session(database_url, session_id):
         ).fetchall()
         counts = connection.execute("SELECT (SELECT COUNT(*) FROM metadata.lab_queries WHERE session_id=%s), (SELECT COUNT(*) FROM metadata.lab_submissions WHERE session_id=%s)", (session_id,session_id)).fetchone()
         simulation = None
+        etl_simulation = etl.state(connection,session["snapshot_schema"]) if session["lab_id"] in etl.SPECS else None
         if session["lab_id"]=="lab_010_incremental":
             from backend.app.learning.advanced_workspace import execute
             schema=session["snapshot_schema"]
@@ -114,6 +116,8 @@ def inspect_session(database_url, session_id):
     payload["queries"] = [dict(zip(("query_id", "sql", "result", "executed_at"), row, strict=True))
                           for row in reversed(queries)]
     payload["query_count"],payload["submission_count"] = counts
+    if etl_simulation is not None:
+        payload["etl_simulation"]=etl_simulation
     if simulation is not None:
         payload["simulation"]=simulation
     return payload
@@ -144,8 +148,13 @@ def _active(database_url, session_id):
 
 def query_session(database_url, session_id, query):
     session = _active(database_url, session_id)
-    query = normalize_sql(query)
-    result = asdict(run_sql(database_url, session["snapshot_schema"], query))
+    if session["lab_id"] in http_exercises.IDS:
+        http_exercises.parse(query)
+        with transaction(database_url) as connection:
+            result=http_exercises.run(connection,session["snapshot_schema"],session["lab_id"],query,session["scenario_id"],persist=True)
+    else:
+        query = normalize_sql(query)
+        result = asdict(run_sql(database_url, session["snapshot_schema"], query))
     query_id = uuid4()
     with transaction(database_url) as connection:
         connection.execute(
@@ -170,12 +179,26 @@ def next_hint(database_url, session_id):
 
 def submit_solution(database_url, session_id, query, conclusion):
     session = _active(database_url, session_id)
-    query = normalize_sql(query)
+    if session["lab_id"] in http_exercises.IDS:
+        http_exercises.parse(query)
+    else:
+        query = normalize_sql(query)
     if not isinstance(conclusion, str) or not conclusion.strip() or len(conclusion.encode("utf-8")) > 4096:
         raise ValueError("A non-empty conclusion of at most 4 KiB is required")
     cases = []
     profile = PROFILES[session["lab_id"]]
     for variant in profile.variants:
+        if session["lab_id"] in http_exercises.IDS:
+            try:
+                with connect(database_url) as connection:
+                    data=http_exercises.run(connection,session["snapshot_schema"],session["lab_id"],query,variant,persist=True)
+                    connection.rollback()  # grading must retain the learner's actual Target
+                count=int(data["rows"][0][0])
+                expected=http_exercises.expected_count(session["lab_id"],variant)
+                cases.append({"case":variant,"status":"PASS" if count==expected else "FAIL","count":count,"result":data})
+            except (OSError,RuntimeError,ValueError):
+                cases.append({"case":variant,"status":"ERROR","count":None})
+            continue
         result = run_sql(database_url, session["snapshot_schema"], query, variant)
         oracle = run_sql(database_url, session["snapshot_schema"], profile.solution, variant)
         try:
@@ -236,10 +259,15 @@ def simulate_session(database_url, session_id, action):
     from backend.app.learning.advanced_workspace import advance_simulation, execute
     with transaction(database_url) as connection:
         session = _get(connection, session_id)
-        if session["lab_id"]!="lab_010_incremental" or session["mode"]!="SANDBOX" or session["status"]!="ACTIVE":
+        if session["lab_id"] in etl.SPECS:
+            if session["mode"]!="SANDBOX" or session["status"]!="ACTIVE":
+                raise LabStateError("ETL controls need an active SANDBOX")
+            etl.advance(connection,session["snapshot_schema"],session["scenario_id"],action)
+        elif session["lab_id"]!="lab_010_incremental" or session["mode"]!="SANDBOX" or session["status"]!="ACTIVE":
             raise LabStateError("Simulation needs an active incremental SANDBOX")
-        step=execute(connection,session["snapshot_schema"],"SELECT COALESCE(MAX(step_no),0) FROM {s}.incremental_steps").fetchone()[0]
-        if step>=100 and action!="RESET":
-            raise LabStateError("Reset the simulation after 100 steps")
-        advance_simulation(connection,session["snapshot_schema"],session["scenario_id"],action)
+        if session["lab_id"]=="lab_010_incremental":
+            step=execute(connection,session["snapshot_schema"],"SELECT COALESCE(MAX(step_no),0) FROM {s}.incremental_steps").fetchone()[0]
+            if step>=100 and action!="RESET":
+                raise LabStateError("Reset the simulation after 100 steps")
+            advance_simulation(connection,session["snapshot_schema"],session["scenario_id"],action)
     return inspect_session(database_url,session_id)
