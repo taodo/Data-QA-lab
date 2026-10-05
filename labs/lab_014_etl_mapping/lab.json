@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "id": "lab_014_etl_mapping",
+  "title": "Source-to-target mapping",
+  "requirement": "Count FULL JOIN rows with missing/unexpected order_id or customer_id different from the source reference lookup. One joined row counts once.",
+  "difficulty": "intermediate",
+  "pipeline_id": "orders_v1",
+  "available_fault_ids": [
+    "etl_wrong_mapping",
+    "etl_missing"
+  ],
+  "learning_objectives": [
+    "Resolve customer codes using a reference table, then reconcile keys and customer IDs.",
+    "Design a reusable check that accepts clean data and finds defects."
+  ]
+}

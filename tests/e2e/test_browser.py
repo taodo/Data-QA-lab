@@ -161,7 +161,8 @@ class BrowserTests(unittest.TestCase):
 
     def test_all_lessons_are_usable_through_the_browser(self):
         from playwright.sync_api import expect
-        from backend.app.learning.lessons import CATALOG
+        from backend.app.learning.lessons import CATALOG as ALL_CATALOG
+        CATALOG={k:v for k,v in ALL_CATALOG.items() if v.get("course_id","sql-data-qa")=="sql-data-qa"}
         from backend.app.learning.profiles import PROFILES
         self.page.goto(self.url+"/courses/sql-data-qa")
         self.page.locator(".lesson-card").first.wait_for()
@@ -367,3 +368,61 @@ class BrowserTests(unittest.TestCase):
         self.page.get_by_role('button',name='Change password',exact=True).click()
         expect(self.page.get_by_role('status')).to_contain_text('Password changed')
         other.close()
+
+    def test_task10_etl_api_courses_actual_grading_language_and_resume(self):
+        from playwright.sync_api import expect
+        from backend.app.learning.task10_content import CATALOG
+        from backend.app.learning.profiles import PROFILES
+        from backend.app.learning.http_exercises import IDS
+        self.page.goto(self.url+'/courses/etl-testing')
+        self.page.get_by_label('Select language').select_option('ENG')
+        expect(self.page.locator('.lesson-card')).to_have_count(5)
+        self.page.screenshot(path=str(self.artifacts/'task10-etl-course.png'),full_page=True)
+        for key,definition in CATALOG.items():
+            course=definition['course_id']
+            self.page.goto(self.url+f'/courses/{course}/lessons/{key}')
+            self.page.get_by_label('Mode',exact=True).wait_for()
+            self.idle()
+            self.page.get_by_label('Mode',exact=True).select_option('SANDBOX')
+            self.page.get_by_label('Scenario',exact=True).select_option('clean')
+            self.page.locator('.work-column .primary').click()
+            label='API test plan editor' if key in IDS else 'SQL editor'
+            editor=self.page.get_by_label(label,exact=True);editor.wait_for();self.idle()
+            if key=='lab_018_etl_recovery':
+                self.page.get_by_role('button',name='Recover load',exact=True).click();self.idle()
+                expect(self.page.locator('.etl-controls tbody tr')).to_have_count(2)
+            if key=='lab_017_etl_replay':
+                for name in ('Reset','Next batch','Replay batch'):
+                    self.page.get_by_role('button',name=name,exact=True).click();self.idle()
+                expect(self.page.locator('.etl-controls tbody tr')).to_have_count(2)
+            editor.click();editor.press('ControlOrMeta+a');editor.fill(PROFILES[key].solution)
+            self.page.locator('#conclusion').fill('Verified the actual source, transport and target contract.')
+            if key==IDS[3]:
+                draft=editor.inner_text();url=self.page.url
+                self.page.get_by_label('Select language').select_option('VIE');self.idle()
+                expect(editor).to_have_text(draft)
+                self.page.reload();editor.wait_for();self.idle();expect(editor).to_have_text(draft)
+                self.page.get_by_label('Select language').select_option('ENG');self.idle()
+                self.assertEqual(self.page.url,url)
+            self.page.get_by_role('button',name='Send HTTP & test' if key in IDS else 'Run SQL',exact=False).click();self.idle()
+            expect(self.page.locator('.query-result .badge').first).to_have_text('SUCCESS')
+            if key in IDS:
+                expect(self.page.locator('.http-evidence')).to_be_visible()
+                self.assertGreater(self.page.locator('.http-evidence tbody tr').count(),0)
+            self.page.get_by_role('button',name='Submit API test' if key in IDS else 'Submit check',exact=True).click();self.idle()
+            expect(self.page.locator('.lesson-heading .badge')).to_have_text('Completed')
+            if key==IDS[3]:
+                self.page.screenshot(path=str(self.artifacts/'task10-api-workspace.png'),full_page=True)
+                self.page.set_viewport_size({'width':390,'height':844})
+                self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),390)
+                self.page.screenshot(path=str(self.artifacts/'task10-api-mobile.png'),full_page=True)
+                self.page.set_viewport_size({'width':1440,'height':1000})
+        self.page.goto(self.url+'/my-learning');self.idle()
+        expect(self.page.locator('.course-card')).to_have_count(2)
+        for course,count in (('etl-testing',5),('api-testing',4)):
+            expect(self.page.locator(f'[data-course-id="{course}"] progress')).to_have_attribute('value',str(count))
+        self.page.screenshot(path=str(self.artifacts/'task10-my-learning.png'),full_page=True)
+        self.page.goto(self.url+'/history');self.idle()
+        self.page.locator('.session-row .secondary').first.click()
+        expect(self.page).to_have_url(__import__('re').compile('/courses/api-testing/lessons/'))
+        self.page.reload();self.idle();expect(self.page.locator('.lesson-heading .badge')).to_have_text('Completed')

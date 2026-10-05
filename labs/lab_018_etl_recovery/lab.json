@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "id": "lab_018_etl_recovery",
+  "title": "Recover after an interrupted load",
+  "requirement": "Add Source/Target FULL JOIN missing-key or exact-amount differences to one violation if the latest step is not SUCCESS with checkpoint 1.",
+  "difficulty": "intermediate",
+  "pipeline_id": "orders_v1",
+  "available_fault_ids": [
+    "etl_failed",
+    "etl_partial_publish"
+  ],
+  "learning_objectives": [
+    "Distinguish failed execution from a successful partial publication.",
+    "Design a reusable check that accepts clean data and finds defects."
+  ]
+}

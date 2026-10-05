@@ -9,7 +9,7 @@ class CurriculumTests(unittest.TestCase):
     def test_complete_bilingual_lessons_match_executable_profiles(self):
         self.assertEqual(set(CATALOG), set(PROFILES))
         self.assertEqual(set(CATALOG), {lab.id for lab in load_labs()})
-        self.assertEqual(sorted(item["order"] for item in CATALOG.values()), list(range(1,14)))
+        self.assertEqual(sorted(item["order"] for item in CATALOG.values()), list(range(1,23)))
         for lab_id, definition in CATALOG.items():
             profile = PROFILES[lab_id]
             self.assertLessEqual(set(profile.variants), VARIANTS)

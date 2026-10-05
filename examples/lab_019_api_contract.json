@@ -1,0 +1,23 @@
+{
+  "method": "GET",
+  "path": "/orders",
+  "page_size": 2,
+  "paginate": true,
+  "max_attempts": 3,
+  "timeout_ms": 150,
+  "ingest": false,
+  "idempotent": true,
+  "checks": {
+    "status": 200,
+    "required": [
+      "order_id",
+      "customer_id",
+      "net_amount"
+    ],
+    "types": {
+      "order_id": "integer",
+      "customer_id": "integer",
+      "net_amount": "decimal"
+    }
+  }
+}

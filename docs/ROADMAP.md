@@ -20,9 +20,9 @@
 | 10 — ETL / API curriculum | Separately planned runnable testing courses | Validate pipeline and ingestion contracts | Independent clean/fault graders and browser flow |
 | 11 — Cloud adapters | Separately planned Fabric/ADF/OneLake/Databricks/Synapse integrations | Transfer established concepts | Explicit environment, credentials and cost planning checkpoint |
 
-V1 scope is Tasks 0–7.2. Tasks 8.1–8.4 are approved and merged, bringing SQL to
-13 ENG/VIE lessons. Task 9 extends the approved scope to a local course platform
-with accounts and personal evidence; its implementation is approved and finished
-work remains on its review branch until user approval. Tasks 10–11 are future
-proposals, not implementation authorization. See TASK_8.md and TASK_9.md. No fixed
-completion date or QA Sentinel integration.
+V1 scope is Tasks 0–7.2. Tasks 8 and 9 are approved and merged into
+`feature/develop`, providing 13 SQL lessons, local accounts and a course platform.
+Task 10 is approved for implementation on its own review branch: five ETL and
+four API lessons, actual session PostgreSQL batches/ingestion and loopback HTTP
+exercises. See TASK_10.md. Task 11 cloud adapters require a separate plan and
+approval. No fixed completion date or QA Sentinel integration.

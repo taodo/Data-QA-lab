@@ -185,6 +185,9 @@ def import_legacy(db, name, confirm=False):
             for table in counts:
                 connection.execute(f"UPDATE metadata.{table} SET owner_id=%s WHERE owner_id IS NULL" + (" AND NOT is_shared" if table == "pipeline_runs" else ""), (row[0],))
             if counts["lab_sessions"]:
-                connection.execute("INSERT INTO metadata.course_enrollments (user_id,course_id) VALUES (%s,'sql-data-qa') ON CONFLICT DO NOTHING", (row[0],))
+                from backend.app.learning.lessons import course_id
+                labs=connection.execute("SELECT DISTINCT lab_id FROM metadata.lab_sessions WHERE owner_id=%s",(row[0],)).fetchall()
+                for course in {course_id(lab[0]) for lab in labs}:
+                    connection.execute("INSERT INTO metadata.course_enrollments (user_id,course_id) VALUES (%s,%s) ON CONFLICT DO NOTHING", (row[0],course))
             connection.execute("INSERT INTO metadata.legacy_imports (user_id,run_count,session_count,fault_count) VALUES (%s,%s,%s,%s)", (row[0], *counts.values()))
         return {"username": name, "confirmed": confirm, "counts": counts}

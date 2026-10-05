@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "lab_019_api_contract",
+  "title": "Response contract: status, required fields and types",
+  "requirement": "HTTP 200 does not prove JSON is valid. order_id/customer_id must be integers; net_amount is a finite decimal string, including legitimate zero. Add required-field and type checks. A malformed row counts once even if several checks reject it; each final non-200 response counts once.",
+  "difficulty": "intermediate",
+  "pipeline_id": "orders_v1",
+  "available_fault_ids": [
+    "api_missing_field",
+    "api_wrong_type",
+    "api_wrong_status"
+  ],
+  "learning_objectives": [
+    "Response contract: status, required fields and types",
+    "Use actual HTTP evidence to distinguish transport and data defects."
+  ]
+}

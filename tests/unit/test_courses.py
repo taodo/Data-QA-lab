@@ -11,13 +11,13 @@ class CourseContractTests(unittest.TestCase):
             subjects = client.get('/api/subjects?language='+language).json()
             self.assertEqual(len(subjects),9)
             catalog = client.get('/api/courses?language='+language).json()
-            self.assertEqual(sum(c['available'] for c in catalog),1)
+            self.assertEqual(sum(c['available'] for c in catalog),3)
             for c in catalog:
                 detail=client.get('/api/courses/'+c['id']+'?language='+language).json()
                 if c['available']:
                     labs=[l for ch in detail['chapters'] for l in ch['lessons']]
-                    self.assertEqual({l['id'] for l in labs},set(CATALOG))
-                    self.assertEqual(len(labs),13)
+                    self.assertEqual({l['id'] for l in labs},{k for k,v in CATALOG.items() if v.get('course_id','sql-data-qa')==c['id']})
+                    self.assertEqual(len(labs),c['lesson_count'])
                     self.assertNotIn('solution_sql',str(labs))
                     self.assertNotIn('hints',str(labs))
                 else:
