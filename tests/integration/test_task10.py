@@ -20,6 +20,20 @@ DB = os.getenv("DATA_QA_TEST_DATABASE_URL")
 
 @unittest.skipUnless(DB, "PostgreSQL test database required")
 class Task10IntegrationTests(unittest.TestCase):
+    def target_rows(self, sid):
+        from psycopg import sql
+
+        with connect(DB) as c:
+            schema = c.execute(
+                "SELECT snapshot_schema FROM metadata.lab_sessions WHERE session_id=%s",
+                (sid,),
+            ).fetchone()[0]
+            return c.execute(
+                sql.SQL(
+                    "SELECT order_id,customer_id,net_amount FROM {}.api_target ORDER BY order_id,customer_id,net_amount"
+                ).format(sql.Identifier(schema))
+            ).fetchall()
+
     @classmethod
     def setUpClass(cls):
         from backend.app.learning.sql_runtime import initialize_sql_security
@@ -152,6 +166,7 @@ class Task10IntegrationTests(unittest.TestCase):
             self.assertNotIn("cases", bad)
             query_session(DB, sid, http.SOLUTIONS[key])
             before = inspect_session(DB, sid)["queries"][-1]["result"]
+            target_before = self.target_rows(sid)
             result = submit_solution(
                 DB,
                 sid,
@@ -161,6 +176,7 @@ class Task10IntegrationTests(unittest.TestCase):
             self.assertEqual(result["status"], "PASS", result)
             self.assertEqual(inspect_session(DB, sid)["status"], "COMPLETED")
             self.assertEqual(inspect_session(DB, sid)["queries"][-1]["result"], before)
+            self.assertEqual(self.target_rows(sid), target_before)
         s = self.session(http.IDS[3])
         sid = s["session_id"]
         bad = json.loads(http.SOLUTIONS[http.IDS[3]])

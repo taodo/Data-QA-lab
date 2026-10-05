@@ -59,6 +59,7 @@ class ApiPlanTests(unittest.TestCase):
             labs = [l for ch in c["chapters"] for l in ch["lessons"]]
             self.assertEqual(c["lesson_count"], count)
             self.assertEqual(len(labs), count)
+            self.assertEqual([l["order"] for l in labs], list(range(1, count + 1)))
             for item in labs:
                 self.assertEqual(item["course_id"], course_id)
                 self.assertNotIn("solution_sql", item)
