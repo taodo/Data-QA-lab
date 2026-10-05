@@ -400,8 +400,8 @@ class BrowserTests(unittest.TestCase):
             if key==IDS[3]:
                 draft=editor.inner_text();url=self.page.url
                 self.page.get_by_label('Select language').select_option('VIE');self.idle()
-                expect(editor).to_have_text(draft)
-                self.page.reload();editor.wait_for();self.idle();expect(editor).to_have_text(draft)
+                self.assertEqual(editor.inner_text(),draft)
+                self.page.reload();editor.wait_for();self.idle();self.assertEqual(editor.inner_text(),draft)
                 self.page.get_by_label('Select language').select_option('ENG');self.idle()
                 self.assertEqual(self.page.url,url)
             self.page.get_by_role('button',name='Send HTTP & test' if key in IDS else 'Run SQL',exact=False).click();self.idle()

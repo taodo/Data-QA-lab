@@ -23,6 +23,19 @@ for name in ("etl_target", "api_expected", "api_target"):
         **({"event_id": "bigint"} if name == "etl_target" else {}),
     }
 
+for name, grain in {
+    "etl_context": "one row per exercise; current visible batch",
+    "etl_customers": "one row per customer_code reference key",
+    "etl_source": "one row per event_id; order_id may have multiple versions",
+    "etl_target": "one row per order_id is required; faulty fixtures can violate this",
+    "etl_rejects": "one row per rejected order_id is required",
+    "etl_steps": "one row per step_no; the highest step is latest",
+    "api_context": "one row per exercise",
+    "api_expected": "one reference row per order_id",
+    "api_target": "one row per order_id is required after replay",
+}.items():
+    SCHEMA[name]["grain"] = grain
+
 DEFINITIONS = [
     (
         "lab_014_etl_mapping",
