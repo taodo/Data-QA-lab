@@ -58,6 +58,10 @@ already contains that base. Existing learner PostgreSQL data and accounts remain
   progress intentionally has no progress bar. Full browser suite is re-running.
 - Pending: complete final PostgreSQL/browser regression, final Docker smoke,
   source ZIP verification, push final code and open PR. Do not merge.
+- Full regression identified an obsolete enrollment assertion: Fabric is now
+  executable, so the planned-course rejection test uses Synapse instead.
+- Metadata-only imports now attach run IDs from runs/activities/manifests/references,
+  even when no data snapshot rows exist. A regression assertion covers this case.
 - Pre-approval evidence: data/generated/task11-review-20261005/REVIEW.md.
 
 ## Resume

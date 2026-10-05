@@ -96,6 +96,7 @@ class CloudIntegrationTests(unittest.TestCase):
         minimal=json.dumps({'version':1,'provider':'Fabric','as_of':cloud.AS_OF.isoformat(),'runs':[{'run_id':'r'}]})
         unknown=service.import_cloud_evidence(DB,sid,'unknown.json','json',minimal)['cloud_evidence']
         self.assertEqual(unknown['execution_status'],'UNKNOWN');self.assertEqual(unknown['evidence_status'],'NOT_VERIFIED')
+        self.assertEqual(unknown['imports'][-1]['run_ids'],['r'])
         service.query_session(DB,sid,'SELECT 0 AS violation_count')
         self.assertEqual(service.inspect_session(DB,sid)['cloud_evidence']['quality_status'],'NOT_VERIFIED')
         reset=service.simulate_session(DB,sid,'RESET')['cloud_evidence']

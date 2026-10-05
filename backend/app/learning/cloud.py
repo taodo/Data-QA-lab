@@ -284,8 +284,12 @@ def import_file(c, s, filename, file_format, content):
     # Imports are snapshots, not proof that simulator actions/checkpoints executed.
     execute(c, s, "TRUNCATE {s}.cloud_steps")
     execute(c, s, "UPDATE {s}.cloud_context SET provenance='IMPORTED',captured_at=%s", (now,))
-    run_ids = sorted({row[-1] for rows in data["datasets"].values() for row in rows})
-    insert(c, s, "cloud_imports", [(uuid4().hex, _json(run_ids), filename, file_format,
+    run_ids = {row[-1] for rows in data["datasets"].values() for row in rows}
+    if file_format == "json":
+        run_ids.update(row[0] for row in data["runs"])
+        run_ids.update(row[1] for row in data["activities"])
+        run_ids.update(row[-1] for row in (*data["manifest"], *data["references"]))
+    insert(c, s, "cloud_imports", [(uuid4().hex, _json(sorted(run_ids)), filename, file_format,
                                     hashlib.sha256(content.encode()).hexdigest(), now, 1, content)])
 
 
