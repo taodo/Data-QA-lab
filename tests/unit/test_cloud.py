@@ -11,6 +11,54 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class CloudFileTests(unittest.TestCase):
+    def test_timestamp_utc_overflow_is_a_localized_validation_error(self):
+        for value in ('0001-01-01T00:00:00+23:59', '9999-12-31T23:59:59-23:59'):
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, 'Invalid evidence timestamp'):
+                cc.timestamp(value)
+        self.assertEqual(cc.localized_error('Invalid evidence timestamp','ENG'), 'Invalid evidence timestamp')
+        self.assertEqual(cc.localized_error('Invalid evidence timestamp','VIE'), 'Timestamp evidence không hợp lệ.')
+
+    def test_selected_batch_is_explicit_and_checkpoint_fields_are_bounded(self):
+        data = self.sample()
+        data.pop('batch_no')
+        self.assertIsNone(self.parse(data)['batch_no'])
+        for value in (True, -1, 2**31):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                self.parse({**data, 'batch_no': value})
+        step = dict(step_no=1, operation='RECOVER', run_id='run-1', execution_status='Succeeded',
+                    batch_no=2, target_rows=4, watermark=data['as_of'])
+        parsed = self.parse({**data, 'batch_no': 2, 'steps': [step]})
+        self.assertEqual(parsed['steps'][0][3:6], ('SUCCESS', 2, 4))
+        for steps in ([step]*2, [{**step, 'step_no': i} for i in range(cc.MAX_STEPS+1)]):
+            with self.assertRaises(ValueError):
+                self.parse({**data, 'steps': steps})
+
+    def test_export_uses_import_contract_and_never_truncates_runs(self):
+        data = self.sample()
+        base = data['runs'][0]
+        data['runs'] += [{**base, 'run_id': f'run-{i}'} for i in range(2, cc.MAX_RUNS+1)]
+        exported = cc.export_file(data)
+        normalized = cc.parse_file(**exported)
+        self.assertEqual(len(normalized['runs']), cc.MAX_RUNS)
+        self.assertIn('run-1', {row[0] for row in normalized['runs']})
+        data['runs'].append({**base, 'run_id': 'too-many'})
+        with self.assertRaisesRegex(ValueError, 'Evidence array exceeds its limit'):
+            cc.export_file(data)
+        data = self.sample()
+        data['datasets'] = {name: [data['datasets']['target'][0]]*100 for name in cc.DATASETS}
+        with self.assertRaisesRegex(ValueError, '48 KiB'):
+            cc.export_file(data)
+
+    def test_export_rejects_files_whose_escaped_import_request_is_too_large(self):
+        data = self.sample()
+        row = {**data['datasets']['target'][0], 'run_id': '"'*128}
+        data['datasets']['target'] = [row]*100
+        # The file is below 48 KiB, but wrapping quote-heavy content in the import
+        # request crosses 64 KiB. The app must not download this unusable file.
+        self.assertLess(len(json.dumps(data, separators=(',', ':')).encode()), cc.MAX_BYTES)
+        with self.assertRaisesRegex(ValueError, 'Evidence import request exceeds 64 KiB'):
+            cc.export_file(data)
+
     def sample(self):
         return json.loads((ROOT/'examples/cloud-evidence-v1.json').read_text())
 

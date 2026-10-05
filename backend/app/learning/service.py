@@ -132,10 +132,8 @@ def inspect_session(database_url, session_id):
                           for row in reversed(queries)]
     payload["query_count"],payload["submission_count"] = counts
     if cloud_evidence is not None:
-        # An evidence import/action invalidates earlier checks. Do not reuse their PASS.
-        latest_step = cloud_evidence["runs"][-1].get("ended_at") if cloud_evidence["runs"] else None
-        changed_at = max(cloud_evidence["captured_at"], latest_step or cloud_evidence["captured_at"])
-        if queries and queries[0][3] >= changed_at:
+        # Bind checks to a local snapshot revision; provider clocks are only evidence.
+        if queries and queries[0][2].get("cloud_revision") == cloud_evidence["mutation_revision"]:
             cloud_evidence["quality_status"] = _cloud_quality(cloud_evidence["evidence_status"], queries[0][2])
         cloud_evidence["quality_scope"] = "learner_check"
         payload["cloud_evidence"] = cloud_evidence
@@ -175,6 +173,14 @@ def query_session(database_url, session_id, query):
         http_exercises.parse(query)
         with transaction(database_url) as connection:
             result=http_exercises.run(connection,session["snapshot_schema"],session["lab_id"],query,session["scenario_id"],persist=True)
+    elif session["lab_id"] in cloud.IDS:
+        query = normalize_sql(query)
+        with transaction(database_url) as connection:
+            # Mutators take FOR UPDATE first, keeping the SQL snapshot/revision coherent.
+            revision = cloud.execute(connection, session["snapshot_schema"],
+                                     "SELECT captured_at FROM {s}.cloud_context FOR SHARE").fetchone()[0]
+            result = asdict(run_sql(database_url, session["snapshot_schema"], query))
+            result["cloud_revision"] = revision.isoformat()
     else:
         query = normalize_sql(query)
         result = asdict(run_sql(database_url, session["snapshot_schema"], query))
@@ -312,3 +318,12 @@ def import_cloud_evidence(database_url, session_id, filename, file_format, conte
             raise LabStateError("Import needs an active cloud SANDBOX")
         cloud.import_file(connection, session["snapshot_schema"], filename, file_format, content)
     return inspect_session(database_url, session_id)
+
+
+def export_cloud_evidence(database_url, session_id):
+    with connect(database_url) as connection:
+        session = _get(connection, session_id)
+        if session["lab_id"] not in cloud.IDS:
+            raise LabStateError("Export needs a cloud session")
+        evidence = cloud.state(connection, session["snapshot_schema"], session["lab_id"])
+    return cloud.contracts.export_file(evidence)

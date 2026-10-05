@@ -225,7 +225,7 @@ def _publish(c, s, policy):
 
 
 def advance(c, s, scenario, action):
-    lab_id, batch = execute(c, s, "SELECT lab_id,batch_no FROM {s}.cloud_context FOR UPDATE").fetchone()
+    lab_id, batch, previous_revision = execute(c, s, "SELECT lab_id,batch_no,captured_at FROM {s}.cloud_context FOR UPDATE").fetchone()
     steps = execute(c, s, "SELECT COUNT(*) FROM {s}.cloud_steps").fetchone()[0]
     if steps >= 100 and action != "RESET":
         raise ValueError("Reset after 100 cloud steps")
@@ -240,6 +240,7 @@ def advance(c, s, scenario, action):
             execute(c, s, "UPDATE {s}.cloud_context SET batch_no=0")
             _publish(c, s, "cloud_clean")
             execute(c, s, "TRUNCATE {s}.cloud_steps")
+        _touch(c, s, previous_revision)
         return
     if execute(c, s, "SELECT provenance FROM {s}.cloud_context").fetchone()[0] == "IMPORTED":
         raise ValueError("Reset to simulator fixtures before running simulation actions")
@@ -257,6 +258,13 @@ def advance(c, s, scenario, action):
     count = execute(c, s, "SELECT COUNT(*) FROM {s}.cloud_target").fetchone()[0]
     execute(c, s, "UPDATE {s}.cloud_activities SET rows_read=%s,rows_written=%s", (count, count))
     insert(c, s, "cloud_steps", [(steps+1, action, run_id, "SUCCESS", batch, count, as_of)])
+    _touch(c, s)
+
+
+def _touch(c, s, previous_revision=None):
+    # This local monotonic timestamp is a revision token, never a provider timestamp.
+    execute(c, s, "UPDATE {s}.cloud_context SET captured_at=GREATEST(clock_timestamp(), "
+                 "COALESCE(%s,captured_at)+INTERVAL '1 microsecond')", (previous_revision,))
 
 
 def import_file(c, s, filename, file_format, content):
@@ -277,39 +285,52 @@ def import_file(c, s, filename, file_format, content):
             if name in {"runs", "activities"}:
                 rows = [(*row[:-1], _json(row[-1])) for row in rows]
             insert(c, s, table, rows)
-        execute(c, s, "UPDATE {s}.cloud_context SET as_of=%s,resource_id=%s", (data["as_of"], data["resource_id"]))
+        execute(c, s, "UPDATE {s}.cloud_context SET as_of=%s,resource_id=%s,batch_no=%s",
+                (data["as_of"], data["resource_id"], data["batch_no"]))
+    else:
+        # A snapshot-only CSV supplies neither selected batch nor as-of boundary.
+        execute(c, s, "UPDATE {s}.cloud_context SET batch_no=NULL,as_of=NULL")
     for name, rows in data["datasets"].items():
         execute(c, s, "TRUNCATE {s}.cloud_"+name)
         insert(c, s, "cloud_"+name, rows)
-    # Imports are snapshots, not proof that simulator actions/checkpoints executed.
+    # Imported step/checkpoint claims are evidence, not locally executed operations.
     execute(c, s, "TRUNCATE {s}.cloud_steps")
-    execute(c, s, "UPDATE {s}.cloud_context SET provenance='IMPORTED',captured_at=%s", (now,))
+    if file_format == "json":
+        insert(c, s, "cloud_steps", data["steps"])
+    execute(c, s, "UPDATE {s}.cloud_context SET provenance='IMPORTED'")
+    _touch(c, s)
     run_ids = {row[-1] for rows in data["datasets"].values() for row in rows}
     if file_format == "json":
         run_ids.update(row[0] for row in data["runs"])
         run_ids.update(row[1] for row in data["activities"])
         run_ids.update(row[-1] for row in (*data["manifest"], *data["references"]))
+        run_ids.update(row[2] for row in data["steps"])
     insert(c, s, "cloud_imports", [(uuid4().hex, _json(sorted(run_ids)), filename, file_format,
                                     hashlib.sha256(content.encode()).hexdigest(), now, 1, content)])
 
 
 def state(c, s, lab_id):
-    cursor = execute(c, s, "SELECT * FROM {s}.cloud_context")
+    cursor = execute(c, s, "SELECT * FROM {s}.cloud_context FOR SHARE")
     result = dict(zip((col.name for col in cursor.description), cursor.fetchone(), strict=True))
     for table, order in (("cloud_runs", "started_at NULLS FIRST,run_id"), ("cloud_activities", "activity_id"),
                          ("cloud_schema", "dataset,column_name"), ("cloud_manifest", "partition_key,file_key"),
                          ("cloud_references", "dataset_id"), ("cloud_steps", "step_no")):
-        cursor = execute(c, s, "SELECT * FROM {s}."+table+" ORDER BY "+order+" LIMIT 100")
+        # Bound writers/imports rather than silently truncating export evidence.
+        cursor = execute(c, s, "SELECT * FROM {s}."+table+" ORDER BY "+order)
         names = [col.name for col in cursor.description]
         result[table.removeprefix("cloud_")] = [dict(zip(names, row, strict=True)) for row in cursor.fetchall()]
     result["datasets"] = {}
     for name in contracts.DATASETS:
-        cursor = execute(c, s, "SELECT * FROM {s}.cloud_"+name+" ORDER BY order_id,event_id LIMIT 100")
+        cursor = execute(c, s, "SELECT * FROM {s}.cloud_"+name+" ORDER BY order_id,event_id")
         names = [col.name for col in cursor.description]
         result["datasets"][name] = [dict(zip(names, row, strict=True)) for row in cursor.fetchall()]
     imports = execute(c, s, "SELECT import_id,run_ids,filename,file_format,sha256,captured_at,mapping_version FROM {s}.cloud_imports ORDER BY captured_at").fetchall()
     result["imports"] = [dict(zip(("import_id", "run_ids", "filename", "file_format", "sha256", "captured_at", "mapping_version"), row, strict=True)) for row in imports]
     gaps = []
+    if result["batch_no"] is None or result["as_of"] is None:
+        gaps.append("Selected batch or UTC as-of context is unknown")
+    if lab_id == IDS[5] and not result["steps"]:
+        gaps.append("Publication checkpoint evidence is missing")
     if not result["runs"] or any(r["execution_status"] == "UNKNOWN" or r["started_at"] is None or r["ended_at"] is None for r in result["runs"]):
         gaps.append("Run execution or timestamps are unknown")
     if not result["resource_id"]:
@@ -328,4 +349,5 @@ def state(c, s, lab_id):
     result["evidence_gaps"] = gaps
     result["execution_status"] = result["steps"][-1]["execution_status"] if result["steps"] else result["runs"][-1]["execution_status"] if result["runs"] else "UNKNOWN"
     result["quality_status"] = "NOT_RUN"
+    result["mutation_revision"] = result["captured_at"].isoformat()
     return result

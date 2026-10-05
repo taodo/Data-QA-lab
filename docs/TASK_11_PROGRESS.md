@@ -165,3 +165,53 @@ https://github.com/taodo/Data-QA-lab/actions/runs/37281206389.
 That success precedes the introduction follow-up and does not verify these edits.
 Next: push this follow-up to existing PR #13, inspect updated-head CI and report
 results. No merge or next task.
+
+## PR #13 review fixes (authorized follow-up)
+
+Engineering objective: preserve the meaning of exported snapshots and invalidate
+QA only by local mutations. Learning objective: distinguish selected-batch and
+checkpoint evidence from provider clocks and local execution.
+
+Root causes and changes:
+- Batch/as-of filtering depended on receiving-session state, and import discarded
+  recovery checkpoints. V1 files now carry explicit batch_no and reported steps;
+  imports replace that context. Legacy missing context remains NULL/NOT_VERIFIED.
+  CSV has no selected-batch/as-of contract and clears those values, not guesses.
+- Import allowed 20 runs while the simulator can retain 101; state export also
+  truncated at 100. Backend export reads all bounded evidence, applies the shared
+  importer contract (101 runs/100 steps), preserves every run and checks both
+  48 KiB file and escaped 64 KiB request limits. Oversize is an explicit error.
+- QA compared query times with provider ended_at. Queries now bind to a monotonic
+  local captured_at revision under a shared context lock. All mutations advance
+  it; provider dates never affect QA age. Legacy results lacking a token remain
+  in history but are NOT_RUN until a fresh check.
+- UTC normalization could OverflowError at years 1/9999. It now raises the same
+  ENG/VIE timestamp validation error before any import mutation.
+
+Targeted verification (D-drive evidence: data/generated/task11-reviewfix-20261005):
+- `python -m unittest tests.unit.test_cloud -v`: 10 PASS, including explicit
+  batch/steps, 101-run export, file/request envelope bounds and UTC overflow.
+- `python -m unittest tests.unit.test_api.ApiContractTests.test_input_origin_host_and_body_limits -v`:
+  1 PASS after sharing the request-size constant.
+- `python -m unittest tests.integration.test_cloud -v`: 10 PASS (539.210 seconds)
+  on dedicated data_qa_task11_reviewfix with IPv4 loopback, never the learner DB.
+  Covers round-trip batches 0–3, faulty watermark/checkpoint snapshots, recovery,
+  98 replays/101 runs, future provider clocks and atomic ENG/VIE overflow errors,
+  plus all existing cloud grading/isolation/import regressions.
+- `npm run build --prefix frontend`: PASS.
+- `python -m unittest discover -s tests/e2e -v -k test_cloud_download_round_trip`:
+  1 PASS (24.225 seconds), actual browser download after 21 replays, Reset, upload
+  and unchanged batch/check PASS. Dedicated data_qa_task11_reviewfix_browser.
+
+No local full-suite run: final exact-head GitHub CI will run required unit,
+PostgreSQL integration, Linux browser and packaged smoke/restart checks per the
+user's policy. Targeted checks are complete; pushing this checkpoint to PR #13.
+Final CI diagnostics and handoff are retained in the D-drive evidence directory
+and PR description. Handoff requires green CI on this final commit. No merge or
+new task.
+
+Limits retained: 48 KiB file / 64 KiB request, 100 rows/dataset, 400 rows total,
+eight imports/session and 100 simulator steps. Missing context is not inferred;
+oversized evidence remains stored but cannot be downloaded as an importable file.
+Imported checkpoint claims retain IMPORTED provenance; no live provider execution
+is verified. Existing accounts, PostgreSQL mount/data and history are preserved.

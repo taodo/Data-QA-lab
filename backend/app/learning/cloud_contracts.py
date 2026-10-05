@@ -10,9 +10,13 @@ MAX_BYTES = 48 * 1024
 MAX_ROWS = 400
 MAX_DATASET_ROWS = 100
 MAX_IMPORTS = 8
+MAX_RUNS = 101  # initial run plus the bounded 100-step watermark simulation
+MAX_STEPS = 100
+MAX_REQUEST_BYTES = 64 * 1024
 DATASETS = ("source", "bronze", "silver", "target")
 RECORD_FIELDS = ("order_id", "customer_id", "amount", "updated_at", "event_id", "batch_no", "run_id")
 CSV_FIELDS = ("dataset", *RECORD_FIELDS)
+STEP_FIELDS = ("step_no", "operation", "run_id", "execution_status", "batch_no", "target_rows", "watermark")
 STATES = {"SUCCESS", "FAILED", "RUNNING", "CANCELLED", "UNKNOWN"}
 STATE_MAP = {"Succeeded": "SUCCESS", "Completed": "SUCCESS", "Failed": "FAILED",
              "InProgress": "RUNNING", "Cancelled": "CANCELLED", **{s: s for s in STATES}}
@@ -50,6 +54,7 @@ def localized_error(message, language):
         "CSV contains no snapshot rows": "CSV không chứa dòng snapshot.",
         "At most 8 imports per session; start a new session": "Mỗi session tối đa 8 import; hãy bắt đầu session mới.",
         "Evidence provider does not match this lesson": "Provider của evidence không khớp khóa học này.",
+        "Evidence import request exceeds 64 KiB": "Request import evidence vượt giới hạn 64 KiB.",
     }
     if message.startswith("CSV header must be: "):
         return "Header CSV cần là: " + ",".join(CSV_FIELDS)
@@ -70,10 +75,10 @@ def text(value, nullable=False):
     return value
 
 
-def integer(value, nullable=False):
+def integer(value, nullable=False, maximum=2**63 - 1):
     if nullable and value is None:
         return None
-    if type(value) is not int or not 0 <= value <= 2**63 - 1:
+    if type(value) is not int or not 0 <= value <= maximum:
         raise ValueError("Expected a non-negative integer")
     return value
 
@@ -85,11 +90,14 @@ def timestamp(value, nullable=False):
         raise ValueError("Expected an ISO timestamp with a UTC offset")
     try:
         result = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except ValueError as exc:
+    except (ValueError, OverflowError) as exc:
         raise ValueError("Invalid evidence timestamp") from exc
     if result.tzinfo is None or result.utcoffset() is None:
         raise ValueError("Naive timestamps are not evidence")
-    return result.astimezone(timezone.utc)
+    try:
+        return result.astimezone(timezone.utc)
+    except (ValueError, OverflowError) as exc:
+        raise ValueError("Invalid evidence timestamp") from exc
 
 
 def amount(value):
@@ -144,17 +152,18 @@ def parse_file(filename, file_format, content):
                           parse_constant=lambda _: (_ for _ in ()).throw(ValueError("Non-finite JSON number")))
     except (json.JSONDecodeError, RecursionError) as exc:
         raise ValueError("Invalid evidence JSON") from exc
-    fields(data, ("version", "provider", "resource_id", "as_of", "runs", "activities", "datasets", "schema", "manifest", "references"),
+    fields(data, ("version", "provider", "resource_id", "as_of", "batch_no", "steps", "runs", "activities", "datasets", "schema", "manifest", "references"),
            ("version", "provider", "as_of"))
     if type(data["version"]) is not int or data["version"] != 1:
         raise ValueError("Unsupported evidence version")
     if not isinstance(data["provider"], str) or data["provider"] not in {"Fabric", "ADF", "OneLake"}:
         raise ValueError("Unsupported evidence provider")
     normalized = {"version": 1, "provider": data["provider"],
-                  "resource_id": text(data.get("resource_id"), True), "as_of": timestamp(data["as_of"]),
-                  "runs": [], "activities": [], "schema": [], "manifest": [], "references": []}
+                  "resource_id": text(data.get("resource_id"), True), "as_of": timestamp(data["as_of"], True),
+                  "batch_no": integer(data.get("batch_no"), True, 2**31 - 1),
+                  "steps": [], "runs": [], "activities": [], "schema": [], "manifest": [], "references": []}
     run_ids = set()
-    for row in array(data.get("runs", []), 20):
+    for row in array(data.get("runs", []), MAX_RUNS):
         fields(row, ("run_id", "execution_status", "started_at", "ended_at"), ("run_id",))
         rid = text(row["run_id"])
         if rid in run_ids:
@@ -189,7 +198,43 @@ def parse_file(filename, file_format, content):
         fields(row, ("dataset_id", "reference_id", "observed_at", "run_id"), ("dataset_id", "reference_id", "run_id"))
         normalized["references"].append((text(row["dataset_id"]), text(row["reference_id"]),
                                          timestamp(row.get("observed_at"), True), text(row["run_id"])))
+    step_numbers = set()
+    for row in array(data.get("steps", []), MAX_STEPS):
+        fields(row, STEP_FIELDS, STEP_FIELDS)
+        step = integer(row["step_no"], maximum=2**31 - 1)
+        if step in step_numbers:
+            raise ValueError("Invalid evidence fields")
+        step_numbers.add(step)
+        normalized["steps"].append((step, text(row["operation"]), text(row["run_id"]),
+            STATE_MAP.get(text(row["execution_status"], True), "UNKNOWN"),
+            integer(row["batch_no"], True, 2**31 - 1), integer(row["target_rows"], True),
+            timestamp(row["watermark"], True)))
     return normalized
+
+
+def export_file(evidence):
+    """Serialize every exported row; validate the exact downloadable/importable file."""
+    def pick(rows, names):
+        return [{name: row[name] for name in names} for row in rows]
+    data = {"version": 1, "provider": evidence["provider"], "resource_id": evidence["resource_id"],
+            "as_of": evidence["as_of"], "batch_no": evidence["batch_no"],
+            "runs": pick(evidence["runs"], ("run_id", "execution_status", "started_at", "ended_at")),
+            "activities": pick(evidence["activities"], ("activity_id", "run_id", "dependency_id", "execution_status",
+                                                       "source_dataset", "target_dataset", "rows_read", "rows_written")),
+            "steps": pick(evidence["steps"], STEP_FIELDS),
+            **{name: evidence[name] for name in ("datasets", "schema", "manifest", "references")}}
+    def encode(value):
+        if isinstance(value, datetime):
+            return value.isoformat()
+        if isinstance(value, Decimal):
+            return str(value)
+        raise TypeError("Unsupported evidence value")
+    content = json.dumps(data, default=encode, ensure_ascii=False, separators=(",", ":"))
+    result = {"filename": "cloud-evidence-v1.json", "file_format": "json", "content": content}
+    parse_file(**result)
+    if len(json.dumps(result, ensure_ascii=False, separators=(",", ":")).encode("utf-8")) > MAX_REQUEST_BYTES:
+        raise ValueError("Evidence import request exceeds 64 KiB")
+    return result
 
 
 def _csv(content):

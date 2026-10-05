@@ -51,8 +51,11 @@ tests whether it detects faults. An import/reset/action invalidates old checks.
 Absent provider state normalizes to UNKNOWN, missing metrics remain NULL and
 incomplete evidence cannot establish quality PASS. Query execution errors are ERROR.
 
-JSON version 1 includes provider, resource identity, UTC as_of, run/activity records,
-four data snapshots, reported schema, file manifest and references. Supported raw
+JSON version 1 includes provider, resource identity, selected batch_no, UTC as_of,
+run/activity records, reported step/checkpoint records, four data snapshots,
+reported schema, file manifest and references. Missing batch/as_of is UNKNOWN;
+the importer never borrows the receiving session's batch or infers it from rows.
+Supported raw
 provider fields and their original state are retained alongside normalized fields.
 CSV uses the exact header:
 
@@ -66,19 +69,35 @@ an explicit UTC offset and normalize to UTC. Duplicate data/file rows remain
 evidence. Files cannot supply expected grading contracts or change SQL permissions.
 
 Limits: 48 KiB UTF-8/file, 100 data rows/dataset, 400 data rows total, eight retained
-imports/session; 20 runs, 30 activities, 40 schema fields, 50 manifest rows and 20
+imports/session; 101 runs, 100 steps, 30 activities, 40 schema fields, 50 manifest rows and 20
 references per JSON. The existing 64 KiB encoded HTTP request limit also applies.
 An escaped JSON request can reach this cap before the file cap. Each import retains
 raw content, SHA-256, run IDs, mapping version and server capture time in the owned
 session schema. Invalid imports roll back; reset retains previous imports and
 query/submission history while rebuilding simulator snapshots.
 
-JSON replaces current metadata and all four snapshots; CSV replaces all four
-snapshots and retains current metadata. Both clear simulated step/checkpoint
-claims. Reset before returning to simulation after import. Watermark controls are
+JSON replaces current metadata, selected batch/as_of, reported steps and all four
+snapshots. CSV replaces all four snapshots and retains other metadata but clears
+steps and selected batch/as_of to UNKNOWN; its quality is NOT_VERIFIED. Imported
+steps are provider claims, not proof that local actions ran. Reset before returning
+to simulation after import. Watermark controls are
 RESET/NEXT/REPLAY; recovery controls RESET/RECOVER; other lessons RESET/RUN.
 Controls perform actual session PostgreSQL publications, with a 100-step bound.
 Recovery retains earlier run and step evidence, and repeated recovery is idempotent.
+
+The UI downloads exactly the file returned by the owned `evidence-export` endpoint.
+The backend uses the importer contract to validate all rows and bounds, including
+the 64 KiB escaped request envelope. No run or row is silently omitted. If a
+snapshot cannot fit the file/request bounds, export reports a localized error and
+does not produce a file; retained session evidence remains intact.
+
+QA results are bound to a local mutation revision (the monotonic local
+`captured_at` token), captured while holding a shared context lock for the SQL
+snapshot. Import, Reset and every action advance the token; provider run timestamps
+never determine query age. Existing historical checks without a revision are
+retained but must be rerun to establish current QA. This uses the existing context
+column and query-result JSON; no learner data/schema migration is needed.
+UTC conversion overflow becomes a localized EVIDENCE_INVALID validation error.
 
 Use examples/cloud-evidence-v1.json and examples/cloud-snapshots-v1.csv, or download
 the current JSON from the evidence viewer. A resource_id identifies the selected

@@ -558,6 +558,42 @@ class BrowserTests(unittest.TestCase):
         expect(self.page).to_have_url(__import__('re').compile('/courses/onelake-testing/lessons/'))
         self.page.reload();self.idle();expect(self.page.locator('.lesson-heading .badge')).to_have_text('Completed')
 
+    def test_cloud_download_round_trip_keeps_batch_after_replays_and_reset(self):
+        import json
+        from playwright.sync_api import expect
+        from backend.app.learning import cloud
+        token = self.context.request.get(self.url+'/api/auth/me').json()['csrf_token']
+        headers = {'X-DQA-Intent':'1','X-CSRF-Token':token}
+        response = self.context.request.post(self.url+'/api/sessions', headers=headers,
+            data={'lab_id':cloud.IDS[4],'mode':'SANDBOX','scenario':'clean'})
+        self.assertEqual(response.status, 201)
+        sid = response.json()['session_id']
+        for action in ('RESET','NEXT', *(['REPLAY']*21)):
+            response = self.context.request.post(self.url+'/api/sessions/'+sid+'/simulation', headers=headers, data={'action':action})
+            self.assertEqual(response.status, 200)
+        self.page.goto(self.url+'/courses/adf-testing/lessons/'+cloud.IDS[4]+'?session='+sid)
+        self.page.get_by_label('Select language').select_option('ENG'); self.idle()
+        self.page.locator('.cloud-workspace').wait_for()
+        self.page.get_by_text('Import JSON/CSV evidence',exact=True).click()
+        with self.page.expect_download() as event:
+            self.page.get_by_role('button',name='Download evidence JSON',exact=True).click()
+        downloaded = self.artifacts/'watermark-roundtrip.json'
+        event.value.save_as(str(downloaded))
+        data = json.loads(downloaded.read_text())
+        self.assertEqual(data['batch_no'], 1)
+        self.assertEqual(len(data['runs']), 23)
+        self.assertIn('run-1', {r['run_id'] for r in data['runs']})
+        self.page.get_by_role('button',name='Reset simulator',exact=True).click(); self.idle()
+        self.page.get_by_label('Evidence file',exact=True).set_input_files(downloaded)
+        self.page.get_by_role('button',name='Validate and import',exact=True).click(); self.idle()
+        expect(self.page.locator('.cloud-workspace')).to_contain_text('Batch 1')
+        expect(self.page.locator('.cloud-workspace > .section-title .badge')).to_have_text('IMPORTED')
+        editor = self.page.get_by_label('SQL editor',exact=True)
+        editor.fill(cloud.SOLUTIONS[cloud.IDS[4]])
+        self.page.get_by_role('button',name='Run SQL',exact=False).click(); self.idle()
+        expect(self.page.locator('.cloud-statuses')).to_contain_text('PASS')
+        self.page.screenshot(path=str(self.artifacts/'cloud-roundtrip.png'),full_page=True)
+
     def test_task11_challenge_hints_reveal_and_no_completion(self):
         from playwright.sync_api import expect
         self.page.goto(self.url+'/courses/fabric-testing/lessons/lab_024_fabric_schema?new=1')

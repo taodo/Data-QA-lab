@@ -3,6 +3,8 @@
   "provider": "Fabric",
   "resource_id": "example-local-workspace",
   "as_of": "2026-01-03T12:00:00+00:00",
+  "batch_no": 1,
+  "steps": [],
   "runs": [
     {
       "run_id": "run-1",

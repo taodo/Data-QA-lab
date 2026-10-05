@@ -32,6 +32,115 @@ class CloudIntegrationTests(unittest.TestCase):
     def schema(self,sid):
         with connect(DB) as c:return c.execute('SELECT snapshot_schema FROM metadata.lab_sessions WHERE session_id=%s',(sid,)).fetchone()[0]
 
+    def check(self, sid, key):
+        result = service.query_session(DB, sid, cloud.SOLUTIONS[key])
+        self.assertEqual(result['status'], 'SUCCESS', result)
+        return result['rows'], service.inspect_session(DB, sid)['cloud_evidence']['quality_status']
+
+    def test_watermark_and_recovery_round_trip_keep_batch_and_checkpoint_context(self):
+        for batch in range(4):
+            origin = self.session(cloud.IDS[4]); sid = origin['session_id']
+            service.simulate_session(DB, sid, 'RESET')
+            for _ in range(batch):
+                service.simulate_session(DB, sid, 'NEXT')
+            before = self.check(sid, cloud.IDS[4])
+            exported = service.export_cloud_evidence(DB, sid)
+            self.assertEqual(json.loads(exported['content'])['batch_no'], batch)
+            service.simulate_session(DB, sid, 'RESET')
+            for destination in (sid, self.session(cloud.IDS[4])['session_id']):
+                restored = service.import_cloud_evidence(DB, destination, **exported)['cloud_evidence']
+                self.assertEqual(restored['batch_no'], batch)
+                self.assertEqual(self.check(destination, cloud.IDS[4]), before)
+        # Preserve faulty snapshot meaning too, not only a clean PASS.
+        for key, scenario in ((cloud.IDS[4], 'cloud_skip_late'), (cloud.IDS[5], 'cloud_checkpoint')):
+            sid = self.session(key, scenario)['session_id']
+            before = self.check(sid, key)
+            self.assertEqual(before, ((('1',),), 'FAIL'))
+            exported = service.export_cloud_evidence(DB, sid)
+            service.simulate_session(DB, sid, 'RESET')
+            for destination in (sid, self.session(key)['session_id']):
+                service.import_cloud_evidence(DB, destination, **exported)
+                self.assertEqual(self.check(destination, key), before)
+        sid = self.session(cloud.IDS[5], 'cloud_failed_dependency')['session_id']
+        service.simulate_session(DB, sid, 'RECOVER')
+        exported = service.export_cloud_evidence(DB, sid)
+        destination = self.session(cloud.IDS[5])['session_id']
+        service.import_cloud_evidence(DB, destination, **exported)
+        self.assertEqual(self.check(destination, cloud.IDS[5]), ((('0',),), 'PASS'))
+        # Old JSON and CSV cannot borrow a receiver's selected batch/as-of.
+        legacy = json.loads(exported['content']); legacy.pop('batch_no'); legacy.pop('steps')
+        service.import_cloud_evidence(DB, destination, 'legacy.json', 'json', json.dumps(legacy))
+        evidence = service.inspect_session(DB, destination)['cloud_evidence']
+        self.assertIsNone(evidence['batch_no']); self.assertEqual(evidence['evidence_status'], 'NOT_VERIFIED')
+        csv = (ROOT/'examples/cloud-snapshots-v1.csv').read_text()
+        service.import_cloud_evidence(DB, destination, 'data.csv', 'csv', csv)
+        evidence = service.inspect_session(DB, destination)['cloud_evidence']
+        self.assertIsNone(evidence['batch_no']); self.assertIsNone(evidence['as_of'])
+        self.assertEqual(self.check(destination, cloud.IDS[5])[1], 'NOT_VERIFIED')
+
+    def test_export_after_many_replays_includes_every_referenced_run_and_is_importable(self):
+        sid = self.session(cloud.IDS[4])['session_id']
+        service.simulate_session(DB, sid, 'RESET')
+        for _ in range(2): service.simulate_session(DB, sid, 'NEXT')
+        destination = self.session(cloud.IDS[4])['session_id']
+        for replay in range(1, 99):
+            service.simulate_session(DB, sid, 'REPLAY')
+            if replay not in (21, 98): continue
+            path = '/api/sessions/'+str(sid)+'/evidence-export?language=ENG'
+            self.assertEqual(self.b.get(path).status_code, 404)
+            response = self.a.get(path)
+            self.assertEqual(response.status_code, 200, response.text)
+            exported = response.json(); data = json.loads(exported['content'])
+            run_ids = {r['run_id'] for r in data['runs']}
+            self.assertEqual(len(run_ids), replay+3)
+            references = {r['run_id'] for rows in data['datasets'].values() for r in rows}
+            references.update(r['run_id'] for name in ('activities','manifest','references','steps') for r in data[name])
+            self.assertTrue(references <= run_ids)
+            self.assertIn('run-1', run_ids)
+            imported = self.a.post('/api/sessions/'+str(destination)+'/evidence-import', json=exported)
+            self.assertEqual(imported.status_code, 200, imported.text)
+            self.assertEqual(self.check(destination, cloud.IDS[4]), ((('0',),), 'PASS'))
+        self.assertEqual(len(data['runs']), cloud.contracts.MAX_RUNS)
+        self.assertEqual(len(data['steps']), cloud.contracts.MAX_STEPS)
+
+    def test_provider_future_clock_does_not_hide_new_qa_or_reuse_old_checks(self):
+        sid = self.session(cloud.IDS[0])['session_id']
+        exported = service.export_cloud_evidence(DB, sid)
+        data = json.loads(exported['content'])
+        for run in data['runs']:
+            run['started_at'] = '2099-01-01T00:00:00Z'
+            run['ended_at'] = '2099-01-01T01:00:00Z'
+        service.import_cloud_evidence(DB, sid, 'future.json', 'json', json.dumps(data))
+        self.assertEqual(self.check(sid, cloud.IDS[0])[1], 'PASS')
+        before = service.inspect_session(DB, sid)['cloud_evidence']['mutation_revision']
+        service.import_cloud_evidence(DB, sid, 'future.json', 'json', json.dumps(data))
+        evidence = service.inspect_session(DB, sid)['cloud_evidence']
+        self.assertNotEqual(evidence['mutation_revision'], before)
+        self.assertEqual(evidence['quality_status'], 'NOT_RUN')
+        self.assertEqual(self.check(sid, cloud.IDS[0])[1], 'PASS')
+        service.simulate_session(DB, sid, 'RESET')
+        self.assertEqual(service.inspect_session(DB, sid)['cloud_evidence']['quality_status'], 'NOT_RUN')
+        self.assertEqual(self.check(sid, cloud.IDS[0])[1], 'PASS')
+        service.simulate_session(DB, sid, 'RUN')
+        self.assertEqual(service.inspect_session(DB, sid)['cloud_evidence']['quality_status'], 'NOT_RUN')
+        self.assertEqual(self.check(sid, cloud.IDS[0])[1], 'PASS')
+
+    def test_timestamp_overflow_api_is_bilingual_atomic_validation_error(self):
+        sid = self.session(cloud.IDS[0])['session_id']
+        before = service.inspect_session(DB, sid)['cloud_evidence']
+        sample = json.loads((ROOT/'examples/cloud-evidence-v1.json').read_text())
+        for language, expected in (('ENG','Invalid evidence timestamp'), ('VIE','Timestamp evidence không hợp lệ.')):
+            for timestamp in ('0001-01-01T00:00:00+23:59','9999-12-31T23:59:59-23:59'):
+                for field in ('as_of','started_at','updated_at','snapshot_at','observed_at'):
+                    data = json.loads(json.dumps(sample))
+                    row = data if field=='as_of' else data['runs'][0] if field=='started_at' else data['datasets']['source'][0] if field=='updated_at' else data['manifest'][0] if field=='snapshot_at' else data['references'][0]
+                    row[field] = timestamp
+                    response = self.a.post('/api/sessions/'+str(sid)+'/evidence-import?language='+language,
+                        json={'filename':'overflow.json','file_format':'json','content':json.dumps(data)})
+                    self.assertEqual(response.status_code, 422, response.text)
+                    self.assertEqual(response.json()['error'], {'code':'EVIDENCE_INVALID','detail':expected})
+                    self.assertEqual(service.inspect_session(DB, sid)['cloud_evidence'], before)
+
     def test_independent_counts_all_clean_and_fault_fixtures(self):
         counts={'cloud_orphan_run':1,'cloud_dependency_missing':1,'cloud_unknown_run':2,
                 'cloud_schema_type':1,'cloud_schema_missing':1,'cloud_schema_extra':1,
