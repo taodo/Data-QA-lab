@@ -17,12 +17,14 @@
 | 8.3 — Freshness | Fixed clock and per-dataset SLA | Separate SUCCESS and fresh data | Missing/NULL/future/boundary tests |
 | 8.4 — SCD | Type 1 current and Type 2 history lessons | Reconcile versions and half-open intervals | Current/overlap/history regression evidence |
 | 9 — Learning platform | Course UI, subject/course/chapter routes, local accounts and personal evidence | Follow a guided course and resume personal progress | Two-account isolation, real signup/lesson flow, retained legacy history |
-| 10 — ETL / API curriculum | Separately planned runnable testing courses | Validate pipeline and ingestion contracts | Independent clean/fault graders and browser flow |
-| 11 — Cloud adapters | Separately planned Fabric/ADF/OneLake/Databricks/Synapse integrations | Transfer established concepts | Explicit environment, credentials and cost planning checkpoint |
+| 10 — ETL / API curriculum | Five ETL and four API lessons, real PostgreSQL and HTTP execution | Validate pipeline and ingestion contracts | Approved and merged; independent clean/fault graders, browser flow and Docker restart |
+| 11 — Cloud QA (proposed) | Fabric/ADF/OneLake foundations, local simulations and imported evidence; separate live-adapter pilot | Transfer established concepts to cloud run and data evidence | Eight proposed lessons; explicit environment/credentials/cost checkpoint for live access |
 
-V1 scope is Tasks 0–7.2. Tasks 8 and 9 are approved and merged into
-`feature/develop`, providing 13 SQL lessons, local accounts and a course platform.
-Task 10 is approved for implementation on its own review branch: five ETL and
-four API lessons, actual session PostgreSQL batches/ingestion and loopback HTTP
-exercises. See TASK_10.md. Task 11 cloud adapters require a separate plan and
-approval. No fixed completion date or QA Sentinel integration.
+V1 scope is Tasks 0–7.2. Tasks 8–10 are approved and merged into
+`feature/develop`, providing 22 lessons across SQL (13), ETL (5) and API (4),
+local accounts and a course platform. Task 10 includes actual session PostgreSQL
+batches/ingestion and loopback HTTP exercises. See TASK_10.md.
+Task 11 is proposed on `feature/task-11-cloud-qa`; see TASK_11_PLAN.md for the
+recommended Fabric/ADF/OneLake core and separate live-cloud checkpoint.
+Implementation awaits plan review. Databricks, Synapse and broader Azure courses
+are proposed for a following phase. No fixed completion date or QA Sentinel integration.
