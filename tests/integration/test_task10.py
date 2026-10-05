@@ -29,16 +29,16 @@ class Task10IntegrationTests(unittest.TestCase):
         initialize_database(DB)
         initialize_sql_security(DB)
         seed_source(DB, 20)
-        cls.run = run_orders_pipeline(DB).run_id
+        cls.baseline_run_id = run_orders_pipeline(DB).run_id
         with transaction(DB) as c:
             c.execute(
                 "UPDATE metadata.pipeline_runs SET is_shared=true WHERE run_id=%s",
-                (cls.run,),
+                (cls.baseline_run_id,),
             )
 
     def session(self, key, scenario="clean", mode="SANDBOX"):
         return start_session(
-            DB, key, self.run, mode, scenario if mode == "SANDBOX" else None
+            DB, key, self.baseline_run_id, mode, scenario if mode == "SANDBOX" else None
         )
 
     def test_etl_independent_counts_and_sql_permissions(self):

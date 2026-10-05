@@ -190,7 +190,7 @@ def submit_solution(database_url, session_id, query, conclusion):
     for variant in profile.variants:
         if session["lab_id"] in http_exercises.IDS:
             try:
-                with transaction(database_url) as connection:
+                with connect(database_url) as connection:
                     data=http_exercises.run(connection,session["snapshot_schema"],session["lab_id"],query,variant,persist=True)
                     connection.rollback()  # grading must retain the learner's actual Target
                 count=int(data["rows"][0][0])
