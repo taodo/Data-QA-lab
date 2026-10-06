@@ -183,6 +183,10 @@ CATALOG.update(FOUNDATIONS_CATALOG)
 SCHEMA.update(FOUNDATIONS_SCHEMA)
 
 
+from backend.app.learning.sql_guidance import apply_guidance
+apply_guidance(CATALOG)
+
+
 def course_id(lab_id):
     return CATALOG[lab_id].get("course_id", "sql-data-qa")
 
