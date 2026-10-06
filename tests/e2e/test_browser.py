@@ -465,6 +465,47 @@ class BrowserTests(unittest.TestCase):
         expect(self.page.get_by_role('status')).to_contain_text('Password changed')
         other.close()
 
+    def test_etl_beginner_guidance_practice_language_keyboard_and_reveal(self):
+        from playwright.sync_api import expect
+        from backend.app.learning.etl_guidance import GUIDANCE
+        for lab_id in GUIDANCE:
+            self.page.goto(self.url+f'/courses/etl-testing/lessons/{lab_id}?new=1')
+            for language,label,control in [('ENG','How to practice','Next batch' if lab_id.endswith('replay') else 'Recover load' if lab_id.endswith('recovery') else 'Run ETL'),('VIE','Cách thực hành','Batch tiếp' if lab_id.endswith('replay') else 'Khôi phục load' if lab_id.endswith('recovery') else 'Chạy ETL')]:
+                self.page.get_by_label('Select language').select_option(language);self.idle()
+                heading=self.page.get_by_text(label,exact=True)
+                heading.click()
+                expect(heading.locator('..')).to_contain_text(control)
+                expect(self.page.get_by_text('Solution explained',exact=True)).to_have_count(0)
+                expect(self.page.get_by_text('Giải thích lời giải',exact=True)).to_have_count(0)
+        self.page.goto(self.url+'/courses/etl-testing/lessons/lab_015_etl_transform?new=1')
+        self.page.get_by_label('Select language').select_option('ENG')
+        expect(self.page.get_by_text('What are we checking?',exact=True)).to_be_visible()
+        practice=self.page.get_by_text('How to practice',exact=True)
+        practice.focus();practice.press('Enter')
+        expect(practice.locator('..')).to_contain_text('Run ETL sets batch 1')
+        expect(self.page.get_by_text('Solution explained',exact=True)).to_have_count(0)
+        self.page.get_by_label('Mode',exact=True).select_option('SANDBOX')
+        self.page.get_by_label('Scenario',exact=True).select_option('clean')
+        self.page.locator('.work-column .primary').click();self.idle()
+        self.page.get_by_role('button',name='Reset',exact=True).click();self.idle()
+        expect(self.page.locator('.etl-controls tbody tr')).to_have_count(0)
+        self.page.get_by_role('button',name='Run ETL',exact=True).click();self.idle()
+        expect(self.page.locator('.etl-controls tbody tr')).to_have_count(1)
+        self.page.get_by_label('Select language').select_option('VIE');self.idle()
+        vpractice=self.page.get_by_text('Cách thực hành',exact=True)
+        vpractice.focus();vpractice.press('Space')
+        expect(vpractice.locator('..')).to_contain_text('Chạy ETL đặt batch 1')
+        expect(self.page.get_by_text('Giải thích lời giải',exact=True)).to_have_count(0)
+        self.page.get_by_label('Select language').select_option('ENG');self.idle()
+        self.page.once('dialog',lambda dialog:dialog.accept())
+        self.page.get_by_role('button',name='Reveal solution',exact=True).click();self.idle()
+        expect(self.page.get_by_text('Solution explained',exact=True).locator('..')).to_contain_text('FULL JOIN')
+        expect(self.page.get_by_role('button',name='Run ETL',exact=True)).to_be_disabled()
+        self.page.get_by_label('Select language').select_option('VIE');self.idle()
+        expect(self.page.get_by_text('Giải thích lời giải',exact=True)).to_be_visible()
+        self.page.set_viewport_size({'width':390,'height':844})
+        self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),390)
+
     def test_task10_etl_api_courses_actual_grading_language_and_resume(self):
         from playwright.sync_api import expect
         from backend.app.learning.task10_content import CATALOG
@@ -507,6 +548,11 @@ class BrowserTests(unittest.TestCase):
                 self.assertGreater(self.page.locator('.http-evidence tbody tr').count(),0)
             self.page.get_by_role('button',name='Submit API test' if key in IDS else 'Submit check',exact=True).click();self.idle()
             expect(self.page.locator('.lesson-heading .badge')).to_have_text('Completed')
+            if course=='etl-testing':
+                expect(self.page.get_by_text('Solution explained',exact=True)).to_be_visible()
+                self.page.get_by_label('Select language').select_option('VIE');self.idle()
+                expect(self.page.get_by_text('Giải thích lời giải',exact=True)).to_be_visible()
+                self.page.get_by_label('Select language').select_option('ENG');self.idle()
             if key==IDS[3]:
                 self.page.screenshot(path=str(self.artifacts/'task10-api-workspace.png'),full_page=True)
                 self.page.set_viewport_size({'width':390,'height':844})
