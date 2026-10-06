@@ -1,5 +1,10 @@
 # Task 12 progress
 
+Merged checkpoint: PR #14 approved and merged into feature/develop at
+b0863f8798c8bba2c0ed0f8fc5d37c5e1e158fab. Confirmed by origin fetch on
+2026-10-06 for the separately approved demo preparation. Task 12 implementation
+is complete; the chronological checkpoints below describe its original work.
+
 2026-10-06: read AGENTS, branching, roadmap and Task 11 progress. Fetched origin;
 reviewed merge 3406447 confirmed, clean working tree. Created approved branch
 feature/task-12-cloud-foundations from current origin/feature/develop.

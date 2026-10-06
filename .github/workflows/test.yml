@@ -65,6 +65,16 @@ jobs:
       - run: python scripts/container_smoke.py
       - run: docker compose restart app && docker compose up -d --wait --wait-timeout 180
       - run: python scripts/container_smoke.py resume
+      - name: Prepare separate loopback demo (no public tunnel)
+        run: |
+          python -c "from pathlib import Path; import secrets; d=Path('data/generated/demo'); d.mkdir(parents=True,exist_ok=True); (d/'.env.demo').write_text('DEMO_DB_PASSWORD='+secrets.token_hex(32)+'\nDEMO_PUBLIC_HOST=ci-demo.trycloudflare.com\n')"
+          docker compose -p data-qa-demo --env-file data/generated/demo/.env.demo -f docker-compose.demo.yml up -d --build --wait --wait-timeout 180
+      - name: Verify real demo proxy, HTTPS origin and restart retention
+        run: python -m scripts.demo_verify --hostname ci-demo.trycloudflare.com --self-test --restart
+      - run: docker compose -p data-qa-demo --env-file data/generated/demo/.env.demo -f docker-compose.demo.yml logs --no-color --tail 100 app proxy postgres
+        if: always()
+      - run: docker compose -p data-qa-demo --env-file data/generated/demo/.env.demo -f docker-compose.demo.yml down
+        if: always()
       - run: docker compose logs --no-color --tail 100 app postgres
         if: always()
       - run: docker compose down
