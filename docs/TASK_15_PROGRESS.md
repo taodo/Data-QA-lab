@@ -82,6 +82,13 @@ D:\Data-QA-Lab\data\generated\task15-20261006; browser cache remains on D.
   keyboard/mobile and SQL/ETL rendering regressions verified.
 - Independent-process catalog comparison: PASS, 32 non-API entries unchanged and
   all eight original API contracts/other fields preserved.
+- Initial CI at d13b1df failed a pre-existing privacy assertion that searched
+  the entire serialized lesson text for the word hints. Public control guidance
+  legitimately mentions hints/reveal. Changed the assertion to reject actual
+  private solution_sql/hints/explanation fields on each public lesson, and made
+  the API content/privacy check assert the same three fields. No production
+  security/reveal behavior changed. `python -m unittest tests.unit.test_courses tests.integration.test_api_guidance.ApiGuidancePrivacyTests -v`:
+  3 PASS in 0.330s after the assertion fix. CI supplies final full verification.
 - No full suite duplicated locally; exact final-head full CI provides verification.
 
 Pending release: commit/push, open PR targeting feature/develop, inspect full CI

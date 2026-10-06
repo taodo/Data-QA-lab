@@ -81,6 +81,7 @@ class ApiGuidancePrivacyTests(unittest.TestCase):
                 for index in (0,1,2,3,5):self.assertIn(labels[index],public['theory'])
                 self.assertIn(labels[4],public['requirement'])
                 self.assertIn('JSON',public['requirement'])
-                self.assertNotIn('explanation',public)
+                for private_field in ('explanation','hints','solution_sql'):
+                    self.assertNotIn(private_field,public)
                 self.assertNotIn(labels[6],str(public))
                 self.assertIn(labels[6],CATALOG[lab_id][language]['explanation'])
