@@ -22,6 +22,7 @@
 | 12 — Cloud foundations | Approved 12.1–12.4: six Databricks/Synapse/Azure local lessons and release | Prove classification, versions, fact mapping, grain, manifests and access evidence | 36 lessons across nine executable courses; verification recorded in TASK_12_PROGRESS.md |
 | 13 - SQL learning guidance | Beginner explanations for 13 SQL lessons in ENG/VIE | Understand QA requirements, examples and revealed solutions | Reference-SQL example tests, bilingual UI and final-head CI; see TASK_13_PROGRESS.md |
 | 14 - ETL learning guidance | Beginner explanations and simulation guidance for five ETL lessons in ENG/VIE | Interpret mappings, transformations, rejects, replay and recovery evidence | Actual reference-SQL examples, bilingual simulation/reveal checks and final-head CI; see TASK_14_PROGRESS.md |
+| 15 - API learning guidance | Beginner explanations for four local HTTP lessons in ENG/VIE | Interpret response contracts, pagination, bounded retries and persisted replay evidence | Actual HTTP/PostgreSQL examples, bilingual JSON/reveal UI checks and final-head CI; see TASK_15_PROGRESS.md |
 
 V1 scope is Tasks 0–7.2. Tasks 8–10 are approved and merged into
 `feature/develop`, providing 22 lessons across SQL (13), ETL (5) and API (4),
@@ -38,7 +39,8 @@ Demo preparation is merged as PR #15. Public tunnel startup and external-device
 verification remain user-operated; see DEMO_ONLINE.md and DEMO_PROGRESS.md.
 
 Task 13 is merged as PR #18 at 2588f03, adding beginner ENG/VIE guidance to all
-13 SQL lessons. Active approved task: Task 14 on
-`feature/task-14-etl-learning-guidance`, from latest `origin/feature/develop`.
-Cover all five ETL lessons using unchanged contracts and simulations. See
-TASK_14_PROGRESS.md. Stop at review-ready PR; no merge or next task.
+13 SQL lessons. Task 14 is merged as PR #19 at 221e1b4 with all five ETL lessons
+explained in ENG/VIE. Active approved task: Task 15 on
+`feature/task-15-api-learning-guidance`, from latest `origin/feature/develop`.
+Cover all four API lessons while retaining original HTTP/JSON contracts and execution.
+See TASK_15_PROGRESS.md. Stop at review-ready PR; no merge or next task.

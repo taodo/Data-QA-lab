@@ -189,6 +189,9 @@ apply_guidance(CATALOG)
 from backend.app.learning.etl_guidance import apply_guidance as apply_etl_guidance
 apply_etl_guidance(CATALOG)
 
+from backend.app.learning.api_guidance import apply_guidance as apply_api_guidance
+apply_api_guidance(CATALOG)
+
 
 def course_id(lab_id):
     return CATALOG[lab_id].get("course_id", "sql-data-qa")

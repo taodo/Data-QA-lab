@@ -506,6 +506,41 @@ class BrowserTests(unittest.TestCase):
         self.page.set_viewport_size({'width':390,'height':844})
         self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),390)
 
+    def test_api_beginner_guidance_json_evidence_language_and_reveal(self):
+        from playwright.sync_api import expect
+        from backend.app.learning.api_guidance import GUIDANCE
+        for lab_id in GUIDANCE:
+            self.page.goto(self.url+f'/courses/api-testing/lessons/{lab_id}?new=1')
+            for language,label in [('ENG','How to practice'),('VIE','Cách thực hành')]:
+                self.page.get_by_label('Select language').select_option(language);self.idle()
+                heading=self.page.get_by_text(label,exact=True);heading.click()
+                expect(heading.locator('..')).to_contain_text('JSON')
+                expect(self.page.get_by_text('Solution explained',exact=True)).to_have_count(0)
+                expect(self.page.get_by_text('Giải thích lời giải',exact=True)).to_have_count(0)
+        self.page.goto(self.url+'/courses/api-testing/lessons/lab_019_api_contract?new=1')
+        self.page.get_by_label('Select language').select_option('ENG');self.idle()
+        example=self.page.get_by_text('Small worked example — illustrative',exact=True)
+        example.focus();example.press('Enter')
+        expect(example.locator('..')).to_contain_text('internal diagnostic count 1')
+        self.page.get_by_label('Mode',exact=True).select_option('SANDBOX')
+        self.page.get_by_label('Scenario',exact=True).select_option('clean')
+        self.page.locator('.work-column .primary').click();self.idle()
+        editor=self.page.get_by_label('API test plan editor',exact=True)
+        expect(editor).to_contain_text('"checks"')
+        self.page.get_by_role('button',name='Send HTTP & test',exact=False).click();self.idle()
+        expect(self.page.locator('.http-evidence')).to_contain_text('Transport execution: SUCCESS')
+        expect(self.page.locator('.http-evidence tbody tr')).to_have_count(3)
+        expect(self.page.locator('.etl-controls')).to_have_count(0)
+        expect(self.page.get_by_text('Solution explained',exact=True)).to_have_count(0)
+        self.page.once('dialog',lambda dialog:dialog.accept())
+        self.page.get_by_role('button',name='Reveal solution',exact=True).click();self.idle()
+        expect(self.page.get_by_text('Solution explained',exact=True).locator('..')).to_contain_text('checks.required')
+        expect(self.page.get_by_role('button',name='Send HTTP & test',exact=False)).to_be_disabled()
+        self.page.get_by_label('Select language').select_option('VIE');self.idle()
+        expect(self.page.get_by_text('Giải thích lời giải',exact=True)).to_be_visible()
+        self.page.set_viewport_size({'width':390,'height':844})
+        self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),390)
+
     def test_task10_etl_api_courses_actual_grading_language_and_resume(self):
         from playwright.sync_api import expect
         from backend.app.learning.task10_content import CATALOG
@@ -548,7 +583,7 @@ class BrowserTests(unittest.TestCase):
                 self.assertGreater(self.page.locator('.http-evidence tbody tr').count(),0)
             self.page.get_by_role('button',name='Submit API test' if key in IDS else 'Submit check',exact=True).click();self.idle()
             expect(self.page.locator('.lesson-heading .badge')).to_have_text('Completed')
-            if course=='etl-testing':
+            if course in ('etl-testing','api-testing'):
                 expect(self.page.get_by_text('Solution explained',exact=True)).to_be_visible()
                 self.page.get_by_label('Select language').select_option('VIE');self.idle()
                 expect(self.page.get_by_text('Giải thích lời giải',exact=True)).to_be_visible()
