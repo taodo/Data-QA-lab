@@ -80,3 +80,29 @@ These are local SIMULATED/IMPORTED exercises, not Spark, Delta, Synapse or Azure
 emulators. No credentials, adapters, provisioning, paid services or live claims.
 All nine course introductions remain distinct ENG/VIE accessible accordions.
 See TASK_12_PROGRESS.md for executed commands/results and continuation evidence.
+
+## Local PowerShell verification
+
+Use the declared D-drive virtual environment and a dedicated test database; never
+point fixture tests at the learner database. PostgreSQL must already be running.
+Create data_qa_task12_verify once with createdb/psql if it does not exist.
+
+```powershell
+Set-Location D:\Data-QA-Lab
+$env:DATA_QA_TEST_DATABASE_URL = 'postgresql://data_qa_lab:data_qa_lab@127.0.0.1:5432/data_qa_task12_verify'
+$env:TEMP = 'D:\Data-QA-Lab\data\generated\task12-verify\tmp'
+$env:TMP = $env:TEMP
+$env:PLAYWRIGHT_BROWSERS_PATH = 'D:\Data-QA-Lab\data\generated\playwright-browsers'
+New-Item -ItemType Directory -Force $env:TEMP | Out-Null
+.\.venv\Scripts\python.exe -m unittest tests.unit.test_task12 -v
+.\.venv\Scripts\python.exe -m unittest tests.integration.test_task12 -v
+npm run build --prefix frontend
+.\.venv\Scripts\python.exe -m unittest discover -s tests/e2e -v -k test_task12
+```
+
+Required full suites (normally final exact-head CI, not duplicated locally):
+`python -m unittest discover -s tests/unit -v`,
+`python -m unittest discover -s tests/integration -v`, and
+`python -m unittest discover -s tests/e2e -v`; CI also runs packaged Docker
+smoke/restart/resume. Docker startup uses `docker compose up -d --build --wait`;
+never use down -v or remove the existing PostgreSQL data directory.

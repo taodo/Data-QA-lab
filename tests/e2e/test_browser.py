@@ -613,6 +613,26 @@ class BrowserTests(unittest.TestCase):
         self.page.get_by_role('button',name='Validate and import',exact=True).click();self.idle()
         expect(self.page.locator('.cloud-workspace > .section-title .badge')).to_have_text('IMPORTED')
 
+    def test_task12_learning_sequence_translation_and_mobile(self):
+        from playwright.sync_api import expect
+        from backend.app.learning.foundations_content import CATALOG
+        for language in ('ENG','VIE'):
+            for key in CATALOG:
+                self.page.goto(self.url+'/courses/'+CATALOG[key]['course_id']+'/lessons/'+key+'?new=1')
+                expect(self.page.locator('.account-menu')).to_be_visible()
+                self.page.get_by_label('Select language').select_option(language);self.idle()
+                section=self.page.locator('.instructions')
+                intro=section.get_by_role('heading',name='Introduction' if language=='ENG' else 'Giới thiệu',exact=True)
+                purpose=section.get_by_role('heading',name='Purpose' if language=='ENG' else 'Mục đích',exact=True)
+                expect(intro).to_be_visible();expect(purpose).to_be_visible()
+                expect(section).to_contain_text(CATALOG[key][language]['introduction'])
+                expect(section).to_contain_text(CATALOG[key][language]['purpose'])
+                self.assertTrue(intro.evaluate('(e)=>e.compareDocumentPosition(e.parentElement.querySelectorAll("h3")[1]) & Node.DOCUMENT_POSITION_FOLLOWING'))
+                self.page.set_viewport_size({'width':390,'height':844})
+                self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),390)
+                self.page.screenshot(path=str(self.artifacts/(key+'-'+language+'-flow.png')),full_page=True)
+                self.page.set_viewport_size({'width':1440,'height':1000})
+
     def test_cloud_download_round_trip_keeps_batch_after_replays_and_reset(self):
         import json
         from playwright.sync_api import expect

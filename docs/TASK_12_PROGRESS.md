@@ -32,7 +32,51 @@ Observed targeted verification under data/generated/task12-20261006:
   challenge before answer, mobile screenshots, progress/history and real
   foundation JSON download/import. Database data_qa_task12_browser (127.0.0.1).
 
-Subsequent access-scope/incomplete-state and checkpoint row-count refinements need
-affected regression rerun. Pending: existing-course introduction regression,
-Task 11 relevant integration regression, retention/packaged upgrade and restart,
-final docs/commit/push/PR and exact-head full CI. Do not merge or start another task.
+## Final local verification checkpoint
+
+Release 1.5.0 includes explicit Introduction/Purpose before guided instructions;
+versioned source docs and examples cover all six lessons. No new dependency.
+Affected refinement regressions completed:
+- Access + existing account ownership/CSRF/enrollment/history/security: 9 PASS,
+  67.361s (`access-accounts.log`). Command: `python -m unittest
+  tests.integration.test_task12.Task12IntegrationTests.test_access_execution_incomplete_evidence_not_data_defects_and_restricted_sql
+  tests.integration.test_accounts -v`.
+- Existing Task 11 watermark/recovery round-trip across Reset and other sessions:
+  1 PASS, 56.048s (`cloud-regression.log`), targeted method
+  `tests.integration.test_cloud.CloudIntegrationTests.test_watermark_and_recovery_round_trip_keep_batch_and_checkpoint_context`.
+- Introduction accordions across nine courses, both languages, Enter/Space/Tab,
+  ARIA and mobile: 1 PASS, 15.262s (`introduction-browser.log`),
+  `python -m unittest discover -s tests/e2e -v -k test_course_introductions_all_courses`.
+- Final explicit learning sequence for six lessons in ENG/VIE and mobile:
+  1 PASS, 10.764s (`flow-browser.log`),
+  `python -m unittest discover -s tests/e2e -v -k test_task12_learning_sequence`.
+  Inspected Synapse ENG mobile screenshot; readable layout with no overflow.
+- Final affected contract/curriculum units: 5 PASS, 0.024s (`unit-final.log`),
+  `python -m unittest tests.unit.test_task12 tests.unit.test_curriculum -v`.
+- Final frontend production build PASS (`build-final.log`).
+- Docker app-only upgrade/start, actual packaged query/grading/import for all six
+  lessons, restart and history/evidence/revision resume PASS (`docker-upgrade.log`,
+  `container-smoke.log`, `container-restart.log`, `container-resume.log`). Commands:
+  `docker compose up -d --build --no-deps --wait --wait-timeout 180 app`,
+  `python scripts/container_smoke.py`, `docker compose restart app`,
+  `docker compose up -d --no-deps --wait --wait-timeout 180 app`,
+  `python scripts/container_smoke.py resume`.
+- Read-only hashes before/after upgrade retained exactly: three original accounts,
+  15 enrollments, 31 sessions, 60 queries, 15 submissions, 66,746 Target rows and
+  all 194 original snapshot tables (`retention.json`, `retention-*.log`). Smoke
+  subsequently adds only its own account/sessions. PostgreSQL mount stays on D.
+
+No local full-suite duplication; final exact-head CI must validate full unit,
+PostgreSQL integration, Linux browser and packaged smoke/restart before handoff.
+CI link/counts, exact tested commit and ZIP hash are recorded in the PR and the
+ignored D-drive HANDOFF.md/ci-final.json, avoiding a post-CI source commit that
+would invalidate the exact-head result. Commit/push/PR/CI completion follows this
+checkpoint. Do not merge or start another task.
+
+Limits: local PostgreSQL only, no live cloud/Spark/Delta/Synapse engine or Azure
+authorization emulation. Imported expected rows are forbidden; built-in contract
+identity selects an explicit fixture, while grading always rebuilds independent
+truth. JSON-only foundation evidence retains existing size/row/history bounds.
+Unbounded cloud snapshots and arbitrary provider contracts are unsupported.
+Written answers are retained only. The learning outcome is evidence-based
+classification/version/grain/routing investigation, not provider certification.

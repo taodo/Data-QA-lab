@@ -171,3 +171,13 @@ OneLake shortcuts. Live cloud access (11.5) remains a separate unimplemented sco
 See [Task 11 instructions](docs/TASK_11.md) and the
 [implementation checkpoint](docs/TASK_11_PROGRESS.md). Existing PostgreSQL data,
 local accounts and session history remain on D and are preserved by the additive upgrade.
+
+## Task 12: local Databricks, Synapse and Azure foundations (v1.5.0)
+
+36 ENG/VIE lessons across nine executable courses. Six new lessons investigate
+classification, explicit version updates, fact/dimension publication, reporting
+grain, file routing and access observations. These use isolated PostgreSQL and
+independent contracts; no Spark/Delta engine or live cloud authorization/adapters.
+Existing accounts, sessions and evidence remain intact. See [Task 12](docs/TASK_12.md)
+and [verification checkpoints](docs/TASK_12_PROGRESS.md). PR targets feature/develop;
+merge still requires review approval.

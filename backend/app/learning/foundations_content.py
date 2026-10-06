@@ -42,6 +42,14 @@ TEXT = [
 ]
 
 CATALOG={}
+INTRODUCTIONS=[
+    ('A pipeline can route records to several destinations. Keeping rejects and quarantine visible lets you account for every record.','Pipeline có thể đưa dòng tới nhiều đích. Hiển thị rejects và quarantine giúp đối soát mọi dòng.'),
+    ('A newer arrival is not always a newer business version. Observe the same order before and after an update to prove which value survives.','Dòng tới sau chưa chắc có version nghiệp vụ mới hơn. Quan sát cùng order trước/sau cập nhật để chứng minh giá trị được giữ.'),
+    ('Warehouse facts use dimension keys to connect business events to customers. A wrong key can misattribute a sale even when its amount is correct.','Fact warehouse dùng key dimension để nối sự kiện với customer. Key sai có thể gán sale nhầm người dù amount đúng.'),
+    ('An aggregate is meaningful only at a declared grain. A repeated dimension match can multiply a fact before the report groups its rows.','Aggregate chỉ có ý nghĩa ở grain đã khai báo. Dimension match lặp có thể nhân fact trước khi báo cáo GROUP BY.'),
+    ('A delivery manifest states which files belong at which destinations. Observed paths and routes must match that contract, not just its file count.','Manifest chuyến giao nêu file nào thuộc đích nào. Path và route quan sát phải khớp contract, không chỉ file count.'),
+    ('Access observations tell you what was attempted and recorded. They cannot replace authorization evaluation or establish whether unseen data is correct.','Observation truy cập cho biết điều đã thử và ghi lại. Chúng không thay đánh giá cấp quyền hoặc chứng minh dữ liệu chưa thấy là đúng.'),
+]
 for index,(key,text) in enumerate(zip(f.IDS,TEXT,strict=True),31):
     title,vtitle,body,vbody,practice,hints,vhints=text
     # Guided exploration remains one read-only SELECT, never the final answer.
@@ -55,6 +63,8 @@ for index,(key,text) in enumerate(zip(f.IDS,TEXT,strict=True),31):
                 'Chỉ có evidence PostgreSQL local SIMULATED/IMPORTED. Không thực thi Spark, transaction log Delta, time travel, engine Synapse phân tán hay đánh giá cấp quyền Azure. DISTINCT ON/IS DISTINCT FROM của PostgreSQL không phải SQL dùng trực tiếp cho mọi provider. ')
         CATALOG[key][lang]={
             'title':heading,'summary':heading,'objectives':[heading,'Justify conclusions using independent keys, exact values and observable evidence.' if eng else 'Giải thích kết luận theo key độc lập, giá trị chính xác và evidence quan sát được.'],
+            'introduction':INTRODUCTIONS[index-31][0 if eng else 1],
+            'purpose':('Use independent evidence to '+heading[0].lower()+heading[1:]+'.' if eng else 'Dùng evidence độc lập để '+heading[0].lower()+heading[1:]+'.'),
             'theory':limits+theory,
             'steps':(['Start a clean SANDBOX and identify the grain and independent expected table.','Run the guided SELECT; inspect the matching observed tables in the evidence workspace.','Start the named fault and compare missing, unexpected, mismatched and duplicate keys.','Write the defined violation_count check; use RUN/REPLAY or Reset and rerun after mutation.','Export/import the typed JSON in another SANDBOX; inspect context and provenance.','Start CHALLENGE, read its requirement before the answer field, submit SQL and a written explanation, then resume saved history.'] if eng else
                      ['Mở SANDBOX sạch, xác định grain và bảng kỳ vọng độc lập.','Chạy SELECT hướng dẫn; xem bảng quan sát tương ứng trong workspace evidence.','Mở lỗi cụ thể, so key thiếu, thừa, sai và trùng.','Viết kiểm tra violation_count theo định nghĩa; dùng RUN/REPLAY hoặc Reset rồi kiểm tra lại.','Export/import JSON typed sang SANDBOX khác; xem context và provenance.','Mở CHALLENGE, đọc yêu cầu trước ô trả lời, nộp SQL cùng giải thích rồi tiếp tục lịch sử đã lưu.']),
