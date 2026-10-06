@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "lab_032_databricks_versions",
+  "title": "Reconcile version-aware before/after updates",
+  "requirement": "Return one non-negative integer column named violation_count. A version is an explicit ordered revision of an order, not its arrival time. db_before holds three orders; db_incoming includes a stale version, a newer version and a new key. The policy accepts only a strictly greater version, preserves untouched orders and never deletes without a deletion contract. Equal-version replay must keep one row per order. All timestamps are the same fixed UTC boundary: choosing by timestamp cannot solve this exercise. db_expected_after independently specifies the required final key/version/amount/updated_at. Reconcile it to db_after; count missing/unexpected or differing joined rows plus duplicated order_id groups. Purpose: detect stale overwrite, duplicate replay and unintended deletion. This is final-state version reconciliation, distinct from ADF arrival batches and timestamp watermarks. RUN/REPLAY applies the actual local version guard; it cannot recover an already lost newer value without Reset.",
+  "difficulty": "intermediate",
+  "pipeline_id": "orders_v1",
+  "available_fault_ids": [
+    "f_stale_overwrite",
+    "f_duplicate_replay",
+    "f_unintended_delete"
+  ],
+  "learning_objectives": [
+    "Reconcile version-aware before/after updates",
+    "Justify conclusions using independent keys, exact values and observable evidence."
+  ]
+}

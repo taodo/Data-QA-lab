@@ -136,7 +136,7 @@ INTRODUCTIONS = {
             "A logistics company lands delivery files in a lake, processes them into warehouse tables and publishes a daily late-delivery report with access limited to the right teams.",
             ["Design an end-to-end data path across storage, processing and reporting services.", "Choose clear interfaces and responsibilities so teams can diagnose failures and control access."],
             "Data QA checks boundaries between services: did every delivery arrive, were identifiers preserved, and can the report be traced to the correct source and refresh time?",
-            "This course is planned. Its intended focus is cross-service evidence, access boundaries and end-to-end reconciliation, building on the available SQL, ETL, API and cloud-foundation courses. It has no runnable labs yet."),
+            "The two runnable local lessons reconcile expected file paths and routes, then investigate access observations. They build on OneLake completeness and SQL reconciliation while separating denied access from data defects. No live Azure authorization is evaluated."),
         "VIE": _entry(
             "Azure Data Platform là cách gọi một giải pháp dữ liệu ghép từ các dịch vụ Azure, không phải một sản phẩm duy nhất. Bạn chọn và kết nối dịch vụ để thu thập, lưu, xử lý và cung cấp dữ liệu.",
             ["Nơi lưu trữ như Azure Data Lake Storage giữ tệp; database và warehouse phục vụ truy vấn dữ liệu có cấu trúc.",
@@ -145,7 +145,7 @@ INTRODUCTIONS = {
             "Công ty logistics nhận tệp giao hàng vào lake, xử lý thành bảng warehouse và xuất báo cáo giao trễ hằng ngày, chỉ cho các nhóm phù hợp truy cập.",
             ["Thiết kế đường đi dữ liệu xuyên suốt nơi lưu trữ, xử lý và báo cáo.", "Chọn giao diện và trách nhiệm rõ ràng để các nhóm tìm nguyên nhân lỗi và kiểm soát truy cập."],
             "Data QA kiểm tra ranh giới giữa dịch vụ: đã nhận đủ chuyến giao chưa, ID có được giữ đúng không và có truy ngược báo cáo về nguồn cùng thời điểm refresh không?",
-            "Khóa học đang được lên kế hoạch. Hướng dự kiến là evidence liên dịch vụ, ranh giới truy cập và đối soát xuyên suốt, dựa trên các khóa SQL, ETL, API và cloud nền tảng đã có. Chưa có lab chạy được."),
+            "Hai bài local chạy được đối soát path/route file kỳ vọng rồi điều tra observation truy cập. Bài học nối kiến thức completeness OneLake và đối soát SQL, tách denied access khỏi lỗi dữ liệu. Không đánh giá cấp quyền Azure thật."),
     },
     "databricks-testing": {
         "ENG": _entry(
@@ -156,7 +156,7 @@ INTRODUCTIONS = {
             "A transport company combines millions of vehicle events with trip records, removes repeated events and publishes daily distance totals for analysts.",
             ["Process large or continuously arriving datasets and collaborate on repeatable transformations.", "Maintain reliable table updates and inspect versions when a transformation changes a business metric."],
             "Data QA proves transformation rules, event uniqueness and the meaning of a row at each layer, then compares versions to detect lost or unexpectedly changed records.",
-            "This planned course is intended to extend SQL grain and ETL replay skills into Spark transformations and versioned lakehouse tables. No Databricks or Spark labs are executable here yet."),
+            "Two runnable PostgreSQL simulations account for accepted/rejected/quarantined records and compare version-aware before/after snapshots. They extend SQL grain and ETL replay skills; they do not run Spark or reproduce Delta Lake transactions or time travel."),
         "VIE": _entry(
             "Databricks là nền tảng làm việc với dữ liệu trong lakehouse: kết hợp nơi lưu tệp của data lake với các bảng được quản lý để phân tích. Các nhóm cùng viết và chạy mã xử lý trên bộ dữ liệu lớn.",
             ["Notebook kết hợp mã và giải thích; job chạy lặp các bước xử lý. SQL và Spark giúp truy vấn hoặc biến đổi dữ liệu.",
@@ -165,7 +165,7 @@ INTRODUCTIONS = {
             "Công ty vận tải kết hợp hàng triệu sự kiện xe với thông tin chuyến đi, loại sự kiện lặp và xuất tổng quãng đường ngày cho nhóm phân tích.",
             ["Xử lý bộ dữ liệu lớn hoặc đến liên tục và cộng tác trên các phép biến đổi có thể chạy lại.", "Cập nhật bảng đáng tin cậy và xem phiên bản khi phép biến đổi làm thay đổi chỉ số nghiệp vụ."],
             "Data QA chứng minh quy tắc biến đổi, tính duy nhất của sự kiện và ý nghĩa một hàng ở từng lớp, rồi so sánh phiên bản để phát hiện mất hoặc đổi bản ghi ngoài ý muốn.",
-            "Khóa dự kiến mở rộng kỹ năng grain SQL và replay ETL sang biến đổi Spark và bảng lakehouse có phiên bản. Hiện chưa có lab Databricks hay Spark chạy được ở đây."),
+            "Hai mô phỏng PostgreSQL chạy được đối soát dòng accepted/rejected/quarantined và snapshot before/after theo version. Bài nối kỹ năng grain SQL và replay ETL; không chạy Spark hoặc tái tạo transaction hay time travel Delta Lake."),
     },
     "synapse-testing": {
         "ENG": _entry(
@@ -176,7 +176,7 @@ INTRODUCTIONS = {
             "An insurer combines policy and claims data, builds warehouse facts and dimensions, then calculates claims totals by region without counting one claim several times.",
             ["Analyze warehouse and lake data and coordinate the preparation needed for business reporting.", "Create shared analytical models when raw operational tables are difficult to query directly."],
             "Data QA checks fact/dimension joins, missing keys, totals and load freshness, and reconciles published warehouse results with operational sources.",
-            "This course is planned around warehouse reconciliation and pipeline evidence, building on JOIN grain, history and ETL recovery lessons. Live Synapse execution and runnable course labs are not available yet."),
+            "Two runnable local lessons validate staging-to-fact publication with dimension keys and reporting grain with independent totals. They build on JOIN and ETL reconciliation; PostgreSQL does not reproduce dedicated/serverless Synapse execution or its distributed architecture."),
         "VIE": _entry(
             "Azure Synapse Analytics tập hợp truy vấn warehouse, xử lý dữ liệu lớn và tích hợp dữ liệu trong một workspace phân tích. Nó giúp các nhóm biến dữ liệu nghiệp vụ đã lưu thành báo cáo và thông tin điều tra.",
             ["SQL pool hỗ trợ phân tích warehouse; serverless SQL truy vấn dữ liệu được hỗ trợ trong tệp lake mà không cần SQL pool chuyên dụng.",
@@ -185,7 +185,7 @@ INTRODUCTIONS = {
             "Công ty bảo hiểm gộp dữ liệu hợp đồng và bồi thường, xây fact/dimension warehouse rồi tính tổng bồi thường theo vùng mà không đếm một yêu cầu nhiều lần.",
             ["Phân tích dữ liệu warehouse và lake, điều phối việc chuẩn bị dữ liệu cho báo cáo nghiệp vụ.", "Tạo mô hình phân tích chung khi các bảng vận hành thô khó truy vấn trực tiếp."],
             "Data QA kiểm tra JOIN fact/dimension, khóa thiếu, tổng và độ mới của đợt nạp; đối soát kết quả warehouse đã xuất với nguồn vận hành.",
-            "Khóa đang được lên kế hoạch cho đối soát warehouse và evidence pipeline, dựa trên bài grain JOIN, lịch sử và khôi phục ETL. Chưa có thực thi Synapse thật hoặc lab khóa học chạy được."),
+            "Hai bài local chạy được kiểm tra publication staging-to-fact với key dimension và grain báo cáo theo tổng độc lập. Bài nối JOIN và đối soát ETL; PostgreSQL không tái tạo thực thi Synapse dedicated/serverless hay kiến trúc phân tán."),
     },
 }
 

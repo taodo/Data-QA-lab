@@ -18,15 +18,16 @@
 | 8.4 — SCD | Type 1 current and Type 2 history lessons | Reconcile versions and half-open intervals | Current/overlap/history regression evidence |
 | 9 — Learning platform | Course UI, subject/course/chapter routes, local accounts and personal evidence | Follow a guided course and resume personal progress | Two-account isolation, real signup/lesson flow, retained legacy history |
 | 10 — ETL / API curriculum | Five ETL and four API lessons, real PostgreSQL and HTTP execution | Validate pipeline and ingestion contracts | Approved and merged; independent clean/fault graders, browser flow and Docker restart |
-| 11 — Cloud QA | Approved 11.1–11.4: Fabric/ADF/OneLake foundations, local simulations and imported evidence | Transfer established concepts to cloud run and data evidence | Eight implemented lessons under review; live-adapter stage 11.5 remains proposed |
+| 11 — Cloud QA | Approved and merged 11.1–11.4: Fabric/ADF/OneLake foundations | Transfer concepts to run and data evidence | PR #13 merged at 3406447; final-head CI green; stage 11.5 unapproved |
+| 12 — Cloud foundations | Approved 12.1–12.4: six Databricks/Synapse/Azure local lessons and release | Prove classification, versions, fact mapping, grain, manifests and access evidence | 36 lessons across nine executable courses; verification recorded in TASK_12_PROGRESS.md |
 
 V1 scope is Tasks 0–7.2. Tasks 8–10 are approved and merged into
 `feature/develop`, providing 22 lessons across SQL (13), ETL (5) and API (4),
 local accounts and a course platform. Task 10 includes actual session PostgreSQL
 batches/ingestion and loopback HTTP exercises. See TASK_10.md.
-Task 11.1–11.4 was approved on 2026-10-05 and implemented on
-`feature/task-11-cloud-qa`, increasing the branch catalog to 30 lessons across six
-courses. It has not been merged; see TASK_11.md and TASK_11_PROGRESS.md for scope,
-verification and remaining review. Live-cloud stage 11.5 requires separate approval.
-Databricks, Synapse and broader Azure courses
-are proposed for a following phase. No fixed completion date or QA Sentinel integration.
+Task 11.1–11.4 was approved and merged as PR #13 into feature/develop on
+2026-10-06, reviewed merge 34064470c681816e5ea72e03a82cecabb57dbfb8.
+Task 12.1–12.4 is approved on feature/task-12-cloud-foundations from that merge.
+Its six local lessons activate Databricks, Synapse and Azure, giving 36 ENG/VIE
+lessons across nine executable courses. See TASK_12_PLAN.md and TASK_12_PROGRESS.md.
+Live-cloud stage 11.5 still requires separate approval. No QA Sentinel integration.

@@ -43,3 +43,6 @@ PROFILES.update({key:Profile(scenarios,("api_clean","api_shifted",*scenarios),ht
 from backend.app.learning import cloud
 PROFILES.update({key: Profile(scenarios, ("cloud_clean", "cloud_shifted", "cloud_zero", "cloud_sla_boundary", *scenarios, *(cloud.SHIFTED_PREFIX+v for v in scenarios)), cloud.SOLUTIONS[key], cloud.TABLES)
                 for key, scenarios in cloud.SCENARIOS.items()})
+from backend.app.learning import foundations
+PROFILES.update({key: Profile(scenarios, ('f_clean','f_shifted','f_zero',*scenarios,*('alt__'+v for v in scenarios)),
+                foundations.SOLUTIONS[key], foundations.DATASETS[key]) for key,scenarios in foundations.SCENARIOS.items()})

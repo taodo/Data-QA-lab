@@ -1,0 +1,1 @@
+SELECT (SELECT COUNT(*) FROM sy_expected_fact e FULL JOIN sy_fact a USING(sale_id) WHERE e.sale_id IS NULL OR a.sale_id IS NULL OR e.customer_key IS DISTINCT FROM a.customer_key OR e.amount IS DISTINCT FROM a.amount OR e.sale_date IS DISTINCT FROM a.sale_date) + (SELECT COUNT(*) FROM (SELECT sale_id FROM sy_fact GROUP BY sale_id HAVING COUNT(*)>1) d) AS violation_count;

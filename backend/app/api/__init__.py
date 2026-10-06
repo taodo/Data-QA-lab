@@ -103,7 +103,7 @@ class BodyLimit:
 
 
 def create_app(database_url=None):
-    app = FastAPI(title="Data QA Lab", version="1.4.0")
+    app = FastAPI(title="Data QA Lab", version="1.5.0")
     db = database_url or Settings.from_env().database_url
     gate = Lock()
     app.add_middleware(BodyLimit)

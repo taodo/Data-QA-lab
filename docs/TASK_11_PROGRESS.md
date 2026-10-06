@@ -1,5 +1,12 @@
 # Task 11 implementation checkpoint
 
+Final status (2026-10-06, supersedes pending/approval notes below): PR #13 approved
+and merged into feature/develop at 34064470c681816e5ea72e03a82cecabb57dbfb8.
+Reviewed source head 81d06a3 passed exact-head CI run 37300698537: 60 unit,
+62 PostgreSQL integration, 12 browser tests plus build and Docker smoke/restart.
+Task 12.1–12.4 is now separately approved; use TASK_12_PROGRESS.md to resume.
+Live stage 11.5 remains unimplemented/unapproved. Historical checkpoints follow.
+
 Engineering objective: session-owned cloud evidence, bounded imports, eight local
 lessons and retained account progress, using the existing PostgreSQL security boundary.
 Learning objective: reconcile run/activity metadata with actual data, partitions,

@@ -26,6 +26,7 @@ def localized_error(message, language):
     if language == "ENG":
         return message
     messages = {
+        "Foundation evidence requires JSON": "Evidence nền tảng cần file JSON theo contract riêng của bài.",
         "Invalid evidence fields": "Field evidence thiếu hoặc không nằm trong contract được hỗ trợ.",
         "Evidence identifiers must be 1–128 printable characters": "ID evidence cần 1–128 ký tự, không chứa ký tự điều khiển.",
         "Expected a non-negative integer": "Giá trị cần là số nguyên không âm; không dùng boolean.",

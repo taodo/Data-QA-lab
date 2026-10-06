@@ -10,7 +10,9 @@ Use deterministic seed data, exact decimal money (database NUMERIC), UTC-aware t
 
 Begin each task with engineering and learning objectives. Finish with commands, observed results, limitations and a learning explanation.
 
-New dependencies require a concrete use in the active task. Prefer small modules and meaningful behavior tests. Never claim unexecuted checks passed. V1 Tasks 0–7.2 exclude AI, cloud, authentication and multi-user scope. The user explicitly approved local accounts, per-account ownership and course-platform UI for Task 9; cloud/AI remain out of scope.
+New dependencies require a concrete use in the active task. Prefer small modules and meaningful behavior tests. Never claim unexecuted checks passed. V1 Tasks 0–7.2 exclude AI, cloud, authentication and multi-user scope. Task 9 approved local accounts and ownership. Task 11.1–11.4 is merged; Task 12.1–12.4 approves local Databricks/Synapse/Azure evidence foundations. Live adapters, cloud authorization emulation, credentials, provisioning, paid services and AI remain out of scope.
+
+Active task: Task 12; see docs/TASK_12_PLAN.md and docs/TASK_12_PROGRESS.md. Keep all caches/artifacts on D. Imports cannot supply grading truth. Retain portable evidence context, explicit bounds and local mutation revisions. Use targeted tests during implementation; successful full CI on the exact final commit satisfies final verification without duplicating the full suite locally. No merge or next task without user instruction.
 
 Before SQL workspace implementation, design database read-only permissions, allowlisted lab schemas, row/time limits and cancellation. Do not rely on SQL text filtering alone.
 

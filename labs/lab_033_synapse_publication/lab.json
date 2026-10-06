@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "lab_033_synapse_publication",
+  "title": "Validate staging-to-fact publication and dimension lookup",
+  "requirement": "Return one non-negative integer column named violation_count. A fact records a business event; a dimension supplies its descriptive identity. Staging uses customer_code while the fact stores customer_key. The expected mapping and exact amount/date for each sale_id are independently specified in sy_expected_fact. Observe sy_staging, sy_dimension and sy_fact, then FULL JOIN expected fact to actual fact by sale_id. Count missing/unexpected keys or wrong customer_key/amount/sale_date once per joined row; add duplicate sale_id groups. Purpose: detect a publication that has plausible counts but maps a sale to the wrong customer. RUN actually joins staging to the local dimension. Matching totals alone do not establish correct dimension mapping.",
+  "difficulty": "intermediate",
+  "pipeline_id": "orders_v1",
+  "available_fault_ids": [
+    "f_fact_missing",
+    "f_fact_unexpected",
+    "f_dimension_mapping"
+  ],
+  "learning_objectives": [
+    "Validate staging-to-fact publication and dimension lookup",
+    "Justify conclusions using independent keys, exact values and observable evidence."
+  ]
+}

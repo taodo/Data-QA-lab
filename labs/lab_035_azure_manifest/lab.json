@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "lab_035_azure_manifest",
+  "title": "Reconcile lake manifest paths and routing",
+  "requirement": "Return one non-negative integer column named violation_count. A manifest declares the files expected for a delivery. az_expected_files defines file_id, exact path label, route and byte_count; az_files is the observed listing evidence with capture time and run_id. Paths are labels only: this app never reads local or cloud files from them. FULL JOIN by file_id; count missing/unexpected or wrong path/route/byte_count once per joined row plus duplicated file_id groups. Purpose: detect missing delivery, an extra file, repeated publication and wrong destination even when file counts match. RUN records the existing local evidence; it does not repair files or fetch a real Azure listing. This is per-file path/routing reconciliation, not the OneLake partition-level row-count exercise.",
+  "difficulty": "intermediate",
+  "pipeline_id": "orders_v1",
+  "available_fault_ids": [
+    "f_file_missing",
+    "f_file_unexpected",
+    "f_file_duplicate",
+    "f_file_route"
+  ],
+  "learning_objectives": [
+    "Reconcile lake manifest paths and routing",
+    "Justify conclusions using independent keys, exact values and observable evidence."
+  ]
+}

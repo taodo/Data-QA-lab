@@ -1,0 +1,1 @@
+SELECT (SELECT COUNT(*) FROM db_contract e FULL JOIN db_publication a USING(record_id) WHERE e.record_id IS NULL OR a.record_id IS NULL OR e.classification IS DISTINCT FROM a.classification OR e.amount IS DISTINCT FROM a.amount) + (SELECT COUNT(*) FROM (SELECT record_id FROM db_publication GROUP BY record_id HAVING COUNT(*)>1) d) AS violation_count;

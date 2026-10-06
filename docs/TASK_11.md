@@ -7,8 +7,10 @@ partitions and freshness independently from successful cloud execution metadata.
 
 Scope 11.1–11.4 approved on 2026-10-05. Branch feature/task-11-cloud-qa is based
 on approved Task 10 merge 6799950642e2a3b621826268dfe10a7f8ff06aa0. Version 1.4.0.
-Implementation and verification are in this chat; plan/review are in the user's
-separate ChatGPT chat. No merge or next-task work is authorized.
+Implementation and verification were completed here; plan/review occurred in the
+user's separate ChatGPT chat. PR #13 is approved and merged at
+34064470c681816e5ea72e03a82cecabb57dbfb8 (2026-10-06). Reviewed head 81d06a3 passed
+full CI run 37300698537. Task 12.1–12.4 is separately approved; stage 11.5 is not.
 
 ## Curriculum and evidence
 

@@ -71,7 +71,7 @@ class AccountIntegrationTests(unittest.TestCase):
         self.assertEqual(self.a.post('/api/sessions',json={'lab_id':'x','admin':True}).status_code,422)
         for path in ('/api/sessions?limit=51','/api/sessions?offset=-1','/api/sessions/not-uuid'):
             self.assertEqual(self.a.get(path).status_code,422)
-        self.assertEqual(self.a.post('/api/courses/synapse-testing/enroll').status_code,409)
+        self.assertEqual(self.a.post('/api/courses/synapse-testing/enroll').status_code,200)
 
     def test_password_rotation_logout_expiry_and_operator_recovery(self):
         second=TestClient(create_app(self.db))

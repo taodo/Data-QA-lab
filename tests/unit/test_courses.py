@@ -39,7 +39,7 @@ class CourseContractTests(unittest.TestCase):
             subjects = client.get('/api/subjects?language='+language).json()
             self.assertEqual(len(subjects),9)
             catalog = client.get('/api/courses?language='+language).json()
-            self.assertEqual(sum(c['available'] for c in catalog),6)
+            self.assertEqual(sum(c['available'] for c in catalog),9)
             for c in catalog:
                 detail=client.get('/api/courses/'+c['id']+'?language='+language).json()
                 if c['available']:

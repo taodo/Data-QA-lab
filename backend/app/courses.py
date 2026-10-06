@@ -27,7 +27,7 @@ CHAPTERS = (
 def subjects(language="VIE"):
     return [{"id": row[0], "title": row[1 if language == "ENG" else 2],
              "summary": row[3 if language == "ENG" else 4], "family": row[5],
-             "course_id": COURSE_IDS[row[0]], "available": row[0] in {"sql","etl","api","fabric","adf","onelake"}}
+             "course_id": COURSE_IDS[row[0]], "available": any(lesson_course(k)==COURSE_IDS[row[0]] for k in CATALOG)}
             for row in SUBJECTS]
 
 
@@ -45,7 +45,7 @@ def courses(language="VIE"):
                        "objectives": (["Write SQL checks using observable evidence.", "Detect defects with clean and faulty fixtures.", "Validate replay, freshness and dimension history."] if language == "ENG" else ["Viết kiểm tra SQL dựa trên bằng chứng.", "Phát hiện lỗi bằng dữ liệu sạch và dữ liệu có lỗi.", "Kiểm tra replay, freshness và lịch sử dimension."]) if available else [subject["summary"]],
                        "prerequisites": (["Basic database concepts; guided SQL practice is included.", "Docker Desktop running for local practical labs."] if language == "ENG" else ["Biết khái niệm database cơ bản; có hướng dẫn thực hành SQL.", "Docker Desktop đang chạy để thực hành local."]) if available else []})
     for item in result:
-        if item["subject_id"] in {"fabric","adf","onelake"}:
+        if item["subject_id"] in {"fabric","adf","onelake","databricks","synapse","azure"}:
             item["objectives"] = (["Trace run/activity evidence and reconcile actual snapshots.","Prove schema, replay, partitions and freshness with independent contracts.","Distinguish SIMULATED/IMPORTED evidence from live cloud verification."] if language=="ENG" else
                                   ["Truy vết run/activity và đối soát snapshot thực tế.","Chứng minh schema, replay, partition và freshness theo hợp đồng độc lập.","Phân biệt evidence SIMULATED/IMPORTED với kiểm chứng cloud thật."])
             item["prerequisites"] = (["SQL, ETL and API course fundamentals.","Local Docker PostgreSQL; no cloud account required."] if language=="ENG" else ["Kiến thức khóa SQL, ETL và API.","Docker PostgreSQL local; không cần tài khoản cloud."])
@@ -54,6 +54,13 @@ def courses(language="VIE"):
         if item["id"]=="api-testing":
             item["objectives"] = (["Test actual HTTP responses and JSON contracts.","Prove pagination completeness and bounded retries.","Load HTTP records into PostgreSQL and verify idempotent replay."] if language=="ENG" else ["Kiểm thử response HTTP thật và hợp đồng JSON.","Chứng minh pagination đầy đủ và retry có giới hạn.","Load bản ghi HTTP vào PostgreSQL và kiểm tra replay idempotent."])
             item["prerequisites"] = (["Basic HTTP/JSON concepts; guided examples are included.","Docker Desktop running for the local HTTP playground and PostgreSQL."] if language=="ENG" else ["Khái niệm HTTP/JSON cơ bản; có ví dụ hướng dẫn.","Docker Desktop đang chạy cho HTTP playground và PostgreSQL local."])
+    outcomes={
+        'databricks':(['Account for accepted, rejected and quarantined records.','Reconcile before/after versions, replay and deletion.'],['Đối soát dòng accepted, rejected và quarantined.','So version before/after, replay và xóa ngoài ý muốn.']),
+        'synapse':(['Prove staging-to-fact keys and dimension mappings.','Validate reporting grain and independent totals; detect JOIN fanout.'],['Chứng minh key staging-to-fact và mapping dimension.','Kiểm tra grain báo cáo và tổng độc lập; phát hiện JOIN fanout.']),
+        'azure':(['Reconcile required file paths, routes and completeness.','Investigate access errors and incomplete observations separately from data quality.'],['Đối soát path, route và độ đầy đủ file bắt buộc.','Điều tra lỗi truy cập và observation chưa đủ riêng với chất lượng dữ liệu.'])}
+    for item in result:
+        if item['subject_id'] in outcomes:
+            item['objectives']=outcomes[item['subject_id']][0 if language=='ENG' else 1]
     return result
 
 
@@ -71,6 +78,10 @@ def course(course_id, language="VIE"):
         cloud_chapters={"fabric-testing":[("FABRIC_EVIDENCE","Runs, contracts & layers","Run, hợp đồng & layer")],
                         "adf-testing":[("ADF_EVIDENCE","Copy, replay & recovery","Copy, replay & khôi phục")],
                         "onelake-testing":[("ONELAKE_EVIDENCE","Partitions & reference freshness","Partition & freshness reference")]}
+        cloud_chapters.update({
+            'databricks-testing':[('DATABRICKS_FOUNDATIONS','Classification & version contracts','Contract classification & version')],
+            'synapse-testing':[('SYNAPSE_FOUNDATIONS','Fact publication & reporting grain','Publication fact & grain báo cáo')],
+            'azure-testing':[('AZURE_FOUNDATIONS','Lake manifests & access evidence','Manifest lake & evidence truy cập')]})
         chapters=cloud_chapters.get(course_id,chapters)
         for track, eng, vie in chapters:
             labs = [lesson(key, language) for key in sorted(CATALOG, key=lambda k: CATALOG[k]["order"]) if lesson_course(key)==course_id and CATALOG[key].get("track","FOUNDATION") == track]

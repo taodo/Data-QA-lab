@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "lab_031_databricks_classification",
+  "title": "Account for accepted, rejected and quarantined records",
+  "requirement": "Return one non-negative integer column named violation_count. An accepted record can enter the published dataset. A rejected record violates a known rule; quarantine retains a record needing investigation. The exercise contract gives each record exactly one destination: customer_id <= 0 is REJECTED; otherwise NULL amount is QUARANTINED; otherwise ACCEPTED, including zero amounts. This precedence is an exercise policy, not a Databricks default. db_contract is an independently authored expected decision and exact amount per record_id. db_source and db_publication are observed evidence. Reconcile contract to publication by record_id, counting missing/unexpected rows or wrong classification/amount once per joined row; add duplicated record_id groups. A correct reject is not lost data. Purpose: prove every input is accounted for rather than accepting an accepted-row count alone.",
+  "difficulty": "intermediate",
+  "pipeline_id": "orders_v1",
+  "available_fault_ids": [
+    "f_lost",
+    "f_classification",
+    "f_duplicate_publication"
+  ],
+  "learning_objectives": [
+    "Account for accepted, rejected and quarantined records",
+    "Justify conclusions using independent keys, exact values and observable evidence."
+  ]
+}
