@@ -21,6 +21,7 @@
 | 11 — Cloud QA | Approved and merged 11.1–11.4: Fabric/ADF/OneLake foundations | Transfer concepts to run and data evidence | PR #13 merged at 3406447; final-head CI green; stage 11.5 unapproved |
 | 12 — Cloud foundations | Approved 12.1–12.4: six Databricks/Synapse/Azure local lessons and release | Prove classification, versions, fact mapping, grain, manifests and access evidence | 36 lessons across nine executable courses; verification recorded in TASK_12_PROGRESS.md |
 | 13 - SQL learning guidance | Beginner explanations for 13 SQL lessons in ENG/VIE | Understand QA requirements, examples and revealed solutions | Reference-SQL example tests, bilingual UI and final-head CI; see TASK_13_PROGRESS.md |
+| 14 - ETL learning guidance | Beginner explanations and simulation guidance for five ETL lessons in ENG/VIE | Interpret mappings, transformations, rejects, replay and recovery evidence | Actual reference-SQL examples, bilingual simulation/reveal checks and final-head CI; see TASK_14_PROGRESS.md |
 
 V1 scope is Tasks 0–7.2. Tasks 8–10 are approved and merged into
 `feature/develop`, providing 22 lessons across SQL (13), ETL (5) and API (4),
@@ -36,7 +37,8 @@ Live-cloud stage 11.5 still requires separate approval. No QA Sentinel integrati
 Demo preparation is merged as PR #15. Public tunnel startup and external-device
 verification remain user-operated; see DEMO_ONLINE.md and DEMO_PROGRESS.md.
 
-Active approved task: Task 13 on `feature/task-13-sql-learning-guidance`, from
-latest `origin/feature/develop`. All 13 SQL lessons receive equivalent beginner
-ENG/VIE guidance; graders and completion contracts stay unchanged. See
-TASK_13_PROGRESS.md. Stop at review-ready PR; no merge or next task.
+Task 13 is merged as PR #18 at 2588f03, adding beginner ENG/VIE guidance to all
+13 SQL lessons. Active approved task: Task 14 on
+`feature/task-14-etl-learning-guidance`, from latest `origin/feature/develop`.
+Cover all five ETL lessons using unchanged contracts and simulations. See
+TASK_14_PROGRESS.md. Stop at review-ready PR; no merge or next task.
