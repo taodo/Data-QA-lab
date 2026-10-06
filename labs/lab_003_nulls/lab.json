@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "id": "lab_003_nulls",
+  "title": "Missing values: NULL is not zero",
+  "requirement": "Return violation_count equal to the number of Target rows with NULL net_amount. Zero amounts are valid; do not treat them as missing.",
+  "pipeline_id": "orders_v1",
+  "difficulty": "beginner",
+  "available_fault_ids": [],
+  "learning_objectives": [
+    "Understand SQL unknown values",
+    "Choose the correct count expression"
+  ]
+}

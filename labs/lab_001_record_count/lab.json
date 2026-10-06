@@ -2,11 +2,11 @@
   "schema_version": 1,
   "id": "lab_001_record_count",
   "title": "Record Count & Completeness",
-  "requirement": "With 10,000 source orders, Bronze, Silver and Target must each contain exactly the same 10,000 order_id values. Gold aggregates by order date: reconcile total order_count, not the number of Gold rows. Equal row counts alone do not prove completeness.",
+  "requirement": "Target must contain exactly the same order_id key set as the immutable Source snapshot of this pipeline run (normally 10,000 orders, smaller test runs supported). Query source_orders and target_orders. Return one non-negative integer column named violation_count: zero when key sets match, positive when keys are missing or unexpected. Gold aggregates by UTC order date: reconcile total order_count, not the number of Gold rows. Equal row counts alone do not prove completeness.",
   "difficulty": "beginner",
   "pipeline_id": "orders_v1",
   "available_fault_ids": [
-    "missing_rows"
+    "missing_order"
   ],
   "learning_objectives": [
     "Explain pipeline execution success versus data quality success.",

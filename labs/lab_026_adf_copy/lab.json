@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "lab_026_adf_copy",
+  "title": "Test ADF copy metrics against actual keys",
+  "requirement": "Return one non-negative integer column named violation_count. rowsRead and rowsWritten describe an activity, not correctness. Compare latest visible Source with actual Target keys, customer, exact amount, event and timestamp; add duplicated Target key groups. Add one for each target activity whose state is not SUCCESS or whose metrics are NULL/differ from actual counts. If no target activity exists add one evidence gap. Equal-count swaps pass copy counts but fail keyed reconciliation. Missing metrics stay NULL rather than zero.",
+  "difficulty": "intermediate",
+  "pipeline_id": "orders_v1",
+  "available_fault_ids": [
+    "cloud_copy_swap",
+    "cloud_copy_missing",
+    "cloud_copy_metrics",
+    "cloud_copy_unknown"
+  ],
+  "learning_objectives": [
+    "Test ADF copy metrics against actual keys",
+    "Separate execution, quality and incomplete evidence."
+  ]
+}

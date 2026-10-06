@@ -1,0 +1,1 @@
+SELECT (SELECT COUNT(*) FROM sy_expected_report e FULL JOIN sy_report a USING(sale_date,region) WHERE e.sale_date IS NULL OR a.sale_date IS NULL OR e.sale_count IS DISTINCT FROM a.sale_count OR e.total IS DISTINCT FROM a.total) + (SELECT COUNT(*) FROM (SELECT sale_date,region FROM sy_report GROUP BY sale_date,region HAVING COUNT(*)>1) d) AS violation_count;

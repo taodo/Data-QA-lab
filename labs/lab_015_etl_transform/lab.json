@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "id": "lab_015_etl_transform",
+  "title": "Transform strings into exact money",
+  "requirement": "Count order-key FULL JOIN rows with missing keys or a Target amount distinct from the exact Source subtraction, including NULL Target amounts.",
+  "difficulty": "intermediate",
+  "pipeline_id": "orders_v1",
+  "available_fault_ids": [
+    "etl_rounding",
+    "etl_null_amount"
+  ],
+  "learning_objectives": [
+    "Test parsing, subtraction, legitimate zeros and one-cent errors.",
+    "Design a reusable check that accepts clean data and finds defects."
+  ]
+}

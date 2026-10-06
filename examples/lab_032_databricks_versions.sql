@@ -1,0 +1,1 @@
+SELECT (SELECT COUNT(*) FROM db_expected_after e FULL JOIN db_after a USING(order_id) WHERE e.order_id IS NULL OR a.order_id IS NULL OR e.version IS DISTINCT FROM a.version OR e.amount IS DISTINCT FROM a.amount OR e.updated_at IS DISTINCT FROM a.updated_at) + (SELECT COUNT(*) FROM (SELECT order_id FROM db_after GROUP BY order_id HAVING COUNT(*)>1) d) AS violation_count;

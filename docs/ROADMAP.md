@@ -10,7 +10,29 @@
 | 5 — Learning labs | Sessions, learner SQL, grading, hints | Design checks and justify conclusions | Read-only bounded SQL; hidden solutions; real evaluation |
 | 6 — API | FastAPI endpoints and run queries | Read evidence through contracts | Integration checks including error responses |
 | 7 — UI | Lab browser, pipeline, SQL, faults, history | Complete the learning loop visually | End-to-end lab with actual backend |
-| 8 — Advanced | Incremental, joins, freshness, dates, SCD | Diagnose realistic data incidents | Scenarios and regression evidence |
-| 9 — Cloud adapter | Optional Fabric implementation | Transfer established concepts | Explicit separate planning checkpoint |
+| 7.1 — V1 curriculum | Six bilingual ENG/VIE lessons, instructions, fixtures and graders | Learn SQL for data QA through guided practice and challenges | Every lesson evaluated against clean and faulty data |
+| 7.2 — V1 release | Local Compose app, Windows D-drive setup, recovery and E2E checks | Use and resume a complete learning app | Browser learning flow and reproducible startup |
+| 8.1 — Advanced SQL | JOIN/grain, CTE, ROW_NUMBER, UTC dates | Diagnose fanout, tied versions and date boundaries | Independent fixture counts and real grading |
+| 8.2 — Incremental | Actual session batch/replay simulation, version-guarded merge | Prove idempotency and late-arrival handling | Replay/late-key/tied-update evidence |
+| 8.3 — Freshness | Fixed clock and per-dataset SLA | Separate SUCCESS and fresh data | Missing/NULL/future/boundary tests |
+| 8.4 — SCD | Type 1 current and Type 2 history lessons | Reconcile versions and half-open intervals | Current/overlap/history regression evidence |
+| 9 — Learning platform | Course UI, subject/course/chapter routes, local accounts and personal evidence | Follow a guided course and resume personal progress | Two-account isolation, real signup/lesson flow, retained legacy history |
+| 10 — ETL / API curriculum | Five ETL and four API lessons, real PostgreSQL and HTTP execution | Validate pipeline and ingestion contracts | Approved and merged; independent clean/fault graders, browser flow and Docker restart |
+| 11 — Cloud QA | Approved and merged 11.1–11.4: Fabric/ADF/OneLake foundations | Transfer concepts to run and data evidence | PR #13 merged at 3406447; final-head CI green; stage 11.5 unapproved |
+| 12 — Cloud foundations | Approved 12.1–12.4: six Databricks/Synapse/Azure local lessons and release | Prove classification, versions, fact mapping, grain, manifests and access evidence | 36 lessons across nine executable courses; verification recorded in TASK_12_PROGRESS.md |
 
-Current state: Task 0 implemented. Tasks 1–9 planned. No promise of completion by a fixed calendar date. No QA Sentinel integration in this roadmap.
+V1 scope is Tasks 0–7.2. Tasks 8–10 are approved and merged into
+`feature/develop`, providing 22 lessons across SQL (13), ETL (5) and API (4),
+local accounts and a course platform. Task 10 includes actual session PostgreSQL
+batches/ingestion and loopback HTTP exercises. See TASK_10.md.
+Task 11.1–11.4 was approved and merged as PR #13 into feature/develop on
+2026-10-06, reviewed merge 34064470c681816e5ea72e03a82cecabb57dbfb8.
+Task 12.1–12.4 is merged as PR #14 at b0863f8798c8bba2c0ed0f8fc5d37c5e1e158fab.
+Its six local lessons activate Databricks, Synapse and Azure, giving 36 ENG/VIE
+lessons across nine executable courses. See TASK_12_PLAN.md and TASK_12_PROGRESS.md.
+Live-cloud stage 11.5 still requires separate approval. No QA Sentinel integration.
+
+Active approved preparation: temporary online showcase on `feature/demo-online`
+from current `origin/feature/develop`; see DEMO_ONLINE.md and DEMO_PROGRESS.md.
+Separate demo database, exact public hosts and trusted HTTPS proxy; public tunnel
+startup and external-device verification are user-operated. No new curriculum task.

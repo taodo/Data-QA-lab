@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "id": "lab_016_etl_quarantine",
+  "title": "Reject invalid records without losing evidence",
+  "requirement": "Sum: valid-key vs Target FULL JOIN differences; invalid-key vs Reject FULL JOIN differences or wrong reason; duplicated reject-key groups. Each joined difference counts once.",
+  "difficulty": "intermediate",
+  "pipeline_id": "orders_v1",
+  "available_fault_ids": [
+    "etl_drop_reject",
+    "etl_accept_invalid"
+  ],
+  "learning_objectives": [
+    "Prove valid rows are accepted and malformed amounts are quarantined.",
+    "Design a reusable check that accepts clean data and finds defects."
+  ]
+}

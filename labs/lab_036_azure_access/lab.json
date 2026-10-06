@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "id": "lab_036_azure_access",
+  "title": "Investigate access evidence without inferring data defects",
+  "requirement": "Return one non-negative integer column named violation_count. Access evidence records an observation; it does not calculate a permission decision. az_required_access independently lists observation_id, identity_id, scope and operation. FULL JOIN to az_access by observation_id. Count missing/unexpected observations, mismatched/unknown identity/scope/operation, outcome other than ALLOWED, NULL capture time or capture after context.as_of once per joined row; add duplicated observation_id groups. This violation_count is an evidence-investigation metric, not a data-defect count. DENIED is an observed access execution error; unknown identity/scope or missing/future observations are incomplete evidence. Neither proves bad data, and ALLOWED alone does not prove data correctness or future authorization. A zero metric only validates this bounded evidence contract. Purpose: identify what is known and what must be investigated. RUN retains observations and never grants permissions.",
+  "difficulty": "intermediate",
+  "pipeline_id": "orders_v1",
+  "available_fault_ids": [
+    "f_access_denied",
+    "f_access_identity",
+    "f_access_scope",
+    "f_access_missing",
+    "f_access_future"
+  ],
+  "learning_objectives": [
+    "Investigate access evidence without inferring data defects",
+    "Justify conclusions using independent keys, exact values and observable evidence."
+  ]
+}

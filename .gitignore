@@ -11,5 +11,10 @@ dist/
 node_modules/
 data/generated/*
 !data/generated/.gitkeep
+data/postgres/
 *.db
 *.sqlite*
+e2e-artifacts/
+e2e-server.log
+backups/
+.container-smoke-state.json

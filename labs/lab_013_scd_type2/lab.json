@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "id": "lab_013_scd_type2",
+  "title": "SCD Type 2: trustworthy history",
+  "requirement": "Return violation_count as the sum of: FULL JOIN reference mismatch rows keyed by (customer_id,valid_from), comparing tier,valid_to,is_current; overlapping same-customer version pairs counted once with a.version_id<b.version_id and half-open strict inequalities (NULL end=infinity); Target customer groups with current count <>1; rows with valid_to<=valid_from; duplicated (customer_id,valid_from) groups. Reference resolves equal effective_at with highest event_id then uses LEAD. A missing version counts in reconciliation; this diagnostic sum is not unique bad customers.",
+  "pipeline_id": "orders_v1",
+  "difficulty": "advanced",
+  "available_fault_ids": [],
+  "learning_objectives": [
+    "Derive historical windows with LEAD",
+    "Investigate overlap, missing history and current flags"
+  ]
+}

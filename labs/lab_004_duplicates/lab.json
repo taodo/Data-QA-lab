@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "id": "lab_004_duplicates",
+  "title": "One order, one business key",
+  "requirement": "Return violation_count as the number of distinct order_id groups occurring more than once in Target, not the number of excess rows.",
+  "pipeline_id": "orders_v1",
+  "difficulty": "beginner",
+  "available_fault_ids": [],
+  "learning_objectives": [
+    "Distinguish duplicate keys from duplicate rows",
+    "Count groups that violate uniqueness"
+  ]
+}

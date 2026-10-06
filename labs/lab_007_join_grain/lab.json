@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "id": "lab_007_join_grain",
+  "title": "JOIN without multiplying revenue",
+  "requirement": "Return violation_count: FULL JOIN rows between the order-level SUM(order_lines.net_amount) and target_order_totals with a missing key or distinct amount. Count an order once even if multiple lines contributed. Target keys are unique in this exercise.",
+  "pipeline_id": "orders_v1",
+  "difficulty": "advanced",
+  "available_fault_ids": [],
+  "learning_objectives": [
+    "Diagnose many-to-many fanout",
+    "Use CTEs to reconcile order-level totals"
+  ]
+}

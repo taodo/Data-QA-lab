@@ -1,0 +1,71 @@
+# Separate project/database/data. Never pass this as an override of learner Compose.
+name: data-qa-demo
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "5m"
+    max-file: "2"
+services:
+  app:
+    build: .
+    environment:
+      DATA_QA_DATABASE_HOST: postgres
+      POSTGRES_DB: data_qa_demo
+      POSTGRES_USER: data_qa_demo
+      POSTGRES_PASSWORD: ${DEMO_DB_PASSWORD:?Run scripts/demo.ps1 Prepare first}
+      DATA_QA_DEMO_MODE: "1"
+      DATA_QA_PUBLIC_HOSTS: ${DEMO_PUBLIC_HOST:-}
+      DATA_QA_TRUSTED_PROXIES: "172.29.246.2"
+    command: ["sh", "-c", "python -m backend.app.bootstrap && exec python -m uvicorn backend.app.api:app --host 0.0.0.0 --port 8000 --workers 1 --no-proxy-headers"]
+    networks:
+      demo:
+        ipv4_address: 172.29.246.3
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 5s
+      timeout: 4s
+      retries: 20
+      start_period: 30s
+    mem_limit: 1g
+    cpus: 1.0
+    logging: *logging
+  proxy:
+    image: nginx:stable-alpine
+    ports: ["127.0.0.1:8001:8080"]
+    volumes: ["./scripts/demo-nginx.conf:/etc/nginx/nginx.conf:ro"]
+    networks:
+      demo:
+        ipv4_address: 172.29.246.2
+      edge: {}
+    depends_on:
+      app:
+        condition: service_healthy
+    mem_limit: 128m
+    logging: *logging
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: data_qa_demo
+      POSTGRES_USER: data_qa_demo
+      POSTGRES_PASSWORD: ${DEMO_DB_PASSWORD:?Run scripts/demo.ps1 Prepare first}
+    volumes: ["./data/generated/demo/postgres:/var/lib/postgresql/data"]
+    networks:
+      demo:
+        ipv4_address: 172.29.246.4
+    command: ["postgres", "-c", "max_connections=30", "-c", "max_wal_size=256MB", "-c", "log_statement=none"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U data_qa_demo -d data_qa_demo"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    mem_limit: 512m
+    logging: *logging
+networks:
+  edge: {}
+  demo:
+    internal: true
+    ipam:
+      config: [{subnet: 172.29.246.0/24}]

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "id": "lab_006_capstone",
+  "title": "Investigate a successful, incorrect pipeline",
+  "requirement": "Return violation_count as the sum of: missing plus unexpected order keys; NULL net_amount rows; duplicated order_id groups; joined order rows whose net_amount differs from the Source formula (including NULL); and daily FULL JOIN rows with missing dates, unequal order_count or unequal net_revenue. One daily row counts once even if both totals differ. Use Gold as the day-level baseline. A defect may contribute to more than one check.",
+  "pipeline_id": "orders_v1",
+  "difficulty": "beginner",
+  "available_fault_ids": [],
+  "learning_objectives": [
+    "Separate execution success from quality",
+    "Combine independent checks across explicit grains"
+  ]
+}

@@ -1,0 +1,265 @@
+{
+  "version": 1,
+  "provider": "Fabric",
+  "resource_id": "example-local-workspace",
+  "as_of": "2026-01-03T12:00:00+00:00",
+  "batch_no": 1,
+  "steps": [],
+  "runs": [
+    {
+      "run_id": "run-1",
+      "execution_status": "Succeeded",
+      "started_at": "2026-01-03T11:50:00Z",
+      "ended_at": "2026-01-03T12:00:00+00:00"
+    }
+  ],
+  "activities": [
+    {
+      "activity_id": "copy-1",
+      "run_id": "run-1",
+      "dependency_id": null,
+      "execution_status": "Succeeded",
+      "source_dataset": "source",
+      "target_dataset": "bronze",
+      "rows_read": 4,
+      "rows_written": 4
+    },
+    {
+      "activity_id": "publish-1",
+      "run_id": "run-1",
+      "dependency_id": "copy-1",
+      "execution_status": "Succeeded",
+      "source_dataset": "silver",
+      "target_dataset": "target",
+      "rows_read": 4,
+      "rows_written": 4
+    }
+  ],
+  "datasets": {
+    "source": [
+      {
+        "order_id": 1,
+        "customer_id": 101,
+        "amount": "1.01",
+        "updated_at": "2026-01-01T07:00:00+00:00",
+        "event_id": 1,
+        "batch_no": 1,
+        "run_id": "run-1"
+      },
+      {
+        "order_id": 2,
+        "customer_id": 102,
+        "amount": "2.01",
+        "updated_at": "2026-01-01T07:00:00+00:00",
+        "event_id": 2,
+        "batch_no": 1,
+        "run_id": "run-1"
+      },
+      {
+        "order_id": 3,
+        "customer_id": 103,
+        "amount": "3.01",
+        "updated_at": "2026-01-02T07:00:00+00:00",
+        "event_id": 3,
+        "batch_no": 1,
+        "run_id": "run-1"
+      },
+      {
+        "order_id": 4,
+        "customer_id": 104,
+        "amount": "4.01",
+        "updated_at": "2026-01-02T07:00:00+00:00",
+        "event_id": 4,
+        "batch_no": 1,
+        "run_id": "run-1"
+      },
+      {
+        "order_id": 1,
+        "customer_id": 101,
+        "amount": "9.99",
+        "updated_at": "2026-01-01T07:00:00+00:00",
+        "event_id": 9,
+        "batch_no": 2,
+        "run_id": "run-1"
+      },
+      {
+        "order_id": 2,
+        "customer_id": 102,
+        "amount": "7.77",
+        "updated_at": "2026-01-03T12:00:00+00:00",
+        "event_id": 10,
+        "batch_no": 2,
+        "run_id": "run-1"
+      },
+      {
+        "order_id": 3,
+        "customer_id": 103,
+        "amount": "8.88",
+        "updated_at": "2026-01-03T12:00:01+00:00",
+        "event_id": 11,
+        "batch_no": 3,
+        "run_id": "run-1"
+      }
+    ],
+    "bronze": [
+      {
+        "order_id": 1,
+        "customer_id": 101,
+        "amount": "1.01",
+        "updated_at": "2026-01-01T07:00:00+00:00",
+        "event_id": 1,
+        "batch_no": 1,
+        "run_id": "run-1"
+      },
+      {
+        "order_id": 2,
+        "customer_id": 102,
+        "amount": "2.01",
+        "updated_at": "2026-01-01T07:00:00+00:00",
+        "event_id": 2,
+        "batch_no": 1,
+        "run_id": "run-1"
+      },
+      {
+        "order_id": 3,
+        "customer_id": 103,
+        "amount": "3.01",
+        "updated_at": "2026-01-02T07:00:00+00:00",
+        "event_id": 3,
+        "batch_no": 1,
+        "run_id": "run-1"
+      },
+      {
+        "order_id": 4,
+        "customer_id": 104,
+        "amount": "4.01",
+        "updated_at": "2026-01-02T07:00:00+00:00",
+        "event_id": 4,
+        "batch_no": 1,
+        "run_id": "run-1"
+      }
+    ],
+    "silver": [
+      {
+        "order_id": 1,
+        "customer_id": 101,
+        "amount": "1.01",
+        "updated_at": "2026-01-01T07:00:00+00:00",
+        "event_id": 1,
+        "batch_no": 1,
+        "run_id": "run-1"
+      },
+      {
+        "order_id": 2,
+        "customer_id": 102,
+        "amount": "2.01",
+        "updated_at": "2026-01-01T07:00:00+00:00",
+        "event_id": 2,
+        "batch_no": 1,
+        "run_id": "run-1"
+      },
+      {
+        "order_id": 3,
+        "customer_id": 103,
+        "amount": "3.01",
+        "updated_at": "2026-01-02T07:00:00+00:00",
+        "event_id": 3,
+        "batch_no": 1,
+        "run_id": "run-1"
+      },
+      {
+        "order_id": 4,
+        "customer_id": 104,
+        "amount": "4.01",
+        "updated_at": "2026-01-02T07:00:00+00:00",
+        "event_id": 4,
+        "batch_no": 1,
+        "run_id": "run-1"
+      }
+    ],
+    "target": [
+      {
+        "order_id": 1,
+        "customer_id": 101,
+        "amount": "1.01",
+        "updated_at": "2026-01-01T07:00:00+00:00",
+        "event_id": 1,
+        "batch_no": 1,
+        "run_id": "run-1"
+      },
+      {
+        "order_id": 2,
+        "customer_id": 102,
+        "amount": "2.01",
+        "updated_at": "2026-01-01T07:00:00+00:00",
+        "event_id": 2,
+        "batch_no": 1,
+        "run_id": "run-1"
+      },
+      {
+        "order_id": 3,
+        "customer_id": 103,
+        "amount": "3.01",
+        "updated_at": "2026-01-02T07:00:00+00:00",
+        "event_id": 3,
+        "batch_no": 1,
+        "run_id": "run-1"
+      },
+      {
+        "order_id": 4,
+        "customer_id": 104,
+        "amount": "4.01",
+        "updated_at": "2026-01-02T07:00:00+00:00",
+        "event_id": 4,
+        "batch_no": 1,
+        "run_id": "run-1"
+      }
+    ]
+  },
+  "schema": [
+    {
+      "dataset": "target",
+      "column_name": "order_id",
+      "data_type": "bigint"
+    },
+    {
+      "dataset": "target",
+      "column_name": "customer_id",
+      "data_type": "bigint"
+    },
+    {
+      "dataset": "target",
+      "column_name": "amount",
+      "data_type": "numeric(14,2)"
+    },
+    {
+      "dataset": "target",
+      "column_name": "updated_at",
+      "data_type": "timestamptz"
+    }
+  ],
+  "manifest": [
+    {
+      "partition_key": "2026-01-01",
+      "file_key": "2026-01-01/orders.csv",
+      "row_count": 2,
+      "snapshot_at": "2026-01-03T12:00:00+00:00",
+      "run_id": "run-1"
+    },
+    {
+      "partition_key": "2026-01-02",
+      "file_key": "2026-01-02/orders.csv",
+      "row_count": 2,
+      "snapshot_at": "2026-01-03T12:00:00+00:00",
+      "run_id": "run-1"
+    }
+  ],
+  "references": [
+    {
+      "dataset_id": "orders",
+      "reference_id": "shortcut-orders",
+      "observed_at": "2026-01-03T11:00:00Z",
+      "run_id": "run-1"
+    }
+  ]
+}

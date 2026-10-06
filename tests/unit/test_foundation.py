@@ -57,7 +57,7 @@ class DomainTests(unittest.TestCase):
 class CatalogTests(unittest.TestCase):
     def test_supplied_lab_loads(self):
         labs = load_labs()
-        self.assertEqual(len(labs), 1)
+        self.assertEqual(len(labs), 36)
         self.assertEqual(labs[0].id, "lab_001_record_count")
         self.assertIn("Gold", labs[0].requirement)
 

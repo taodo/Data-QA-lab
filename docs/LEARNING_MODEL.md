@@ -20,4 +20,21 @@ Every task produces an engineering capability and a concept the learner can expl
 14. Timezones: business dates versus UTC timestamps.
 15. SCD Type 2: history and overlapping validity periods.
 
-The catalog starts with Lab 001. Later labs are planned, not executable. Grading should inspect submitted checks against clean and faulty datasets, including false positives; matching SQL text is insufficient. Correct SQL execution by itself does not prove test coverage.
+V1 has six executable ENG/VIE lessons: SQL business filters, NULLs, duplicate keys,
+key completeness, exact calculations and combined order/daily reconciliation.
+Each includes concept, objectives, guided SQL, observations, challenge, hints and
+post-completion explanation. Sandbox offers clean baselines and explicit defects.
+Grading executes submitted SQL against multiple independent clean/defective
+snapshots and requires the exact documented violation count. Matching SQL text
+is never required. A query can execute successfully yet FAIL grading because it
+misses a defect, flags clean data or returns the wrong shape/metric.
+
+Sessions are ACTIVE until a passing submission marks them COMPLETED or explicit
+reveal marks them REVEALED. Failed/error submissions allow another attempt. Hints
+advance through three levels. Completion/reveal exposes the instructor solution;
+revealed sessions cannot submit for credit. History survives process restarts.
+
+Conclusions are required and preserved for review, but their reasoning is not
+semantically graded in this deterministic V1. Challenge mode hides scenario and
+grading fixture values in service responses; it is not secrecy against a local
+administrator with access to repository files or the database.

@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "lab_022_api_ingestion",
+  "title": "API ingestion: reconcile and replay into PostgreSQL",
+  "requirement": "Enable ingest to load real HTTP records into the session PostgreSQL api_target. The same batch is applied twice. An idempotent upsert must retain one row per order_id. Compare response completeness/uniqueness plus database keys, customer_id and exact decimal net_amount against api_expected. A missing key counts in both response and Target checks.",
+  "difficulty": "intermediate",
+  "pipeline_id": "orders_v1",
+  "available_fault_ids": [
+    "api_ingest_missing",
+    "api_ingest_wrong",
+    "api_ingest_duplicate"
+  ],
+  "learning_objectives": [
+    "API ingestion: reconcile and replay into PostgreSQL",
+    "Use actual HTTP evidence to distinguish transport and data defects."
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "method": "GET",
+  "path": "/orders",
+  "page_size": 2,
+  "paginate": true,
+  "max_attempts": 3,
+  "timeout_ms": 150,
+  "ingest": true,
+  "idempotent": true,
+  "checks": {
+    "status": 200,
+    "complete": true,
+    "unique": true,
+    "reconcile": true
+  }
+}
