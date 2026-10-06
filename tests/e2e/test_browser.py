@@ -604,6 +604,48 @@ class BrowserTests(unittest.TestCase):
         expect(self.page).to_have_url(__import__('re').compile('/courses/api-testing/lessons/'))
         self.page.reload();self.idle();expect(self.page.locator('.lesson-heading .badge')).to_have_text('Completed')
 
+    def test_cloud_beginner_guidance_import_controls_language_and_reveal(self):
+        from playwright.sync_api import expect
+        from backend.app.learning.cloud_guidance import GUIDANCE
+        from backend.app.learning.lessons import course_id
+        for lab_id in GUIDANCE:
+            self.page.goto(self.url+f'/courses/{course_id(lab_id)}/lessons/{lab_id}?new=1')
+            for language,label in [('ENG','How to practice'),('VIE','Cách thực hành')]:
+                self.page.get_by_label('Select language').select_option(language);self.idle()
+                heading=self.page.get_by_text(label,exact=True);heading.click()
+                expect(heading.locator('..')).to_contain_text('48 KiB')
+                expect(heading.locator('..')).to_contain_text('batch_no')
+                expect(self.page.get_by_text('Solution explained',exact=True)).to_have_count(0)
+                expect(self.page.get_by_text('Giải thích lời giải',exact=True)).to_have_count(0)
+        self.page.goto(self.url+'/courses/fabric-testing/lessons/lab_023_fabric_lineage?new=1')
+        self.page.get_by_label('Select language').select_option('ENG');self.idle()
+        example=self.page.get_by_text('Small worked example — illustrative',exact=True)
+        example.focus();example.press('Enter')
+        expect(example.locator('..')).to_contain_text('violation_count = 3')
+        self.page.get_by_label('Mode',exact=True).select_option('SANDBOX')
+        self.page.get_by_label('Scenario',exact=True).select_option('clean')
+        self.page.locator('.work-column .primary').click();self.idle()
+        expect(self.page.locator('.cloud-workspace')).to_contain_text('SIMULATED')
+        self.page.get_by_text('Import JSON/CSV evidence',exact=True).click()
+        with self.page.expect_download() as download:
+            self.page.get_by_role('button',name='Download evidence JSON',exact=True).click()
+        path=download.value.path()
+        self.page.get_by_label('Evidence file',exact=True).set_input_files({'name':download.value.suggested_filename,'mimeType':'application/json','buffer':Path(path).read_bytes()})
+        self.page.get_by_role('button',name='Validate and import',exact=True).click();self.idle()
+        expect(self.page.locator('.cloud-workspace > .section-title .badge')).to_have_text('IMPORTED')
+        expect(self.page.get_by_role('button',name='Publish snapshots',exact=True)).to_be_disabled()
+        self.page.get_by_role('button',name='Reset simulator',exact=True).click();self.idle()
+        expect(self.page.locator('.cloud-workspace > .section-title .badge')).to_have_text('SIMULATED')
+        self.page.get_by_role('button',name='Publish snapshots',exact=True).click();self.idle()
+        self.page.once('dialog',lambda dialog:dialog.accept())
+        self.page.get_by_role('button',name='Reveal solution',exact=True).click();self.idle()
+        expect(self.page.get_by_text('Solution explained',exact=True).locator('..')).to_contain_text('LEFT JOIN')
+        self.page.get_by_label('Select language').select_option('VIE');self.idle()
+        expect(self.page.get_by_text('Giải thích lời giải',exact=True)).to_be_visible()
+        self.page.set_viewport_size({'width':390,'height':844})
+        overflow=self.page.evaluate("Array.from(document.querySelectorAll('.player-main p,.player-main summary,.player-main input')).filter(e=>e.clientWidth>0 && e.scrollWidth>e.clientWidth+1).map(e=>({tag:e.tagName,cls:e.className,width:e.clientWidth,scroll:e.scrollWidth,text:e.textContent?.slice(0,130)}))")
+        self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),390,str(overflow))
+
     def test_task11_eight_lessons_grading_imports_language_and_resume(self):
         from playwright.sync_api import expect
         from backend.app.learning import cloud

@@ -28,3 +28,6 @@
 .course-intro-content li+li {margin-top:.55rem}
 .course-intro-example {padding:.1rem 1rem;background:#faf9fc;border-left:3px solid #b193e7;border-radius:4px}
 @media(max-width:600px){.course-intro-toggle {padding:.85rem 1rem;gap:.6rem}.course-intro-item>h2 {font-size:1rem}.course-intro-state {font-size:.65rem}.course-intro-content {padding:.1rem 1rem 1rem}.course-intro-example {padding:.1rem .75rem}}
+
+/* Exact CSV headers and evidence identifiers must fit narrow guidance/import panels. */
+.guidance-text p,.cloud-import p {overflow-wrap:anywhere}
