@@ -20,6 +20,7 @@
 | 10 — ETL / API curriculum | Five ETL and four API lessons, real PostgreSQL and HTTP execution | Validate pipeline and ingestion contracts | Approved and merged; independent clean/fault graders, browser flow and Docker restart |
 | 11 — Cloud QA | Approved and merged 11.1–11.4: Fabric/ADF/OneLake foundations | Transfer concepts to run and data evidence | PR #13 merged at 3406447; final-head CI green; stage 11.5 unapproved |
 | 12 — Cloud foundations | Approved 12.1–12.4: six Databricks/Synapse/Azure local lessons and release | Prove classification, versions, fact mapping, grain, manifests and access evidence | 36 lessons across nine executable courses; verification recorded in TASK_12_PROGRESS.md |
+| 13 - SQL learning guidance | Beginner explanations for 13 SQL lessons in ENG/VIE | Understand QA requirements, examples and revealed solutions | Reference-SQL example tests, bilingual UI and final-head CI; see TASK_13_PROGRESS.md |
 
 V1 scope is Tasks 0–7.2. Tasks 8–10 are approved and merged into
 `feature/develop`, providing 22 lessons across SQL (13), ETL (5) and API (4),
@@ -32,7 +33,10 @@ Its six local lessons activate Databricks, Synapse and Azure, giving 36 ENG/VIE
 lessons across nine executable courses. See TASK_12_PLAN.md and TASK_12_PROGRESS.md.
 Live-cloud stage 11.5 still requires separate approval. No QA Sentinel integration.
 
-Active approved preparation: temporary online showcase on `feature/demo-online`
-from current `origin/feature/develop`; see DEMO_ONLINE.md and DEMO_PROGRESS.md.
-Separate demo database, exact public hosts and trusted HTTPS proxy; public tunnel
-startup and external-device verification are user-operated. No new curriculum task.
+Demo preparation is merged as PR #15. Public tunnel startup and external-device
+verification remain user-operated; see DEMO_ONLINE.md and DEMO_PROGRESS.md.
+
+Active approved task: Task 13 on `feature/task-13-sql-learning-guidance`, from
+latest `origin/feature/develop`. All 13 SQL lessons receive equivalent beginner
+ENG/VIE guidance; graders and completion contracts stay unchanged. See
+TASK_13_PROGRESS.md. Stop at review-ready PR; no merge or next task.
