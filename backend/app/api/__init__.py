@@ -19,6 +19,7 @@ from faults.contracts import FaultStateError
 from backend.app.learning.contracts import LabStateError, SqlSecurityError
 from backend.app.learning.lessons import CATALOG, lesson, localize_session, course_id
 from backend.app.learning import service
+from backend.app.learning.cloud_contracts import MAX_REQUEST_BYTES
 from backend.app.persistence.database import connect, transaction
 from backend.app import accounts, courses as curriculum
 
@@ -53,6 +54,12 @@ class Simulation(Input):
     action: Literal["RESET", "NEXT", "REPLAY", "RUN", "RECOVER"]
 
 
+class EvidenceImport(Input):
+    filename: str = Field(min_length=1, max_length=80)
+    file_format: Literal["json", "csv"]
+    content: str = Field(min_length=1, max_length=49152)
+
+
 class Login(Input):
     username: str = Field(min_length=3,max_length=32,pattern=r"^[A-Za-z0-9_]+$")
     password: str = Field(min_length=12,max_length=128)
@@ -85,7 +92,7 @@ class BodyLimit:
             if message["type"] == "http.disconnect":
                 return
             size += len(message.get("body", b""))
-            if size > 65536:
+            if size > MAX_REQUEST_BYTES:
                 return await response({"error": {"code": "BODY_LIMIT"}}, 413)(scope, receive, send)
             messages.append(message)
             if not message.get("more_body", False):
@@ -96,7 +103,7 @@ class BodyLimit:
 
 
 def create_app(database_url=None):
-    app = FastAPI(title="Data QA Lab", version="1.3.0")
+    app = FastAPI(title="Data QA Lab", version="1.4.0")
     db = database_url or Settings.from_env().database_url
     gate = Lock()
     app.add_middleware(BodyLimit)
@@ -310,6 +317,29 @@ def create_app(database_url=None):
     def simulation(session_id: UUID, body: Simulation,user=Depends(writer), language: Language = "VIE"):
         owned("lab_sessions","session_id",session_id,user)
         return response(localize_session(mutate(service.simulate_session, db, session_id, body.action),language))
+
+    @app.get("/api/sessions/{session_id}/evidence-export")
+    def evidence_export(session_id: UUID, user=Depends(principal), language: Language = "VIE"):
+        owned("lab_sessions", "session_id", session_id, user)
+        try:
+            return response(mutate(service.export_cloud_evidence, db, session_id))
+        except LabStateError:
+            raise
+        except ValueError as exc:
+            from backend.app.learning.cloud_contracts import localized_error
+            return response({"error": {"code": "EVIDENCE_INVALID", "detail": localized_error(str(exc), language)}}, 422)
+
+    @app.post("/api/sessions/{session_id}/evidence-import")
+    def evidence_import(session_id: UUID, body: EvidenceImport,user=Depends(writer), language: Language = "VIE"):
+        owned("lab_sessions", "session_id", session_id, user)
+        try:
+            result = mutate(service.import_cloud_evidence, db, session_id, body.filename, body.file_format, body.content)
+        except LabStateError:
+            raise
+        except ValueError as exc:
+            from backend.app.learning.cloud_contracts import localized_error
+            return response({"error": {"code": "EVIDENCE_INVALID", "detail": localized_error(str(exc), language)}}, 422)
+        return response(localize_session(result, language))
 
     @app.post("/api/sessions/{session_id}/submit")
     def submit(session_id: UUID, body: Submit,user=Depends(writer), language: Language = "VIE"):

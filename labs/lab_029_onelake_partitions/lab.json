@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "lab_029_onelake_partitions",
+  "title": "Prove partition and file completeness",
+  "requirement": "Return one non-negative integer column named violation_count. A file manifest is observable evidence, not a listing fetched from real OneLake. cloud_expected_partitions defines two independently required UTC partitions and row counts. Group manifest rows by partition, SUM(row_count), then FULL JOIN expected partitions; count missing/unexpected/mismatched partition groups once. Add duplicated file_key groups. A repeated file may violate both the aggregate and duplicate rule. NULL row counts mean incomplete evidence. Imported file keys are labels; paths and links are never resolved.",
+  "difficulty": "intermediate",
+  "pipeline_id": "orders_v1",
+  "available_fault_ids": [
+    "cloud_partition_missing",
+    "cloud_partition_extra",
+    "cloud_file_duplicate"
+  ],
+  "learning_objectives": [
+    "Prove partition and file completeness",
+    "Separate execution, quality and incomplete evidence."
+  ]
+}

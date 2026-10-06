@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "lab_028_adf_recovery",
+  "title": "Verify dependency recovery and publication",
+  "requirement": "Return one non-negative integer column named violation_count. Recovery requires both correct data and current execution/checkpoint evidence. Return latest visible Source/Target differing FULL JOIN rows, duplicated Target key groups, one per non-SUCCESS activity, and one if the latest step is absent/non-SUCCESS or its batch checkpoint differs from context. An older failed run remains evidence after RECOVER; inspect the latest step, not any historical failure. A partial publication can report SUCCESS and still miss a key. Repeat recovery must retain one row per order.",
+  "difficulty": "intermediate",
+  "pipeline_id": "orders_v1",
+  "available_fault_ids": [
+    "cloud_failed_dependency",
+    "cloud_partial_publish",
+    "cloud_checkpoint"
+  ],
+  "learning_objectives": [
+    "Verify dependency recovery and publication",
+    "Separate execution, quality and incomplete evidence."
+  ]
+}

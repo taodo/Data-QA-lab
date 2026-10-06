@@ -1,5 +1,6 @@
 """Public curriculum taxonomy; availability reflects implemented executable labs."""
 from backend.app.learning.lessons import CATALOG, lesson, course_id as lesson_course
+from backend.app.course_introductions import introduction
 
 # Subject, course and chapter are distinct; only executable courses are available.
 SUBJECTS = (
@@ -26,7 +27,7 @@ CHAPTERS = (
 def subjects(language="VIE"):
     return [{"id": row[0], "title": row[1 if language == "ENG" else 2],
              "summary": row[3 if language == "ENG" else 4], "family": row[5],
-             "course_id": COURSE_IDS[row[0]], "available": row[0] in {"sql","etl","api"}}
+             "course_id": COURSE_IDS[row[0]], "available": row[0] in {"sql","etl","api","fabric","adf","onelake"}}
             for row in SUBJECTS]
 
 
@@ -44,6 +45,10 @@ def courses(language="VIE"):
                        "objectives": (["Write SQL checks using observable evidence.", "Detect defects with clean and faulty fixtures.", "Validate replay, freshness and dimension history."] if language == "ENG" else ["Viết kiểm tra SQL dựa trên bằng chứng.", "Phát hiện lỗi bằng dữ liệu sạch và dữ liệu có lỗi.", "Kiểm tra replay, freshness và lịch sử dimension."]) if available else [subject["summary"]],
                        "prerequisites": (["Basic database concepts; guided SQL practice is included.", "Docker Desktop running for local practical labs."] if language == "ENG" else ["Biết khái niệm database cơ bản; có hướng dẫn thực hành SQL.", "Docker Desktop đang chạy để thực hành local."]) if available else []})
     for item in result:
+        if item["subject_id"] in {"fabric","adf","onelake"}:
+            item["objectives"] = (["Trace run/activity evidence and reconcile actual snapshots.","Prove schema, replay, partitions and freshness with independent contracts.","Distinguish SIMULATED/IMPORTED evidence from live cloud verification."] if language=="ENG" else
+                                  ["Truy vết run/activity và đối soát snapshot thực tế.","Chứng minh schema, replay, partition và freshness theo hợp đồng độc lập.","Phân biệt evidence SIMULATED/IMPORTED với kiểm chứng cloud thật."])
+            item["prerequisites"] = (["SQL, ETL and API course fundamentals.","Local Docker PostgreSQL; no cloud account required."] if language=="ENG" else ["Kiến thức khóa SQL, ETL và API.","Docker PostgreSQL local; không cần tài khoản cloud."])
         if item["id"]=="etl-testing":
             item["objectives"] = (["Validate mapping, exact transformations and rejected records.","Run real isolated batches, replay and recover a failed publication.","Design SQL checks using Source/Target and execution evidence."] if language=="ENG" else ["Kiểm tra ánh xạ, biến đổi chính xác và dòng bị reject.","Chạy batch riêng biệt, replay và khôi phục publish lỗi.","Thiết kế kiểm tra SQL dùng bằng chứng Source/Target và thực thi."])
         if item["id"]=="api-testing":
@@ -56,11 +61,17 @@ def course(course_id, language="VIE"):
     item = next((item for item in courses(language) if item["id"] == course_id), None)
     if item is None:
         return None
+    subject_title = next(s["title"] for s in subjects(language) if s["id"] == item["subject_id"])
+    item["introduction"] = introduction(course_id, subject_title, language)
     item["chapters"] = []
     if item["available"]:
         chapters=list(CHAPTERS) if course_id=="sql-data-qa" else (
             [("ETL_MAPPING","Mapping & reference data","Ánh xạ & dữ liệu tham chiếu"),("ETL_TRANSFORM","Transformation contracts","Hợp đồng biến đổi"),("ETL_REJECT","Rejects & quarantine","Dữ liệu lỗi & quarantine"),("ETL_INCREMENTAL","Batches & replay","Batch & replay"),("ETL_RECOVERY","Failure & recovery","Lỗi & khôi phục")] if course_id=="etl-testing" else
             [("API_CONTRACT","HTTP & JSON contracts","Hợp đồng HTTP & JSON"),("API_RELIABILITY","Pagination & reliability","Pagination & độ tin cậy"),("API_INGESTION","Ingestion & reconciliation","Ingestion & đối soát")])
+        cloud_chapters={"fabric-testing":[("FABRIC_EVIDENCE","Runs, contracts & layers","Run, hợp đồng & layer")],
+                        "adf-testing":[("ADF_EVIDENCE","Copy, replay & recovery","Copy, replay & khôi phục")],
+                        "onelake-testing":[("ONELAKE_EVIDENCE","Partitions & reference freshness","Partition & freshness reference")]}
+        chapters=cloud_chapters.get(course_id,chapters)
         for track, eng, vie in chapters:
             labs = [lesson(key, language) for key in sorted(CATALOG, key=lambda k: CATALOG[k]["order"]) if lesson_course(key)==course_id and CATALOG[key].get("track","FOUNDATION") == track]
             item["chapters"].append({"id": track, "title": eng if language == "ENG" else vie,

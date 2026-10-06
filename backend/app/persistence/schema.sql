@@ -205,7 +205,11 @@ ALTER TABLE metadata.lab_sessions ADD CONSTRAINT lab_sessions_scenario_id_check 
                     'inc_append','inc_event_watermark','fresh_stale','fresh_missing','fresh_failed',
                     'scd1_stale','scd1_tie','scd2_overlap','scd2_two_current','scd2_missing',
                     'etl_wrong_mapping','etl_missing','etl_rounding','etl_null_amount','etl_drop_reject','etl_accept_invalid','etl_append','etl_skip_late','etl_failed','etl_partial_publish',
-                    'api_missing_field','api_wrong_type','api_wrong_status','api_missing_page','api_duplicate_page','api_exhausted','api_timeout','api_ingest_missing','api_ingest_wrong','api_ingest_duplicate')
+                    'api_missing_field','api_wrong_type','api_wrong_status','api_missing_page','api_duplicate_page','api_exhausted','api_timeout','api_ingest_missing','api_ingest_wrong','api_ingest_duplicate',
+                    'cloud_orphan_run','cloud_dependency_missing','cloud_unknown_run','cloud_schema_type','cloud_schema_missing','cloud_schema_extra',
+                    'cloud_layer_swap','cloud_layer_amount','cloud_layer_duplicate','cloud_copy_swap','cloud_copy_missing','cloud_copy_metrics','cloud_copy_unknown',
+                    'cloud_skip_late','cloud_replay_duplicate','cloud_boundary_skip','cloud_failed_dependency','cloud_partial_publish','cloud_checkpoint',
+                    'cloud_partition_missing','cloud_partition_extra','cloud_file_duplicate','cloud_reference_stale','cloud_reference_missing','cloud_reference_null','cloud_reference_future')
 );
 
 CREATE TABLE IF NOT EXISTS metadata.lab_queries (
@@ -266,4 +270,4 @@ CREATE TABLE IF NOT EXISTS metadata.legacy_imports (
 );
 
 ALTER TABLE metadata.course_enrollments DROP CONSTRAINT IF EXISTS course_enrollments_course_id_check;
-ALTER TABLE metadata.course_enrollments ADD CONSTRAINT course_enrollments_course_id_check CHECK (course_id IN ('sql-data-qa','etl-testing','api-testing'));
+ALTER TABLE metadata.course_enrollments ADD CONSTRAINT course_enrollments_course_id_check CHECK (course_id IN ('sql-data-qa','etl-testing','api-testing','fabric-testing','adf-testing','onelake-testing'));

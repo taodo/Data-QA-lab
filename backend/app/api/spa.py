@@ -9,7 +9,8 @@ class FrontendFiles(StaticFiles):
         try:
             return await super().get_response(path, scope)
         except HTTPException as exc:
-            route=re.fullmatch(r"(?:login|signup|account|my-learning|history|pipeline|courses|subjects/[a-z0-9-]+|courses/[a-z0-9-]+(?:/lessons/lab_[a-z0-9_]+)?|learn/lab_[a-z0-9_]+)",path)
+            # StaticFiles normalizes paths using the host OS (backslashes on Windows).
+            route=re.fullmatch(r"(?:login|signup|account|my-learning|history|pipeline|courses|subjects/[a-z0-9-]+|courses/[a-z0-9-]+(?:/lessons/lab_[a-z0-9_]+)?|learn/lab_[a-z0-9_]+)",path.replace('\\','/'))
             if exc.status_code==404 and scope["method"] in {"GET","HEAD"} and route:
                 return await super().get_response("index.html",scope)
             raise
