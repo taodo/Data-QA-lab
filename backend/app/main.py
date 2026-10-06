@@ -65,6 +65,9 @@ def build_parser() -> argparse.ArgumentParser:
     account_import.add_argument("--confirm", action="store_true")
     account_reset = subparsers.add_parser("account-reset", help="Operator password recovery with a hidden interactive prompt")
     account_reset.add_argument("--username", required=True)
+    demo_account = subparsers.add_parser("demo-account", help="Create a bounded demo account with hidden password prompts")
+    demo_account.add_argument("--username", required=True)
+    demo_account.add_argument("--display-name", default="Demo learner")
     return parser
 
 def main() -> None:
@@ -84,7 +87,18 @@ def main() -> None:
         return
 
     database_url = Settings.from_env().database_url
-    if args.command == "account-import":
+    if args.command == "demo-account":
+        from getpass import getpass
+        from backend.app import demo, accounts
+        if not demo.enabled():
+            raise SystemExit("demo-account requires DATA_QA_DEMO_MODE=1 and the separate demo database")
+        password = getpass("Demo password (12–128 characters): ")
+        if password != getpass("Repeat demo password: "):
+            raise SystemExit("Passwords do not match")
+        payload, token = accounts.signup(database_url, args.username, args.display_name, password)
+        accounts.logout(database_url, {"token_hash": accounts.token_hash(token)})
+        _print({"user": payload["user"], "created": True})
+    elif args.command == "account-import":
         from backend.app.accounts import import_legacy
         _print(import_legacy(database_url,args.username,args.confirm))
     elif args.command == "account-reset":
