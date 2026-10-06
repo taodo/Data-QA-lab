@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "lab_034_synapse_grain",
+  "title": "Prove reporting grain and exact aggregates",
+  "requirement": "Return one non-negative integer column named violation_count. Reporting grain is one row per (sale_date, region). Joining a fact to repeated dimension rows can multiply a sale before aggregation; this is JOIN fanout. sy_expected_report independently defines sale_count and exact total for each day/region, rather than reusing the observed dimension join. Inspect dimension multiplicity and sy_report. FULL JOIN the expected and actual report on both grain columns; count missing/unexpected or differing sale_count/total once per joined row plus duplicated day/region groups. Purpose: prove business totals, including a valid zero-total group. RUN actually aggregates the fact/dimension join; if dimension rows are duplicated, rerunning still produces incorrect totals. Do not fix fanout by SUM(DISTINCT amount): different sales can have equal amounts.",
+  "difficulty": "intermediate",
+  "pipeline_id": "orders_v1",
+  "available_fault_ids": [
+    "f_join_fanout",
+    "f_report_total",
+    "f_report_grain"
+  ],
+  "learning_objectives": [
+    "Prove reporting grain and exact aggregates",
+    "Justify conclusions using independent keys, exact values and observable evidence."
+  ]
+}

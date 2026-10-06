@@ -1,0 +1,1 @@
+SELECT (SELECT COUNT(*) FROM az_expected_files e FULL JOIN az_files a USING(file_id) WHERE e.file_id IS NULL OR a.file_id IS NULL OR e.path IS DISTINCT FROM a.path OR e.route IS DISTINCT FROM a.route OR e.byte_count IS DISTINCT FROM a.byte_count) + (SELECT COUNT(*) FROM (SELECT file_id FROM az_files GROUP BY file_id HAVING COUNT(*)>1) d) AS violation_count;

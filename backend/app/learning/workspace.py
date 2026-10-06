@@ -7,11 +7,12 @@ from backend.app.learning.advanced_profiles import ADVANCED_TABLES, ADVANCED_VAR
 
 
 FOUNDATION_TABLES = ("source_orders", "target_orders", "gold_daily_sales", "target_daily_sales")
-from backend.app.learning import etl, http_exercises, cloud
-TABLES = FOUNDATION_TABLES + ADVANCED_TABLES + etl.TABLES + http_exercises.TABLES + cloud.TABLES
+from backend.app.learning import etl, http_exercises, cloud, foundations
+TABLES = FOUNDATION_TABLES + ADVANCED_TABLES + etl.TABLES + http_exercises.TABLES + cloud.TABLES + foundations.TABLES
 VARIANTS = {"current", "clean", "clean_subset", "clean_zero", "missing", "swapped", "invalid_customer", "invalid_customer_last", "invalid_customer_two", "null_net_amount", "null_last", "null_two", "duplicate_order", "duplicate_last", "duplicate_twice", "duplicate_triple", "wrong_net_amount", "wrong_last", "wrong_two", "daily_wrong", "daily_missing", "mixed_order_faults"}
 VARIANTS |= ADVANCED_VARIANTS | etl.VARIANTS | {"api_clean","api_shifted"} | {v for values in http_exercises.SCENARIOS.values() for v in values}
 VARIANTS |= cloud.VARIANTS
+VARIANTS |= foundations.VARIANTS
 
 
 def require_schema(schema: str):
@@ -22,6 +23,8 @@ def require_schema(schema: str):
 def create_session_snapshot(connection, schema, run_id, scenario, lab_id="lab_001_record_count"):
     from psycopg import sql
     require_schema(schema)
+    if lab_id in foundations.IDS:
+        return foundations.create(connection, schema, lab_id, scenario)
     if lab_id in cloud.IDS:
         return cloud.create(connection, schema, lab_id, scenario)
     if lab_id in etl.SPECS:
@@ -120,7 +123,8 @@ def snapshot_tables(connection, schema):
         raise SqlSecurityError("Workspace table allowlist does not match")
     if "cloud_context" in names:
         rows=cloud.execute(connection,schema,"SELECT lab_id FROM {s}.cloud_context").fetchall()
-        if len(rows)!=1 or rows[0][0] not in cloud.IDS or set(names)!=set(cloud.TABLES):
+        expected = foundations.table_names(rows[0][0]) if len(rows)==1 and rows[0][0] in foundations.IDS else cloud.TABLES
+        if len(rows)!=1 or rows[0][0] not in (*cloud.IDS,*foundations.IDS) or set(names)!=set(expected):
             raise SqlSecurityError("Cloud workspace does not match")
     elif "etl_context" in names:
         lab_id=etl.execute(connection,schema,"SELECT lab_id FROM {s}.etl_context").fetchall()
@@ -157,6 +161,8 @@ def populate_query_snapshot(connection, destination, snapshot, variant):
     tables = snapshot_tables(connection, destination)
     if "cloud_context" in tables:
         lab_id=cloud.execute(connection,destination,"SELECT lab_id FROM {s}.cloud_context").fetchone()[0]
+        if lab_id in foundations.IDS:
+            return foundations.populate(connection,destination,lab_id,variant)
         return cloud.populate(connection,destination,lab_id,variant)
     if "etl_context" in tables:
         lab_id=etl.execute(connection,destination,"SELECT lab_id FROM {s}.etl_context").fetchone()[0]

@@ -209,7 +209,11 @@ ALTER TABLE metadata.lab_sessions ADD CONSTRAINT lab_sessions_scenario_id_check 
                     'cloud_orphan_run','cloud_dependency_missing','cloud_unknown_run','cloud_schema_type','cloud_schema_missing','cloud_schema_extra',
                     'cloud_layer_swap','cloud_layer_amount','cloud_layer_duplicate','cloud_copy_swap','cloud_copy_missing','cloud_copy_metrics','cloud_copy_unknown',
                     'cloud_skip_late','cloud_replay_duplicate','cloud_boundary_skip','cloud_failed_dependency','cloud_partial_publish','cloud_checkpoint',
-                    'cloud_partition_missing','cloud_partition_extra','cloud_file_duplicate','cloud_reference_stale','cloud_reference_missing','cloud_reference_null','cloud_reference_future')
+                    'cloud_partition_missing','cloud_partition_extra','cloud_file_duplicate','cloud_reference_stale','cloud_reference_missing','cloud_reference_null','cloud_reference_future',
+                    'f_lost','f_classification','f_duplicate_publication','f_stale_overwrite','f_duplicate_replay','f_unintended_delete',
+                    'f_fact_missing','f_fact_unexpected','f_dimension_mapping','f_join_fanout','f_report_total','f_report_grain',
+                    'f_file_missing','f_file_unexpected','f_file_duplicate','f_file_route',
+                    'f_access_denied','f_access_identity','f_access_scope','f_access_missing','f_access_future')
 );
 
 CREATE TABLE IF NOT EXISTS metadata.lab_queries (
@@ -270,4 +274,4 @@ CREATE TABLE IF NOT EXISTS metadata.legacy_imports (
 );
 
 ALTER TABLE metadata.course_enrollments DROP CONSTRAINT IF EXISTS course_enrollments_course_id_check;
-ALTER TABLE metadata.course_enrollments ADD CONSTRAINT course_enrollments_course_id_check CHECK (course_id IN ('sql-data-qa','etl-testing','api-testing','fabric-testing','adf-testing','onelake-testing'));
+ALTER TABLE metadata.course_enrollments ADD CONSTRAINT course_enrollments_course_id_check CHECK (course_id IN ('sql-data-qa','etl-testing','api-testing','fabric-testing','adf-testing','onelake-testing','databricks-testing','synapse-testing','azure-testing'));

@@ -35,7 +35,7 @@ def main():
         assert b'<div id="root"></div>' in response.read()
     for language in ("ENG","VIE"):
         lessons=api("/lessons?language="+language)
-        assert len(lessons)==30
+        assert len(lessons)==36
         assert all("solution_sql" not in lesson and "hints" not in lesson for lesson in lessons)
     if len(sys.argv)>1 and sys.argv[1]=="resume":
         previous=json.loads(STATE.read_text())
@@ -45,7 +45,7 @@ def main():
         assert session["pipeline_run_id"]==previous["pipeline_run_id"]
         assert len(session["queries"])==1 and len(session["submissions"])==1
         assert len(api("/runs"))==previous["run_count"]
-        assert {e["course_id"] for e in api("/enrollments")}=={"sql-data-qa","etl-testing","api-testing","fabric-testing","adf-testing","onelake-testing"}
+        assert {e["course_id"] for e in api("/enrollments")}=={"sql-data-qa","etl-testing","api-testing","fabric-testing","adf-testing","onelake-testing","databricks-testing","synapse-testing","azure-testing"}
         assert any(p["lab_id"]=="lab_001_record_count" and p["completed"] for p in api("/progress"))
         incremental=api("/sessions/"+previous["incremental_id"])
         assert incremental["simulation"]["step_count"]==2
@@ -62,6 +62,12 @@ def main():
             assert resumed['cloud_evidence']['datasets']['target']==entry['target']
             assert len(resumed['cloud_evidence']['imports'])==entry['imports']
             assert resumed['queries'] and resumed['submissions']
+        for entry in previous['foundation_sessions']:
+            resumed=api('/sessions/'+entry['session_id'])
+            assert resumed['status']=='COMPLETED' and resumed['queries'] and resumed['submissions']
+            assert resumed['cloud_evidence']['datasets']==entry['datasets']
+            assert resumed['cloud_evidence']['mutation_revision']==entry['revision']
+            assert resumed['cloud_evidence']['imports'][0]['sha256']==entry['sha256']
         print("Container restart retained completed session, SQL history and baseline.")
         return
     name="smoke_"+uuid4().hex[:16]
@@ -102,8 +108,19 @@ def main():
         assert api('/sessions/'+cloud_id+'/query',{'sql':check})['rows']==[['0']]
         assert api('/sessions/'+cloud_id+'/submit',{'sql':check,'conclusion':'Verified cloud run and data evidence.'})['status']=='PASS'
         cloud_sessions.append({'session_id':cloud_id,'target':created['cloud_evidence']['datasets']['target'],'imports':len(created['cloud_evidence']['imports'])})
-    STATE.write_text(json.dumps({'cloud_sessions':cloud_sessions,'new_sessions':new_sessions,"username":name,"session_id":sid,"pipeline_run_id":session["pipeline_run_id"],"run_count":len(api("/runs")),"incremental_id":inc,"as_of":incremental["simulation"]["as_of"]}))
-    print("Packaged UI/API, thirty bilingual lessons, imported cloud evidence and restricted SQL grading passed.")
+    foundation_sessions=[]
+    for lab_id in ('lab_031_databricks_classification','lab_032_databricks_versions','lab_033_synapse_publication','lab_034_synapse_grain','lab_035_azure_manifest','lab_036_azure_access'):
+        created=api('/sessions',{'lab_id':lab_id,'mode':'SANDBOX','scenario':'clean'})
+        fid=created['session_id']
+        exported=api('/sessions/'+fid+'/evidence-export')
+        imported=api('/sessions/'+fid+'/evidence-import',exported)
+        check=(Path(__file__).resolve().parents[1]/'examples'/(lab_id+'.sql')).read_text()
+        assert api('/sessions/'+fid+'/query',{'sql':check})['rows']==[['0']]
+        assert api('/sessions/'+fid+'/submit',{'sql':check,'conclusion':'Verified independent foundation contract.'})['status']=='PASS'
+        evidence=imported['cloud_evidence']
+        foundation_sessions.append({'session_id':fid,'datasets':evidence['datasets'],'revision':evidence['mutation_revision'],'sha256':evidence['imports'][0]['sha256']})
+    STATE.write_text(json.dumps({'foundation_sessions':foundation_sessions,'cloud_sessions':cloud_sessions,'new_sessions':new_sessions,"username":name,"session_id":sid,"pipeline_run_id":session["pipeline_run_id"],"run_count":len(api("/runs")),"incremental_id":inc,"as_of":incremental["simulation"]["as_of"]}))
+    print("Packaged UI/API, 36 bilingual lessons, portable foundation evidence and restricted SQL grading passed.")
 
 
 if __name__=="__main__":

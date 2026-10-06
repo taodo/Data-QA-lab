@@ -558,6 +558,61 @@ class BrowserTests(unittest.TestCase):
         expect(self.page).to_have_url(__import__('re').compile('/courses/onelake-testing/lessons/'))
         self.page.reload();self.idle();expect(self.page.locator('.lesson-heading .badge')).to_have_text('Completed')
 
+    def test_task12_six_lessons_challenge_import_language_mobile_history(self):
+        from playwright.sync_api import expect
+        from backend.app.learning import foundations as f
+        from backend.app.learning.foundations_content import CATALOG
+        self.page.goto(self.url+'/courses/databricks-testing')
+        self.page.get_by_label('Select language').select_option('ENG');self.idle()
+        expect(self.page.locator('.lesson-card')).to_have_count(2)
+        for key,definition in CATALOG.items():
+            course=definition['course_id']
+            self.page.goto(self.url+f'/courses/{course}/lessons/{key}?new=1')
+            self.page.get_by_label('Mode',exact=True).wait_for();self.idle()
+            # Exercise challenge mode; reveal is not needed for a correct submission.
+            self.page.get_by_label('Mode',exact=True).select_option('CHALLENGE')
+            self.page.locator('.work-column .primary').click();self.idle()
+            editor=self.page.get_by_label('SQL editor',exact=True);editor.wait_for()
+            expect(self.page.locator('.solution')).to_have_count(0)
+            challenge=self.page.locator('.challenge-answer .challenge-box')
+            answer=self.page.locator('#conclusion')
+            self.assertTrue(challenge.evaluate('(e)=>!!(e.compareDocumentPosition(document.querySelector("#conclusion")) & Node.DOCUMENT_POSITION_FOLLOWING)'))
+            expect(self.page.locator('.cloud-workspace')).to_contain_text('SIMULATED')
+            self.sql(f.SOLUTIONS[key]);answer.fill('Independent contract and evidence reasoning '+key)
+            if key==f.IDS[0]:
+                self.page.get_by_label('Select language').select_option('VIE');self.idle()
+                expect(self.page.locator('.lesson-heading h1')).to_have_text(definition['VIE']['title'])
+                expect(self.page.locator('#conclusion')).to_have_value('Independent contract and evidence reasoning '+key)
+                self.page.reload();editor.wait_for();self.idle()
+                expect(editor).to_have_text(f.SOLUTIONS[key])
+                self.page.get_by_label('Select language').select_option('ENG');self.idle()
+            self.page.get_by_role('button',name='Run SQL',exact=False).click();self.idle()
+            expect(self.page.locator('.query-result .badge').first).to_have_text('SUCCESS')
+            self.page.set_viewport_size({'width':390,'height':844})
+            self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),390)
+            self.page.screenshot(path=str(self.artifacts/(key+'-mobile.png')),full_page=True)
+            self.page.set_viewport_size({'width':1440,'height':1000})
+            self.page.get_by_role('button',name='Submit check',exact=True).click();self.idle()
+            expect(self.page.locator('.lesson-heading .badge')).to_have_text('Completed')
+            expect(self.page.locator('.solution')).to_be_visible()
+            self.page.reload();self.idle()
+            expect(self.page.locator('.history-item')).to_contain_text('Independent contract and evidence reasoning '+key)
+        self.page.goto(self.url+'/my-learning');self.idle()
+        for course in ('databricks-testing','synapse-testing','azure-testing'):
+            expect(self.page.locator(f'[data-course-id="{course}"] progress')).to_have_attribute('value','2')
+        # An actual download/import is available only in an active sandbox.
+        self.page.goto(self.url+'/courses/azure-testing/lessons/'+f.IDS[4]+'?new=1')
+        self.page.get_by_label('Mode',exact=True).select_option('SANDBOX')
+        self.page.get_by_label('Scenario',exact=True).select_option('clean')
+        self.page.locator('.work-column .primary').click();self.idle()
+        self.page.get_by_text('Import foundation JSON evidence',exact=True).click()
+        with self.page.expect_download() as event:
+            self.page.get_by_role('button',name='Download evidence JSON',exact=True).click()
+        path=self.artifacts/'foundation-roundtrip.json';event.value.save_as(str(path))
+        self.page.get_by_label('Evidence file',exact=True).set_input_files(path)
+        self.page.get_by_role('button',name='Validate and import',exact=True).click();self.idle()
+        expect(self.page.locator('.cloud-workspace > .section-title .badge')).to_have_text('IMPORTED')
+
     def test_cloud_download_round_trip_keeps_batch_after_replays_and_reset(self):
         import json
         from playwright.sync_api import expect

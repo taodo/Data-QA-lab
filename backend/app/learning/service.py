@@ -7,7 +7,7 @@ from uuid import UUID, uuid4
 
 from backend.app.learning.content import LAB_ID
 from backend.app.learning.lessons import CATALOG, course_id
-from backend.app.learning import etl, http_exercises, cloud
+from backend.app.learning import etl, http_exercises, cloud, foundations
 from backend.app.learning.profiles import PROFILES
 from backend.app.learning.contracts import LabStateError, QueryResult, normalize_sql, violation_count
 from backend.app.learning.sql_runtime import run_sql
@@ -18,6 +18,10 @@ from backend.app.services.lab_catalog import load_labs
 
 def _now():
     return datetime.now(timezone.utc)
+
+
+def _evidence_runtime(lab_id):
+    return foundations if lab_id in foundations.IDS else cloud if lab_id in cloud.IDS else None
 
 
 def _cloud_quality(evidence_status, data):
@@ -115,7 +119,8 @@ def inspect_session(database_url, session_id):
         counts = connection.execute("SELECT (SELECT COUNT(*) FROM metadata.lab_queries WHERE session_id=%s), (SELECT COUNT(*) FROM metadata.lab_submissions WHERE session_id=%s)", (session_id,session_id)).fetchone()
         simulation = None
         etl_simulation = etl.state(connection,session["snapshot_schema"]) if session["lab_id"] in etl.SPECS else None
-        cloud_evidence = cloud.state(connection, session["snapshot_schema"], session["lab_id"]) if session["lab_id"] in cloud.IDS else None
+        runtime = _evidence_runtime(session['lab_id'])
+        cloud_evidence = runtime.state(connection, session["snapshot_schema"], session["lab_id"]) if runtime else None
         if session["lab_id"]=="lab_010_incremental":
             from backend.app.learning.advanced_workspace import execute
             schema=session["snapshot_schema"]
@@ -135,7 +140,7 @@ def inspect_session(database_url, session_id):
         # Bind checks to a local snapshot revision; provider clocks are only evidence.
         if queries and queries[0][2].get("cloud_revision") == cloud_evidence["mutation_revision"]:
             cloud_evidence["quality_status"] = _cloud_quality(cloud_evidence["evidence_status"], queries[0][2])
-        cloud_evidence["quality_scope"] = "learner_check"
+        cloud_evidence["quality_scope"] = "access_evidence" if session['lab_id']==foundations.IDS[5] else "learner_check"
         payload["cloud_evidence"] = cloud_evidence
     if etl_simulation is not None:
         payload["etl_simulation"]=etl_simulation
@@ -173,7 +178,7 @@ def query_session(database_url, session_id, query):
         http_exercises.parse(query)
         with transaction(database_url) as connection:
             result=http_exercises.run(connection,session["snapshot_schema"],session["lab_id"],query,session["scenario_id"],persist=True)
-    elif session["lab_id"] in cloud.IDS:
+    elif _evidence_runtime(session['lab_id']):
         query = normalize_sql(query)
         with transaction(database_url) as connection:
             # Mutators take FOR UPDATE first, keeping the SQL snapshot/revision coherent.
@@ -229,8 +234,8 @@ def submit_solution(database_url, session_id, query, conclusion):
                 cases.append({"case":variant,"status":"ERROR","count":None})
             continue
         result = run_sql(database_url, session["snapshot_schema"], query, variant)
-        if session["lab_id"] in cloud.IDS:
-            expected = cloud.expected_count(variant)
+        if _evidence_runtime(session['lab_id']):
+            expected = _evidence_runtime(session['lab_id']).expected_count(variant)
             oracle = None
         else:
             oracle = run_sql(database_url, session["snapshot_schema"], profile.solution, variant)
@@ -293,10 +298,10 @@ def simulate_session(database_url, session_id, action):
     from backend.app.learning.advanced_workspace import advance_simulation, execute
     with transaction(database_url) as connection:
         session = _get(connection, session_id)
-        if session["lab_id"] in cloud.IDS:
+        if _evidence_runtime(session['lab_id']):
             if session["mode"] != "SANDBOX" or session["status"] != "ACTIVE":
                 raise LabStateError("Cloud controls need an active SANDBOX")
-            cloud.advance(connection, session["snapshot_schema"], session["scenario_id"], action)
+            _evidence_runtime(session['lab_id']).advance(connection, session["snapshot_schema"], session["scenario_id"], action)
         elif session["lab_id"] in etl.SPECS:
             if session["mode"]!="SANDBOX" or session["status"]!="ACTIVE":
                 raise LabStateError("ETL controls need an active SANDBOX")
@@ -314,16 +319,17 @@ def simulate_session(database_url, session_id, action):
 def import_cloud_evidence(database_url, session_id, filename, file_format, content):
     with transaction(database_url) as connection:
         session = _get(connection, session_id)
-        if session["lab_id"] not in cloud.IDS or session["mode"] != "SANDBOX" or session["status"] != "ACTIVE":
+        if not _evidence_runtime(session['lab_id']) or session["mode"] != "SANDBOX" or session["status"] != "ACTIVE":
             raise LabStateError("Import needs an active cloud SANDBOX")
-        cloud.import_file(connection, session["snapshot_schema"], filename, file_format, content)
+        _evidence_runtime(session['lab_id']).import_file(connection, session["snapshot_schema"], filename, file_format, content)
     return inspect_session(database_url, session_id)
 
 
 def export_cloud_evidence(database_url, session_id):
     with connect(database_url) as connection:
         session = _get(connection, session_id)
-        if session["lab_id"] not in cloud.IDS:
+        runtime = _evidence_runtime(session['lab_id'])
+        if not runtime:
             raise LabStateError("Export needs a cloud session")
-        evidence = cloud.state(connection, session["snapshot_schema"], session["lab_id"])
-    return cloud.contracts.export_file(evidence)
+        evidence = runtime.state(connection, session["snapshot_schema"], session["lab_id"])
+    return runtime.contracts.export_file(evidence)
