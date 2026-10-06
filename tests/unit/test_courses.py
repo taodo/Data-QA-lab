@@ -46,8 +46,11 @@ class CourseContractTests(unittest.TestCase):
                     labs=[l for ch in detail['chapters'] for l in ch['lessons']]
                     self.assertEqual({l['id'] for l in labs},{k for k,v in CATALOG.items() if v.get('course_id','sql-data-qa')==c['id']})
                     self.assertEqual(len(labs),c['lesson_count'])
-                    self.assertNotIn('solution_sql',str(labs))
-                    self.assertNotIn('hints',str(labs))
+                    # Public prose may mention the hint/reveal controls; private
+                    # payload fields must still be excluded from every lesson.
+                    for lab in labs:
+                        for private_field in ('solution_sql','hints','explanation'):
+                            self.assertNotIn(private_field,lab)
                 else:
                     self.assertEqual(detail['chapters'],[])
                     self.assertEqual(c['lesson_count'],0)
