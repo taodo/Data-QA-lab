@@ -1,183 +1,161 @@
 # Data QA Lab
 
-Interactive Data Pipeline Testing & Learning Platform. The local V1 runs a real PostgreSQL pipeline and preserves evidence for every run.
+A hands-on web app for learning data quality assurance through guided lessons, SQL practice, simulated defects and evidence-based testing.
 
-**Local browser app: six foundation + seven advanced ENG/VIE lessons, real SQL execution and deterministic grading.**
+**V1.5: 36 lessons across nine courses, with English and Vietnamese (ENG/VIE).** Runs locally with Docker and PostgreSQL; no AI API key or cloud subscription is needed.
 
-Task 8 is approved and merged. Task 9 review branch:
-`feature/task-9-learning-platform` — course browsing, subject pages, personal My
-Learning and real local signup/login. See [Task 9](docs/TASK_9.md) for updating,
-retaining legacy history and operator password recovery. Keep this branch until
-Task 9 is approved for merge; `feature/develop` contains the approved Task 8.
+## What you can do
 
-## Start V1 on D:\Data-QA-Lab
+- Browse courses, expand introductory explanations and follow lesson instructions.
+- Create a local account and resume your own sessions from My Learning.
+- Practice SQL against real PostgreSQL datasets in Sandbox or Challenge mode.
+- Inspect clean and faulty data, request hints, submit checks and review grading evidence.
+- Save queries, written answers, submissions and progress across restarts.
+- Run a real orders pipeline and evaluate its data quality independently.
 
-Docker Desktop must be running. No local Python/Node installation is needed for the packaged app.
+**Pipeline SUCCESS ≠ Data Quality PASS.** A pipeline can finish successfully while losing records or producing incorrect values. The quality engine checks business rules and source-to-target reconciliation separately.
+
+## Courses
+
+| Course | Lessons | Practice |
+| --- | ---: | --- |
+| SQL | 13 | Completeness, NULLs, duplicates, calculations, joins, windows, time boundaries and history |
+| ETL Testing | 5 | Transformation, rejects, incremental batches, replay and recovery |
+| API Testing | 4 | Real local HTTP requests, contracts, pagination, retries and ingestion |
+| Microsoft Fabric | 3 | Run lineage, contracts and layered data snapshots |
+| Azure Data Factory | 3 | Activity outcomes, dependencies and recovery |
+| OneLake | 2 | Partitions, reference freshness and imported evidence |
+| Databricks | 2 | Classification and explicit version updates |
+| Azure Synapse | 2 | Fact/dimension publication and reporting grain |
+| Azure | 2 | File routing and access observations |
+
+Cloud courses use **SIMULATED or IMPORTED evidence** in isolated local PostgreSQL workspaces. They teach testing concepts without connecting to live cloud services. They do not emulate Spark, Delta, Synapse engines, actual Azure authorization or real OneLake shortcuts.
+
+## Quick start
+
+### Requirements
+
+- Windows: Docker Desktop running with Linux containers and WSL 2.
+- Linux: Docker Engine and the Docker Compose plugin. macOS: Docker Desktop.
+- Git and internet access for the initial clone, image download and build.
+
+The packaged app includes the frontend and backend. You do not need Python or Node installed on the host.
+
+### Windows / PowerShell
+
+To keep the checkout and its default PostgreSQL data on drive D:
 
 ```powershell
+Set-Location D:\
+git clone https://github.com/taodo/Data-QA-lab.git Data-QA-Lab
 Set-Location D:\Data-QA-Lab
-git fetch origin
-git switch feature/develop
-git pull --ff-only origin feature/develop
 docker compose up -d --build --wait --wait-timeout 180
 Start-Process 'http://127.0.0.1:8000'
 ```
 
-On Task 9, select ENG/VIE, browse the SQL course, sign up or log in, open a lesson, follow instructions, run SQL, inspect evidence,
-request hints and submit. Challenge hides the defect; Sandbox offers clean and
-faulty data. Sessions, grades and history persist through restart. A fresh setup
-creates 1,000 deterministic orders; existing usable runs are retained. The first
-build needs internet; the built learning app uses local assets and no AI API.
+If you already have a checkout, use the update instructions below instead of cloning into the same folder.
 
-Lessons: SELECT/WHERE business rules, NULLs, duplicate keys, completeness,
-exact calculations and combined order/day reconciliation, followed by JOIN/CTE/window
-checks, UTC boundaries, actual session batch simulation, freshness and SCD history.
-The course syllabus groups lessons into five chapters with topic/level/search filters. Incremental Sandbox offers reset/next/replay controls;
-its fixed-clock synthetic data and logs persist with the learning session.
+### Linux / macOS
 
-See [Windows/D-drive guide](docs/V1_GUIDE.md), [SQL boundary](docs/SQL_SECURITY.md)
-and [verification](docs/VERIFICATION.md). Docker images/cache follow Docker
-Desktop's disk location; PostgreSQL's default bind mount is D:\Data-QA-Lab\data\postgres.
-
-Core principle: **Pipeline SUCCESS ≠ Data Quality PASS.** The quality engine evaluates basic checks plus source-to-target reconciliation independently as `PASS`, `FAIL`, `ERROR` or `NOT_RUN`.
-
-## Pipeline
-
-```text
-source.orders (order grain)
-        ↓
-bronze.orders (run-scoped raw snapshot)
-        ↓
-silver.orders (clean values + net_amount)
-        ↓
-gold.daily_sales (UTC-day grain)
-        ↓
-target.orders_report + target.daily_sales_report
+```bash
+git clone https://github.com/taodo/Data-QA-lab.git
+cd Data-QA-lab
+docker compose up -d --build --wait --wait-timeout 180
 ```
 
-The clean seed contains 1,000 customers and 10,000 deterministic orders. Exact expected net revenue is `25,245,493.29`.
+Open **http://127.0.0.1:8000**. Sign up, select ENG or VIE, choose a course and start a lesson.
 
-## Run on Windows from D:\Data-QA-Lab
+A fresh packaged setup creates **1,000 deterministic orders**. An existing usable pipeline run is retained. Lesson sessions use isolated workspaces. The first build may take several minutes; the built app uses local assets.
 
-Requirements: Python 3.11+ and Docker Desktop with Docker Compose.
+## How to learn
+
+1. Read the course introduction and lesson instructions.
+2. Explore the data and run a query in Sandbox, or investigate a hidden defect in Challenge.
+3. Read the challenge and write a check that detects violations.
+4. Submit the SQL and your answer, then inspect the evidence and feedback.
+5. Improve the check and resume the next lesson from My Learning.
+
+SQL submissions are tested against independent clean and faulty fixtures. Written answers are saved for review; their prose is not semantically graded. Learner SQL runs through a restricted, bounded read-only interface. See [SQL security](docs/SQL_SECURITY.md) for its limits.
+
+The Pipeline page follows orders through Source, Bronze, Silver, Gold and Target. Run the pipeline first, then run the QA suite to investigate completeness, values and daily aggregates. Execution status and data quality status describe different results.
+
+## Stop, restart and update
+
+Stop services while keeping database files:
+
+```bash
+docker compose stop
+```
+
+Restart:
+
+```bash
+docker compose up -d --wait --wait-timeout 180
+```
+
+To update an existing checkout with no uncommitted changes:
+
+```bash
+git fetch origin
+git switch main
+git pull --ff-only origin main
+docker compose up -d --build --wait --wait-timeout 180
+```
+
+The default database bind mount is `./data/postgres`. With the Windows checkout above, accounts, sessions and evidence live under `D:\Data-QA-Lab\data\postgres`. Keep this directory when upgrading. Docker Desktop images, cache and virtual disk use Docker Desktop's separately configured storage location; installing this repository on D does not move those files. See the [D-drive guide](docs/WINDOWS_D_DRIVE.md).
+
+The default app and PostgreSQL ports are bound to the local loopback interface. Compose database credentials are local development defaults.
+
+## Share an online demo
+
+For a temporary showcase, follow [the free online demo guide](docs/DEMO_ONLINE.md). It uses a separate demo stack/database, operator-created accounts and a Cloudflare Tunnel. Configure the exact tunnel hostname as described there. Public signup is disabled in demo mode.
+
+The host computer, Docker and tunnel must remain running. A temporary tunnel URL can change when restarted. Do not publish generated configuration, account passwords or database files.
+
+## Development and verification
+
+The backend requires Python 3.11+. For Windows:
 
 ```powershell
-Set-Location D:\Data-QA-Lab
-git switch feature/develop
 py -3 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -e .
-docker compose up -d postgres
-.\.venv\Scripts\python.exe -m backend.app.main db-init
-.\.venv\Scripts\python.exe -m backend.app.main seed
-.\.venv\Scripts\python.exe -m backend.app.main pipeline-run
-.\.venv\Scripts\python.exe -m backend.app.main inspect
-.\.venv\Scripts\python.exe -m backend.app.main quality-run
-.\.venv\Scripts\python.exe -m backend.app.main quality-inspect
-.\.venv\Scripts\python.exe -m backend.app.main fault-list
-```
-
-Expected clean-run facts:
-
-- Source, Bronze, Silver and `target.orders_report`: 10,000 order rows.
-- Gold `SUM(order_count)`: 10,000. Gold row count is the number of UTC dates.
-- Net revenue at Source, Silver, Gold and Target: `25,245,493.29`.
-- Pipeline execution: `SUCCESS`.
-- Data quality after the built-in clean suite: `PASS` across 26 rules.
-- Reconciliation uses immutable run-scoped datasets and reports missing keys, unexpected keys and field mismatches with bounded evidence.
-
-Task 4 faults are applied only to relaxed copies in `fault_workspace`; the original Target remains unchanged. A typical investigation is:
-
-```powershell
-$fault = .\.venv\Scripts\python.exe -m backend.app.main fault-apply wrong_net_amount | ConvertFrom-Json
-.\.venv\Scripts\python.exe -m backend.app.main fault-quality-run --fault-run-id $fault.fault_run_id
-.\.venv\Scripts\python.exe -m backend.app.main fault-inspect --fault-run-id $fault.fault_run_id
-.\.venv\Scripts\python.exe -m backend.app.main fault-reset --fault-run-id $fault.fault_run_id
-.\.venv\Scripts\python.exe -m backend.app.main quality-run --run-id $fault.pipeline_run_id
-```
-
-The fault quality run should report `FAIL` while pipeline execution remains `SUCCESS`; the final clean quality run should report `PASS`.
-
-## Learning Lab 001
-
-Use only the dedicated Data QA Lab database. `lab-sql-init` explicitly revokes
-PUBLIC database CREATE/TEMP and public-schema privileges; it refuses a populated
-public schema. The local provisioning login must be a superuser (the Compose
-default is suitable); learner queries use a separate restricted login.
-
-```powershell
-.\.venv\Scripts\python.exe -m backend.app.main db-init
-.\.venv\Scripts\python.exe -m backend.app.main lab-sql-init
-$lab = .\.venv\Scripts\python.exe -m backend.app.main lab-start lab_001_record_count | ConvertFrom-Json
-.\.venv\Scripts\python.exe -m backend.app.main lab-show --session-id $lab.session_id
-.\.venv\Scripts\python.exe -m backend.app.main lab-query --session-id $lab.session_id --sql-file examples\lab_001_count_only.sql
-.\.venv\Scripts\python.exe -m backend.app.main lab-hint --session-id $lab.session_id
-.\.venv\Scripts\python.exe -m backend.app.main lab-submit --session-id $lab.session_id --sql-file examples\lab_001_count_only.sql --conclusion "Counts cannot prove key identity."
-.\.venv\Scripts\python.exe -m backend.app.main lab-submit --session-id $lab.session_id --sql-file examples\lab_001_key_check.sql --conclusion "Compared missing and unexpected key sets."
-.\.venv\Scripts\python.exe -m backend.app.main lab-inspect --session-id $lab.session_id
-```
-
-The supplied examples are instructor smoke checks: count-only should FAIL grading;
-key-set comparison should PASS and complete the session. For your own exercise,
-write a SELECT query returning one integer `violation_count`. Grading tests clean
-data, a smaller clean fixture, missing keys and an equal-count key swap. It does
-not score the conclusion's prose. Challenge mode hides fault/solution metadata
-until completion or explicit `lab-reveal`; sandbox mode exposes scenario details.
-See [SQL security](docs/SQL_SECURITY.md) for limits, cancellation and boundaries.
-
-Stop PostgreSQL without deleting its D-drive data:
-
-```powershell
-docker compose down
-```
-
-## Verification
-
-```powershell
+.\.venv\Scripts\python.exe -m pip install -e ".[test,e2e]"
 .\.venv\Scripts\python.exe -m unittest discover -s tests/unit -v
-$env:DATA_QA_TEST_DATABASE_URL = 'postgresql://data_qa_lab:data_qa_lab@127.0.0.1:5432/data_qa_lab'
-.\.venv\Scripts\python.exe -m unittest discover -s tests/integration -v
 ```
 
-The integration test initializes only Data QA Lab schemas, reseeds its source tables, runs the pipeline twice, and verifies that evidence from the first run remains available.
+**Run integration tests only against a dedicated test database.** They reseed data and alter fixtures. Do not point them at the database containing your learning history.
 
-The Windows connection uses `127.0.0.1` because Compose publishes PostgreSQL on the IPv4 loopback interface. The database adapter also applies a five-second connection timeout so an unreachable host fails promptly instead of leaving a pipeline command waiting indefinitely.
+With the default Compose PostgreSQL credentials, create a separate database once:
 
-See `docs/TASK_1.md`, `docs/TASK_2.md`, `docs/TASK_3.md`, `docs/TASK_4.md`, `docs/TASK_5.md`, `docs/ARCHITECTURE.md`, `docs/DATA_MODEL.md`, `docs/BRANCHING.md` and `docs/WINDOWS_D_DRIVE.md`.
+```powershell
+docker compose up -d --wait postgres
+docker compose exec postgres createdb -U data_qa_lab data_qa_lab_test
+$env:DATA_QA_TEST_DATABASE_URL = 'postgresql://data_qa_lab:data_qa_lab@127.0.0.1:5432/data_qa_lab_test'
+.\.venv\Scripts\python.exe -m unittest discover -s tests/integration -v
+Remove-Item Env:DATA_QA_TEST_DATABASE_URL
+```
 
-## Task 10: ETL and API courses (v1.3.0)
+If `data_qa_lab_test` already exists, skip its creation. Adjust the connection string if you changed Compose credentials or ports. On Linux/macOS, use the equivalent virtual-environment Python and export the same test variable.
 
-Task 10 added 22 ENG/VIE guided labs: 13 SQL, 5 ETL and 4 API.
-ETL exercises use isolated PostgreSQL Source/Target/reject tables with batch,
-replay and recovery controls. API exercises run real local HTTP requests, JSON
-contract checks, pagination/retries and PostgreSQL ingestion replay. Course
-progress, history and resume routes remain account scoped.
+CI covers unit, PostgreSQL integration, browser and packaged startup/restart checks, including the separate demo stack. During development, run tests relevant to the change first. **Avoid repeated full-suite runs unless a failure requires them.** A green CI run on the final commit can provide full-suite verification without repeating it locally.
 
-See [Task 10 review instructions](docs/TASK_10.md) for Windows/D-drive commands,
-lesson contracts, limits and verification evidence.
+The CLI also supports pipeline, quality, fault and lab commands:
 
-## Task 11: local cloud QA foundations (v1.4.0)
+```powershell
+.\.venv\Scripts\python.exe -m backend.app.main --help
+```
 
-Thirty ENG/VIE lessons across six executable courses now include three Fabric,
-three ADF and two OneLake lessons. Run/activity lineage, schema contracts,
-Source/Bronze/Silver/Gold snapshots, replay/recovery, partitions and fixed-clock
-reference freshness are observable in isolated PostgreSQL workspaces.
+The explicit CLI `seed` command defaults to 10,000 orders; that is a different baseline from the packaged app's initial 1,000 orders.
 
-Evidence is labelled SIMULATED or IMPORTED. Import ordinary JSON/CSV files
-(48 KiB/file, 100 rows/dataset, 400 rows total, eight imports/session), preserving
-raw supported fields, SHA-256 and run IDs. No cloud account or credentials are
-needed. These exercises do not emulate Microsoft services or resolve real
-OneLake shortcuts. Live cloud access (11.5) remains a separate unimplemented scope.
+## Documentation
 
-See [Task 11 instructions](docs/TASK_11.md) and the
-[implementation checkpoint](docs/TASK_11_PROGRESS.md). Existing PostgreSQL data,
-local accounts and session history remain on D and are preserved by the additive upgrade.
+| Guide | Purpose |
+| --- | --- |
+| [V1 guide](docs/V1_GUIDE.md) | Local startup, troubleshooting and learning workflow |
+| [Learning model](docs/LEARNING_MODEL.md) | Lessons, challenges and grading concepts |
+| [Architecture](docs/ARCHITECTURE.md) | Components and pipeline design |
+| [Data model](docs/DATA_MODEL.md) | Schemas and stored evidence |
+| [SQL security](docs/SQL_SECURITY.md) | Query execution boundaries |
+| [Online demo](docs/DEMO_ONLINE.md) | Separate public showcase setup |
+| [Roadmap](docs/ROADMAP.md) | Planned work; availability is described above |
 
-## Task 12: local Databricks, Synapse and Azure foundations (v1.5.0)
-
-36 ENG/VIE lessons across nine executable courses. Six new lessons investigate
-classification, explicit version updates, fact/dimension publication, reporting
-grain, file routing and access observations. These use isolated PostgreSQL and
-independent contracts; no Spark/Delta engine or live cloud authorization/adapters.
-Existing accounts, sessions and evidence remain intact. See [Task 12](docs/TASK_12.md)
-and [verification checkpoints](docs/TASK_12_PROGRESS.md). PR targets feature/develop;
-merge still requires review approval.
+`main` contains the approved application. New task branches start from `feature/develop` and return there through review before a release is promoted to `main`. Task documents under `docs/` preserve implementation history and may describe earlier versions.
