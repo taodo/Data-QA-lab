@@ -22,6 +22,8 @@ from backend.app.learning import service
 from backend.app.learning.cloud_contracts import MAX_REQUEST_BYTES
 from backend.app.persistence.database import connect, transaction
 from backend.app import accounts, courses as curriculum
+from backend.app import demo
+from backend.app.web_security import WebSettings, TrustedScheme
 
 Language = Literal["ENG", "VIE"]
 
@@ -105,9 +107,11 @@ class BodyLimit:
 def create_app(database_url=None):
     app = FastAPI(title="Data QA Lab", version="1.5.0")
     db = database_url or Settings.from_env().database_url
+    if demo.enabled():
+        with connect(db) as connection:
+            demo.require_demo_database(connection)
     gate = Lock()
     app.add_middleware(BodyLimit)
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "testserver"])
 
     @app.middleware("http")
     async def origin_guard(request, call_next):
@@ -122,6 +126,10 @@ def create_app(database_url=None):
         elif request.url.path not in {"/docs","/redoc"}:
             result.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
         return result
+
+    web = WebSettings.from_env()
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=list(web.allowed_hosts), www_redirect=False)
+    app.add_middleware(TrustedScheme, settings=web)
 
     @app.exception_handler(HTTPException)
     async def http_error(request,exc):
@@ -163,6 +171,7 @@ def create_app(database_url=None):
         if not gate.acquire(blocking=False):
             raise HTTPException(409, detail="OPERATION_BUSY")
         try:
+            demo.reserve_write(db, function, args)
             return function(*args)
         finally:
             gate.release()
@@ -203,6 +212,8 @@ def create_app(database_url=None):
     @app.post("/api/auth/signup")
     def signup(body: Signup,request: Request):
         accounts.auth_intent(request)
+        if demo.enabled():
+            raise HTTPException(403, "DEMO_SIGNUP_DISABLED")
         accounts.rate_limit(db,request,"signup")
         payload,token=mutate(accounts.signup,db,body.username,body.display_name,body.password)
         result=response(payload,201)

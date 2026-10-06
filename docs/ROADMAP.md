@@ -27,7 +27,12 @@ local accounts and a course platform. Task 10 includes actual session PostgreSQL
 batches/ingestion and loopback HTTP exercises. See TASK_10.md.
 Task 11.1–11.4 was approved and merged as PR #13 into feature/develop on
 2026-10-06, reviewed merge 34064470c681816e5ea72e03a82cecabb57dbfb8.
-Task 12.1–12.4 is approved on feature/task-12-cloud-foundations from that merge.
+Task 12.1–12.4 is merged as PR #14 at b0863f8798c8bba2c0ed0f8fc5d37c5e1e158fab.
 Its six local lessons activate Databricks, Synapse and Azure, giving 36 ENG/VIE
 lessons across nine executable courses. See TASK_12_PLAN.md and TASK_12_PROGRESS.md.
 Live-cloud stage 11.5 still requires separate approval. No QA Sentinel integration.
+
+Active approved preparation: temporary online showcase on `feature/demo-online`
+from current `origin/feature/develop`; see DEMO_ONLINE.md and DEMO_PROGRESS.md.
+Separate demo database, exact public hosts and trusted HTTPS proxy; public tunnel
+startup and external-device verification are user-operated. No new curriculum task.

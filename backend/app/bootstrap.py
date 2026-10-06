@@ -6,8 +6,15 @@ from backend.app.learning.sql_runtime import initialize_sql_security
 
 
 def prepare_local(database_url):
+    from backend.app import demo
+    if demo.enabled():
+        # Refuse a learner database before even additive schema/bootstrap writes.
+        with connect(database_url) as connection:
+            demo.require_demo_database(connection)
     initialize_database(database_url)
     initialize_sql_security(database_url)
+    from backend.app.demo import initialize
+    initialize(database_url)
     with connect(database_url) as connection:
         row = connection.execute("""SELECT p.run_id FROM metadata.pipeline_runs p
             WHERE p.pipeline_id='orders_v1' AND p.execution_status='SUCCESS' AND p.owner_id IS NULL

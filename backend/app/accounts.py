@@ -40,6 +40,8 @@ def public_user(user):
 
 
 def _issue(connection, user):
+    from backend.app.demo import trim_auth_sessions
+    trim_auth_sessions(connection, user["user_id"])
     token, csrf = secrets.token_urlsafe(32), secrets.token_urlsafe(32)
     connection.execute(
         """INSERT INTO metadata.account_sessions
@@ -59,6 +61,8 @@ def signup(db, name, display_name, password):
     user = {"user_id": uuid4(), "username": name, "display_name": display_name}
     try:
         with transaction(db) as connection:
+            from backend.app.demo import account_slot
+            account_slot(connection)
             connection.execute(
                 "INSERT INTO metadata.accounts (user_id,username,display_name,password_hash) VALUES (%s,%s,%s,%s)",
                 (*user.values(), hashed),
@@ -116,6 +120,9 @@ def auth_intent(request):
 def rate_limit(db, request, operation, name=""):
     """Persist budgets outside failed-login transactions; no forwarded IP trust."""
     host = request.client.host if request.client else "local"
+    from backend.app.demo import enabled
+    if enabled():
+        host, name = "demo", "demo" if name else ""
     keys = [(f"{operation}:ip:{host}", 60)]
     if name:
         keys.append((f"{operation}:username:{name.strip().lower()}", 10))
