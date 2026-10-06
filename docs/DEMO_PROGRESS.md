@@ -61,6 +61,14 @@ learner data. Demo uses D:\Data-QA-Lab\data\generated\demo\postgres.
 Final exact-head CI is pending at this checkpoint. Do not duplicate full suites
 locally; record final commit, CI run and results in the PR and ignored
 `data/generated/demo/logs/HANDOFF.md` when green. Rerun affected tests after fixes.
+Final inspection strengthened fail-closed startup: demo mode now refuses a
+learner database before schema/bootstrap writes and before creating the API.
+Regression checks assert bootstrap initialization is not called on refusal.
+Affected tests rerun: `python -m unittest tests.integration.test_demo
+tests.integration.test_bootstrap -v` — 4 tests PASS (36.046s).
+Docker backing VHD files observed under D:\DockerData\wsl\disk and
+D:\DockerData\wsl\main; the engine location was not moved. Local demo was
+returned to an empty public-host allowlist and stopped; its data is retained.
 No external-device or Cloudflare edge checks were executed; explicitly PENDING
 until user runs the public tunnel/checklist in DEMO_ONLINE.md. Quick Tunnel has no
 uptime guarantee, stable hostname or SSE support. Shared demo throttle/budget may

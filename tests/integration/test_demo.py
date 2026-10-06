@@ -106,3 +106,9 @@ class DemoIntegrationTests(unittest.TestCase):
             if not connection.execute("SELECT current_database()").fetchone()[0].startswith("data_qa_demo"):
                 with self.assertRaises(RuntimeError):
                     demo.require_demo_database(connection)
+        with patch("backend.app.bootstrap.initialize_database") as initialize:
+            with self.assertRaises(RuntimeError):
+                prepare_local(DB)
+            initialize.assert_not_called()
+        with self.assertRaises(RuntimeError):
+            create_app(DB)

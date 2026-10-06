@@ -107,6 +107,9 @@ class BodyLimit:
 def create_app(database_url=None):
     app = FastAPI(title="Data QA Lab", version="1.5.0")
     db = database_url or Settings.from_env().database_url
+    if demo.enabled():
+        with connect(db) as connection:
+            demo.require_demo_database(connection)
     gate = Lock()
     app.add_middleware(BodyLimit)
 
