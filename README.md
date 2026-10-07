@@ -2,7 +2,7 @@
 
 A hands-on web app for learning data quality assurance through guided lessons, SQL practice, simulated defects and evidence-based testing.
 
-**V1.5: 36 lessons across nine courses, with English and Vietnamese (ENG/VIE).** Runs locally with Docker and PostgreSQL; no AI API key or cloud subscription is needed.
+**V1.5: 36 lessons across nine courses, with English and Vietnamese (ENG/VIE).** All 36 lessons include beginner explanations, worked examples, practice guidance and private step-by-step solutions. Runs locally with Docker and PostgreSQL; no AI API key or cloud subscription is needed.
 
 ## What you can do
 
@@ -47,7 +47,7 @@ To keep the checkout and its default PostgreSQL data on drive D:
 
 ```powershell
 Set-Location D:\
-git clone https://github.com/taodo/Data-QA-lab.git Data-QA-Lab
+git clone --branch main https://github.com/taodo/Data-QA-lab.git Data-QA-Lab
 Set-Location D:\Data-QA-Lab
 docker compose up -d --build --wait --wait-timeout 180
 Start-Process 'http://127.0.0.1:8000'
@@ -55,11 +55,28 @@ Start-Process 'http://127.0.0.1:8000'
 
 If you already have a checkout, use the update instructions below instead of cloning into the same folder.
 
-### Linux / macOS
+### macOS / Terminal
+
+Install Git and Docker Desktop for your Mac (choose the installer for your processor), then open Docker Desktop and wait until it is running. The following uses a new folder under your home directory:
 
 ```bash
-git clone https://github.com/taodo/Data-QA-lab.git
-cd Data-QA-lab
+mkdir -p ~/Projects
+cd ~/Projects
+git clone --branch main https://github.com/taodo/Data-QA-lab.git Data-QA-Lab
+cd Data-QA-Lab
+docker compose up -d --build --wait --wait-timeout 180
+open 'http://127.0.0.1:8000'
+```
+
+These are setup instructions; macOS hardware has not been independently tested by this project. CI verifies the packaged app on Linux. If Git is unavailable, macOS may prompt you to install Command Line Tools.
+
+### Linux / Terminal
+
+With Docker Engine and Compose installed and running:
+
+```bash
+git clone --branch main https://github.com/taodo/Data-QA-lab.git Data-QA-Lab
+cd Data-QA-Lab
 docker compose up -d --build --wait --wait-timeout 180
 ```
 
@@ -69,11 +86,11 @@ A fresh packaged setup creates **1,000 deterministic orders**. An existing usabl
 
 ## How to learn
 
-1. Read the course introduction and lesson instructions.
+1. Read the course introduction and expand the lesson sections: what we check, why it matters, illustrative example and common mistake.
 2. Explore the data and run a query in Sandbox, or investigate a hidden defect in Challenge.
 3. Read the challenge and write a check that detects violations.
-4. Submit the SQL and your answer, then inspect the evidence and feedback.
-5. Improve the check and resume the next lesson from My Learning.
+4. Submit your check and written answer, then inspect the evidence and feedback. SQL lessons use SQL; API lessons use a bounded JSON request/check plan.
+5. Improve the check and resume the next lesson from My Learning. Step-by-step solution explanations are available through the existing reveal/completion gate; revealing alone does not award completion.
 
 SQL submissions are tested against independent clean and faulty fixtures. Written answers are saved for review; their prose is not semantically graded. Learner SQL runs through a restricted, bounded read-only interface. See [SQL security](docs/SQL_SECURITY.md) for its limits.
 
@@ -93,7 +110,12 @@ Restart:
 docker compose up -d --wait --wait-timeout 180
 ```
 
-To update an existing checkout with no uncommitted changes:
+To update an existing checkout with no uncommitted changes, first enter its folder:
+
+- Windows: `Set-Location D:\Data-QA-Lab`
+- macOS: `cd ~/Projects/Data-QA-Lab`
+
+Then run these commands in either shell:
 
 ```bash
 git fetch origin
@@ -102,7 +124,9 @@ git pull --ff-only origin main
 docker compose up -d --build --wait --wait-timeout 180
 ```
 
-The default database bind mount is `./data/postgres`. With the Windows checkout above, accounts, sessions and evidence live under `D:\Data-QA-Lab\data\postgres`. Keep this directory when upgrading. Docker Desktop images, cache and virtual disk use Docker Desktop's separately configured storage location; installing this repository on D does not move those files. See the [D-drive guide](docs/WINDOWS_D_DRIVE.md).
+After rebuilding, reload the browser (Windows: Ctrl+F5; macOS: Command+Shift+R). No reseeding is needed for the guidance update.
+
+The default database bind mount is `./data/postgres`. On macOS it is inside your checkout, normally `~/Projects/Data-QA-Lab/data/postgres`. With the Windows checkout above, accounts, sessions and evidence live under `D:\Data-QA-Lab\data\postgres`. Keep this directory when upgrading. Docker Desktop images, cache and virtual disk use Docker Desktop's separately configured storage location; installing this repository on D does not move those files. See the [D-drive guide](docs/WINDOWS_D_DRIVE.md).
 
 The default app and PostgreSQL ports are bound to the local loopback interface. Compose database credentials are local development defaults.
 
