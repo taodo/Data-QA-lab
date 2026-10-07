@@ -711,6 +711,50 @@ class BrowserTests(unittest.TestCase):
         expect(self.page).to_have_url(__import__('re').compile('/courses/onelake-testing/lessons/'))
         self.page.reload();self.idle();expect(self.page.locator('.lesson-heading .badge')).to_have_text('Completed')
 
+    def test_foundations_beginner_guidance_envelope_controls_language_and_reveal(self):
+        import json
+        from playwright.sync_api import expect
+        from backend.app.learning.foundations_guidance import GUIDANCE, LABELS
+        from backend.app.learning.lessons import course_id
+        for lab_id in GUIDANCE:
+            self.page.goto(self.url+f'/courses/{course_id(lab_id)}/lessons/{lab_id}?new=1')
+            for language in ('ENG','VIE'):
+                self.page.get_by_label('Select language').select_option(language);self.idle()
+                practice=self.page.get_by_text(LABELS[language][3],exact=True)
+                practice.click()
+                for marker in ('kind=foundations','contract_id','48 KiB','JSON'):
+                    expect(practice.locator('..')).to_contain_text(marker)
+                expect(self.page.get_by_text(LABELS[language][6],exact=True)).to_have_count(0)
+        self.page.goto(self.url+'/courses/databricks-testing/lessons/lab_031_databricks_classification?new=1')
+        self.page.get_by_label('Select language').select_option('ENG');self.idle()
+        example=self.page.get_by_text(LABELS['ENG'][2],exact=True)
+        example.focus();example.press('Enter')
+        expect(example.locator('..')).to_contain_text('violation_count = 3')
+        example.press('Enter');expect(example.locator('..')).not_to_have_attribute('open','')
+        self.page.get_by_label('Mode',exact=True).select_option('SANDBOX')
+        self.page.get_by_label('Scenario',exact=True).select_option('clean')
+        self.page.locator('.work-column .primary').click();self.idle()
+        self.page.get_by_text('Import foundation JSON evidence',exact=True).click()
+        with self.page.expect_download() as event:
+            self.page.get_by_role('button',name='Download evidence JSON',exact=True).click()
+        downloaded=event.value
+        content=Path(downloaded.path()).read_bytes();envelope=json.loads(content)
+        self.assertEqual((envelope['kind'],envelope['lab_id'],envelope['contract_id']),('foundations','lab_031_databricks_classification','standard'))
+        self.assertNotIn('db_contract',envelope['datasets'])
+        self.page.get_by_label('Evidence file',exact=True).set_input_files({'name':downloaded.suggested_filename,'mimeType':'application/json','buffer':content})
+        self.page.get_by_role('button',name='Validate and import',exact=True).click();self.idle()
+        expect(self.page.locator('.cloud-workspace > .section-title .badge')).to_have_text('IMPORTED')
+        expect(self.page.get_by_role('button',name='Run local publication',exact=True)).to_be_disabled()
+        self.page.get_by_role('button',name='Reset simulator',exact=True).click();self.idle()
+        self.page.get_by_role('button',name='Run local publication',exact=True).click();self.idle()
+        self.page.once('dialog',lambda dialog:dialog.accept())
+        self.page.get_by_role('button',name='Reveal solution',exact=True).click();self.idle()
+        expect(self.page.get_by_text(LABELS['ENG'][6],exact=True).locator('..')).to_contain_text('IS DISTINCT FROM')
+        self.page.get_by_label('Select language').select_option('VIE');self.idle()
+        expect(self.page.get_by_text(LABELS['VIE'][6],exact=True)).to_be_visible()
+        self.page.set_viewport_size({'width':390,'height':844})
+        self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),390)
+
     def test_task12_six_lessons_challenge_import_language_mobile_history(self):
         from playwright.sync_api import expect
         from backend.app.learning import foundations as f
@@ -748,6 +792,13 @@ class BrowserTests(unittest.TestCase):
             self.page.get_by_role('button',name='Submit check',exact=True).click();self.idle()
             expect(self.page.locator('.lesson-heading .badge')).to_have_text('Completed')
             expect(self.page.locator('.solution')).to_be_visible()
+            from backend.app.learning.foundations_guidance import LABELS
+            for language in ('ENG','VIE'):
+                self.page.get_by_label('Select language').select_option(language);self.idle()
+                explanation=self.page.get_by_text(LABELS[language][6],exact=True)
+                expect(explanation).to_be_visible()
+                expect(explanation.locator('..')).to_contain_text('FULL JOIN')
+            self.page.get_by_label('Select language').select_option('ENG');self.idle()
             self.page.reload();self.idle()
             expect(self.page.locator('.history-item')).to_contain_text('Independent contract and evidence reasoning '+key)
         self.page.goto(self.url+'/my-learning');self.idle()
