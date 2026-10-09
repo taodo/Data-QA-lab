@@ -36,3 +36,53 @@
 @media(max-width:600px){.platform .site-header{width:calc(100% - 24px);margin-top:12px;padding:12px;gap:12px}.platform .header-primary{gap:12px}.platform .site-brand{font-size:1rem}.platform .header-search{flex-basis:100%;order:4}.platform .header-links{flex-basis:100%;order:5;justify-content:space-between;font-size:.8rem;gap:8px}.platform .header-account{flex-wrap:wrap;gap:8px}.platform .header-subjects{margin-left:auto}.platform .header-subjects nav{left:auto;right:0;min-width:260px;max-width:calc(100vw - 50px)}.discovery .platform-main{padding:16px 20px 40px}.discovery .platform-crumbs{padding:20px}.landing-hero{padding-bottom:32px}.landing-hero h1{font-size:2.65rem;line-height:1.17}.hero-intro{font-size:.98rem}.landing-metrics{gap:20px}.landing-metrics dd{font-size:1.4rem}.landing-metrics dt{font-size:.65rem}.landing-metrics div:last-child dd{font-size:.9rem}.landing-hero .button-row{align-items:stretch}.landing-hero .button-row>a{flex:1 1 100%}.pipeline-example figcaption{font-size:.65rem}.window-bar{padding:14px 12px}.example-stages{padding:24px 12px;gap:8px}.example-stages li+li{padding-left:8px}.example-stages strong{font-size:.8rem}.example-stages code{font-size:.65rem}.example-stages small{font-size:.6rem}.example-check{padding:16px 12px;flex-wrap:wrap}.example-findings{padding:16px 12px}.execution-callout{padding:20px;gap:16px;align-items:flex-start}.callout-symbol{font-size:2rem}.execution-callout p{font-size:.85rem}.feature-card{padding:24px}.cloud-subjects{grid-template-columns:1fr}.learning-loop ol{gap:20px}.learning-loop h3{font-size:1rem}.learning-loop p{font-size:.82rem}.landing-final{padding:32px 20px}.discovery .catalog-hero{padding-top:16px}.discovery .catalog-hero h1{font-size:2.6rem}.catalog-proof{gap:12px}.catalog-proof span+span{padding-left:12px}.discovery .subject-grid{grid-template-columns:1fr}.discovery .subject-tile{display:grid;grid-template-columns:1fr auto;gap:8px}.discovery .subject-tile strong{grid-column:1}.discovery .subject-tile small{grid-column:2;grid-row:1}.discovery .subject-section{margin-bottom:32px}.discovery .course-detail-hero{padding:24px 20px}.discovery .course-cover.cover-large{height:190px}.discovery .course-card-body{padding:20px}.discovery .course-card .section-title>.muted{max-width:150px}}
 @media(prefers-reduced-motion:reduce){.platform *, .platform *:before,.platform *:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 @media(max-width:600px){.pipeline-example figcaption,.example-stages small,.example-stages code{font-size:.75rem}}
+
+/* Review: bounded header overlay. Open disclosures form one layer above normal
+   positioned siblings (including account-menu); the existing header owns it. */
+.platform .site-header{isolation:isolate}
+.platform .site-header details[open]{z-index:1}
+.platform .header-subjects nav{box-sizing:border-box;max-height:min(70dvh,32rem);overflow-y:auto;overscroll-behavior:contain;top:calc(100% + 8px)}
+.platform .header-subjects nav a{min-height:44px;box-sizing:border-box;align-items:center;gap:12px}
+.platform .header-subjects nav strong{min-width:0}
+.platform .header-subjects nav small{font-size:.8125rem;letter-spacing:0}
+
+/* Shared discovery type scale: essential text is not reduced at breakpoints. */
+.discovery{--text-label:.875rem;--text-meta:.875rem;--text-small:.8125rem;--text-body:1rem;--text-card-title:1.3125rem}
+.discovery :is(.eyebrow,.course-kicker){font-size:var(--text-label);font-weight:600;line-height:1.4;letter-spacing:.06em;margin:0 0 12px;color:var(--accent)}
+.discovery .technical-label{font-size:var(--text-small);font-weight:600;line-height:1.4;letter-spacing:.03em}
+.discovery :is(.hero-copy h1,.catalog-hero h1){margin-top:12px}
+.discovery .discovery-heading h2{margin-top:12px}
+.discovery .feature-card h3{font-size:var(--text-card-title);margin-top:16px;line-height:1.4}
+.discovery :is(.hero-intro,.feature-card p,.learning-loop p,.execution-callout p,.landing-final p,.course-card p,.subject-heading>p,.catalog-hero>p,.course-detail-hero>div>p){font-size:var(--text-body);line-height:1.6}
+.discovery :is(.landing-metrics dt,.catalog-proof,.course-metadata,.subject-section>.section-title>span,.cloud-subjects a,.diagram-caption,.pipeline-example figcaption){font-size:var(--text-meta);line-height:1.6}
+.discovery .course-card .availability{font-size:var(--text-small);letter-spacing:.02em;line-height:1.4}
+.discovery .course-card .section-title>.muted{font-size:var(--text-small);letter-spacing:0;max-width:none}
+.discovery .course-provenance{font-size:var(--text-meta)!important}
+.discovery .course-card h3{font-size:var(--text-card-title);line-height:1.4}
+.discovery .course-card{display:flex;flex-direction:column}
+.discovery .course-card>a{flex-shrink:0}
+.discovery .course-card-body{display:flex;flex-direction:column;flex:1}
+.discovery .course-card-link{margin-top:auto;padding-top:20px;font-size:var(--text-meta);align-self:flex-start}
+.discovery .subject-links{gap:8px;font-size:var(--text-meta)}
+.discovery .subject-links a{padding:8px 12px;border-radius:6px;box-sizing:border-box}
+.discovery .subject-links a[aria-current=page]{color:var(--accent);background:var(--soft);font-weight:650;text-decoration:underline;text-underline-offset:5px}
+.discovery .course-cover>span{font-size:1rem;letter-spacing:.04em}
+.discovery .course-cover>small{font-size:var(--text-small);letter-spacing:.03em}
+.course-cover svg text{fill:currentColor;stroke:none;font:14px ui-monospace,Consolas,monospace}
+.discovery .course-cover svg{overflow:visible}
+.discovery :is(.stage-index,.example-status,.window-bar code){font-size:var(--text-small)}
+.discovery .example-stages strong{font-size:var(--text-body)}
+.discovery .example-stages small{font-size:var(--text-meta);line-height:1.5}
+.discovery .example-stages code{font-size:var(--text-body);white-space:normal;overflow-wrap:anywhere}
+.discovery :is(.example-check code,.example-findings){font-size:var(--text-meta);line-height:1.6}
+.discovery .example-check strong{font-size:var(--text-body)}
+.discovery .window-bar{gap:8px;flex-wrap:wrap}
+@media(max-width:600px){
+  .platform .header-subjects nav{width:min(320px,calc(100vw - 50px));min-width:0}
+  .discovery .example-stages{grid-template-columns:1fr;padding:24px 20px;gap:20px}
+  .discovery .example-stages li{gap:8px}
+  .discovery .example-stages li+li{border-left:0;border-top:1px dashed #64503c;padding:20px 0 0}
+  .discovery .example-stages li+li:before{content:'↓';color:var(--accent);font-size:1.25rem}
+  .discovery .example-findings{flex-direction:column;gap:8px}
+  .discovery .landing-metrics{flex-wrap:wrap;column-gap:24px;row-gap:20px}
+}

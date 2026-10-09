@@ -107,3 +107,57 @@ npm run build --prefix frontend
 
 Resume by checking branch/status, local database health, recorded results and PR
 exact-head CI. Never reset learner data or merge as part of this task.
+
+## Focused review follow-up
+
+Continued on the existing feature/task-18-ui-redesign branch from 40fac4f with a
+clean working tree. No new task branch, merge or backend/auth-policy change.
+
+- Root cause of mobile Subjects overlap: dropdown and later account disclosure
+  were positioned siblings with automatic stacking. Account could paint over the
+  dropdown. The existing header now owns an isolated overlay context; open native
+  disclosures use layer 1 above normal siblings. No huge z-index or clipping hack.
+- Subjects keeps native keyboard toggle and exposes aria-expanded/controls. Added
+  Escape close/trigger focus, outside-pointer close, Tab-exit close, listener cleanup
+  and mutually exclusive account disclosure on Subjects opening. Panel has bounded
+  height, scrolling, viewport width and wrapped subject titles.
+- Shared discovery tokens: 14px section labels, 13px small labels, 16px body/1.6,
+  14px captions/metadata, 21px card headings, 12–16px label/heading spacing. Essential
+  mobile text reflows without shrinking. Hero stages stack vertically on mobile.
+- Flex-column card bodies align CTAs per row without fixed text heights. Active
+  subject links have current-page semantics plus underline/background. Removed
+  generic FOUNDATION TO ADVANCED card label; overview now says hands-on learning.
+- Nine authored decorative inline SVG schematics cover the nine course subjects,
+  reused in overview. Cover links have accessible course names. No external assets,
+  licenses/attribution dependencies, runtime image requests or new dependencies.
+- Final production build PASS (Vite 2.59s, 66 modules).
+- Four existing affected browser regressions PASS in the initial targeted group:
+  ENG/VIE persistence/responsive/motion, signup/login/search, nine introductions and
+  learning/history/pipeline. The new test initially clicked search behind the menu
+  as an outside target, which correctly could not receive a click. Fixed the test
+  to use an uncovered brand link; focused re-run PASS (14.777s).
+- After final listener guards, review test PASS (13.923s). Checks actual account
+  overlap hit-testing, all nine routes at ENG/VIE 375/390px, bounded panel scrolling
+  at 480px viewport height, keyboard/Space/Escape/focus, outside dismissal, active
+  filter, nine distinct SVGs, CTA alignment at 375/390/768/1024/1440px, font sizes,
+  vertical mobile evidence and absence of horizontal overflow.
+- Captured ENG/VIE desktop/mobile landing/catalog, menu and pipeline evidence as
+  e2e-artifacts/task18-review-*.png. Visually inspected landing/catalog desktop and
+  mobile, ENG 375/VIE 390 menus, VIE mobile pipeline and nine-banner contact view.
+  Screenshots will also be available in final CI browser-evidence artifact.
+- No unchanged backend suite or full suite run locally for this visual follow-up.
+  Existing automatic final-head CI and its artifact/results are recorded on PR #25.
+  External-device verification and formal screen-reader audit remain unavailable.
+
+Focused browser command (same dedicated test DB/environment as above):
+
+```powershell
+.venv\Scripts\python.exe -m unittest tests.e2e.test_browser.BrowserTests.test_task18_review_subject_menu_and_course_presentation -v
+```
+
+Local app remains available through generated, ignored port-8001 Compose config:
+
+```powershell
+docker compose --project-directory D:\Data-QA-Lab -p data-qa-lab -f data/generated/docker-compose.local-8001.yml up -d --build --wait
+# Open http://127.0.0.1:8001
+```
