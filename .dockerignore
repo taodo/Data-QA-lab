@@ -11,3 +11,7 @@ e2e-server.log
 .env
 .env.*
 tests
+
+# Development-only design guidance; never ship skill tooling
+.agents
+.codex

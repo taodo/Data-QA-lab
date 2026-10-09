@@ -1,6 +1,7 @@
 import type {Language} from './types';
 import {translator} from './i18n';
 const ENG={
+  localCloudEvidence:'SIMULATED / IMPORTED · Local evidence',
   INTERMEDIATE:'Intermediate',
   ETL_MAPPING:'Mapping',ETL_TRANSFORM:'Transformation',ETL_REJECT:'Rejects & quarantine',ETL_INCREMENTAL:'ETL batches & replay',ETL_RECOVERY:'Recovery',API_CONTRACT:'HTTP contract',API_RELIABILITY:'Pagination & retry',API_INGESTION:'API ingestion',
   etl_wrong_mapping:'Wrong customer mapping',etl_missing:'Missing Target key',etl_rounding:'Rounded money',etl_null_amount:'Missing amount',etl_drop_reject:'Lost reject',etl_accept_invalid:'Invalid row accepted',etl_append:'Append duplicates',etl_skip_late:'Skipped update',etl_failed:'Interrupted publication',etl_partial_publish:'Successful partial publication',api_missing_field:'Missing JSON field',api_wrong_type:'Incorrect JSON type',api_wrong_status:'HTTP 503',api_missing_page:'Missing response key',api_duplicate_page:'Duplicated response key',api_exhausted:'Retries exhausted',api_timeout:'HTTP timeout',api_ingest_missing:'Missing ingested key',api_ingest_wrong:'Incorrect ingested amount',api_ingest_duplicate:'Duplicate ingested key',
@@ -11,6 +12,7 @@ const ENG={
   AUTH_REQUIRED:'Please log in to continue.',AUTH_INVALID:'Username or password is incorrect.',USERNAME_TAKEN:'This username is already in use.',AUTH_RATE_LIMIT:'Too many attempts. Please wait 15 minutes and try again.',CSRF_DENIED:'Your session changed. Reload the page and try again.',ACCOUNT_CHANGED:'The signed-in account changed. Reloading your account…',STALE_REQUEST:'The account changed during this request. Please try again.',READ_ONLY_BASELINE:'This shared sample is read-only. Run pipeline to create your own run.',COURSE_PLANNED:'This course is planned; practical labs are not yet available.',
 };
 const VIE:typeof ENG={
+  localCloudEvidence:'SIMULATED / IMPORTED · Evidence local',
   INTERMEDIATE:'Trung cấp',
   ETL_MAPPING:'Ánh xạ',ETL_TRANSFORM:'Biến đổi',ETL_REJECT:'Reject & quarantine',ETL_INCREMENTAL:'Batch ETL & replay',ETL_RECOVERY:'Khôi phục',API_CONTRACT:'Hợp đồng HTTP',API_RELIABILITY:'Pagination & retry',API_INGESTION:'Ingestion API',
   etl_wrong_mapping:'Ánh xạ customer sai',etl_missing:'Thiếu key Target',etl_rounding:'Số tiền bị làm tròn',etl_null_amount:'Amount bị thiếu',etl_drop_reject:'Mất dòng reject',etl_accept_invalid:'Nhận dòng không hợp lệ',etl_append:'Append tạo duplicate',etl_skip_late:'Bỏ qua cập nhật',etl_failed:'Publish bị gián đoạn',etl_partial_publish:'Publish thiếu nhưng báo thành công',api_missing_field:'Thiếu trường JSON',api_wrong_type:'Sai kiểu dữ liệu JSON',api_wrong_status:'HTTP 503',api_missing_page:'Thiếu key response',api_duplicate_page:'Key response bị trùng',api_exhausted:'Hết lượt retry',api_timeout:'Timeout HTTP',api_ingest_missing:'Thiếu key đã ingest',api_ingest_wrong:'Amount đã ingest bị sai',api_ingest_duplicate:'Key ingest bị trùng',
