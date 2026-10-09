@@ -242,6 +242,8 @@ class BrowserTests(unittest.TestCase):
         expect(self.page.get_by_label("SQL editor",exact=True)).to_have_text("SELECT COUNT(*) FROM source_orders")
         expect(self.page.get_by_label("Answer the challenge",exact=True)).to_have_value("I will compare business keys in both directions.")
         self.page.get_by_role("navigation",name="Breadcrumb",exact=True).get_by_role("link",name="Data QA Lab",exact=True).click()
+        expect(self.page.locator(".landing-hero")).to_be_visible()
+        self.page.locator('.landing-hero a.primary').click()
         expect(self.page.locator(".catalog-hero")).to_be_visible()
         self.page.get_by_role("navigation",name="Main navigation").get_by_role("link",name="Pipeline & QA",exact=True).click();self.idle()
         expect(self.page.get_by_role("heading",name="What is this pipeline for?",exact=True)).to_be_visible()
@@ -362,11 +364,162 @@ class BrowserTests(unittest.TestCase):
         expect(self.page.locator('.course-intro-content').nth(0)).to_contain_text('is a language')
         self.page.screenshot(path=str(self.artifacts/'course-introduction-desktop.png'), full_page=True)
 
+    def test_task18_discovery_language_responsive_keyboard_and_motion(self):
+        from playwright.sync_api import expect
+        vietnamese_browser=self.browser.new_context(locale='vi-VN')
+        try:
+            fresh=vietnamese_browser.new_page();fresh.goto(self.url)
+            expect(fresh.get_by_label('Select language')).to_have_value('ENG')
+            expect(fresh.locator('.landing-hero h1')).to_contain_text('Prove the quality.')
+        finally:
+            vietnamese_browser.close()
+        self.context.clear_cookies()
+        self.page.goto(self.url)
+        self.page.evaluate("localStorage.removeItem('dqa-language')")
+        self.page.reload()
+        expect(self.page.get_by_label('Select language')).to_have_value('ENG')
+        expect(self.page.locator('html')).to_have_attribute('lang','en')
+        expect(self.page.locator('.landing-hero h1')).to_contain_text('Prove the quality.')
+        expect(self.page.locator('.landing-metrics')).to_contain_text('36')
+        expect(self.page.locator('.landing-metrics')).to_contain_text('9')
+        self.page.keyboard.press('Tab')
+        expect(self.page.locator('.skip-link')).to_be_focused()
+        self.assertNotEqual(self.page.locator('.skip-link').evaluate('(e)=>getComputedStyle(e).outlineStyle'),'none')
+        self.page.keyboard.press('Enter')
+        self.page.locator('.landing-hero a.primary').click()
+        expect(self.page).to_have_url(self.url+'/courses')
+        expect(self.page.locator('.course-library .course-card')).to_have_count(9)
+        expect(self.page.locator('.course-provenance')).to_have_count(6)
+        for language in ('ENG','VIE'):
+            self.page.get_by_label('Select language').select_option(language);self.idle()
+            for route in ('/','/courses','/courses/sql-data-qa'):
+                self.page.goto(self.url+route);self.idle()
+                for width in (375,768,1024,1440):
+                    self.page.set_viewport_size({'width':width,'height':900})
+                    self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),width,(route,language,width))
+                    if language=='ENG' and route in ('/','/courses') and width in (375,1440):
+                        slug='landing' if route=='/' else 'catalog'
+                        self.page.screenshot(path=str(self.artifacts/f'task18-{slug}-{width}.png'),full_page=True)
+                    if language=='VIE' and route in ('/','/courses') and width==375:
+                        slug='landing' if route=='/' else 'catalog'
+                        self.page.screenshot(path=str(self.artifacts/f'task18-{slug}-vie-375.png'))
+                expect(self.page.get_by_label('Select language')).to_have_value(language)
+            self.page.reload();expect(self.page.get_by_label('Select language')).to_have_value(language)
+        self.page.get_by_role('button',name=__import__('re').compile('SQL là gì')).focus()
+        toggle=self.page.locator('.course-intro-toggle').first
+        toggle.press('Enter');expect(toggle).to_have_attribute('aria-expanded','false')
+        toggle.press('Space');expect(toggle).to_have_attribute('aria-expanded','true')
+        self.page.evaluate("localStorage.setItem('dqa-language','invalid')")
+        self.page.reload();expect(self.page.get_by_label('Select language')).to_have_value('ENG')
+        self.page.emulate_media(reduced_motion='reduce')
+        self.page.goto(self.url)
+        expect(self.page.locator('.hero-copy')).to_be_visible()
+        self.assertEqual(self.page.locator('.accent-dot').evaluate('(e)=>getComputedStyle(e).animationName'),'none')
+        self.page.locator('.landing-hero a.secondary').click()
+        expect(self.page).to_have_url(self.url+'/pipeline')
+        expect(self.page.locator('.access-prompt')).to_be_visible()
+        self.assertEqual(self.page.locator('.pipeline-example').count(),0)
+
+    def test_task18_review_subject_menu_and_course_presentation(self):
+        from playwright.sync_api import expect
+        self.page.goto(self.url+'/courses')
+        expect(self.page.locator('.account-menu')).to_be_visible()
+        for language in ('ENG','VIE'):
+            self.page.get_by_label('Select language').select_option(language)
+            for width in (375,390):
+                self.page.set_viewport_size({'width':width,'height':480})
+                trigger=self.page.locator('.header-subjects summary')
+                panel=self.page.locator('#header-subject-links')
+                trigger.focus();trigger.press('Enter')
+                expect(trigger).to_have_attribute('aria-expanded','true')
+                links=panel.locator('a')
+                expect(links).to_have_count(9)
+                bounds=panel.bounding_box()
+                self.assertGreaterEqual(bounds['x'],0)
+                self.assertLessEqual(bounds['x']+bounds['width'],width)
+                self.assertLessEqual(bounds['y']+bounds['height'],480)
+                self.assertTrue(panel.evaluate('(e)=>e.scrollHeight>e.clientHeight'))
+                self.assertTrue(panel.evaluate('''e=>{
+                    const a=document.querySelector('.account-menu summary').getBoundingClientRect();
+                    const p=e.getBoundingClientRect();
+                    const left=Math.max(a.left,p.left),right=Math.min(a.right,p.right);
+                    const top=Math.max(a.top,p.top),bottom=Math.min(a.bottom,p.bottom);
+                    return right>left && bottom>top && e.contains(document.elementFromPoint((left+right)/2,(top+bottom)/2));
+                }'''), 'Subjects must own pointer hits over the underlying account summary')
+                trigger.press('Tab');expect(links.first).to_be_focused()
+                links.first.press('Escape')
+                expect(trigger).to_have_attribute('aria-expanded','false')
+                expect(trigger).to_be_focused()
+                trigger.press('Space')
+                expect(trigger).to_have_attribute('aria-expanded','true')
+                # Click genuinely outside the overlay; the search field is behind it.
+                self.page.locator('.site-brand').click()
+                expect(trigger).to_have_attribute('aria-expanded','false')
+                expect(self.page.locator('.site-brand')).to_be_focused()
+                # Every real item must receive pointer hits, even where the account
+                # summary lies behind the overlay. Check all nine routes, not z-index.
+                for index in range(9):
+                    trigger.focus();trigger.press('Enter')
+                    expect(trigger).to_have_attribute('aria-expanded','true')
+                    link=panel.locator('a').nth(index)
+                    href=link.get_attribute('href')
+                    link.scroll_into_view_if_needed()
+                    self.assertTrue(link.evaluate('''e=>{
+                        const r=e.getBoundingClientRect();
+                        return e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));
+                    }'''))
+                    link.click()
+                    expect(self.page).to_have_url(self.url+href)
+                    expect(trigger).to_have_attribute('aria-expanded','false')
+                    expect(self.page.locator('.subject-links [aria-current=page]')).to_have_attribute('href',href)
+                    expect(self.page.locator('.course-grid .course-card')).to_have_count(1)
+                # Tab out closes the disclosure without trapping focus.
+                trigger.focus();trigger.press('Enter');trigger.press('Tab')
+                expect(panel.locator('a').first).to_be_focused()
+                panel.locator('a').last.focus();self.page.keyboard.press('Tab')
+                expect(trigger).to_have_attribute('aria-expanded','false')
+                expect(self.page.locator('.header-search input')).to_be_focused()
+                self.page.set_viewport_size({'width':width,'height':844})
+                trigger.click();expect(trigger).to_have_attribute('aria-expanded','true')
+                self.page.screenshot(path=str(self.artifacts/f'task18-review-menu-{language}-{width}.png'))
+                trigger.press('Escape')
+            self.page.goto(self.url+'/courses')
+            expect(self.page.locator('.course-grid .course-card')).to_have_count(9)
+            expect(self.page.locator('.subject-links [aria-current=page]')).to_have_attribute('href','/courses')
+            covers=self.page.locator('.course-grid .course-cover svg')
+            self.assertEqual(len(set(covers.evaluate_all('(items)=>items.map(e=>e.innerHTML)'))),9)
+            expect(self.page.locator('.course-grid')).not_to_contain_text('FOUNDATION TO ADVANCED')
+            for width in (375,390,768,1024,1440):
+                self.page.set_viewport_size({'width':width,'height':1000})
+                self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),width)
+                cards=self.page.locator('.course-grid .course-card').evaluate_all('''items=>items.map(e=>({
+                    top:e.getBoundingClientRect().top,
+                    cta:e.querySelector('.course-card-link').getBoundingClientRect().bottom
+                }))''')
+                for first,second in zip(cards,cards[1:]):
+                    if abs(first['top']-second['top'])<1:self.assertLess(abs(first['cta']-second['cta']),1)
+            self.page.screenshot(path=str(self.artifacts/f'task18-review-catalog-{language}-1440.png'),full_page=True)
+            if language=='ENG':self.page.locator('.course-grid').screenshot(path=str(self.artifacts/'task18-review-course-banners.png'))
+            self.page.set_viewport_size({'width':375,'height':844})
+            self.page.screenshot(path=str(self.artifacts/f'task18-review-catalog-{language}-375.png'),full_page=True)
+            self.page.goto(self.url)
+            expect(self.page.locator('.example-stages li')).to_have_count(3)
+            stages=self.page.locator('.example-stages li').evaluate_all('(items)=>items.map(e=>e.getBoundingClientRect().y)')
+            self.assertEqual(stages,sorted(stages));self.assertGreater(stages[1],stages[0])
+            for selector,minimum in (('.eyebrow',14),('.feature-card p',16),('.example-stages small',13),('.example-stages code',16),('.example-findings',14)):
+                self.assertGreaterEqual(self.page.locator(selector).first.evaluate('(e)=>parseFloat(getComputedStyle(e).fontSize)'),minimum)
+            self.page.locator('.pipeline-example').screenshot(path=str(self.artifacts/f'task18-review-pipeline-{language}-375.png'))
+            self.page.screenshot(path=str(self.artifacts/f'task18-review-landing-{language}-375.png'),full_page=True)
+            self.page.set_viewport_size({'width':1440,'height':1000})
+            self.page.screenshot(path=str(self.artifacts/f'task18-review-landing-{language}-1440.png'),full_page=True)
+
     def test_public_courses_search_routes_and_real_signup_login(self):
         from playwright.sync_api import expect
         self.context.clear_cookies()
         self.page.goto(self.url)
         self.page.get_by_label('Select language').select_option('ENG')
+        expect(self.page.locator('.landing-hero')).to_be_visible()
+        self.page.locator('.landing-hero').get_by_role('link',name='Explore the courses',exact=False).click()
         expect(self.page.locator('.catalog-hero')).to_be_visible()
         expect(self.page.locator('.subject-tile')).to_have_count(9)
         self.page.screenshot(path=str(self.artifacts/'task9-home-desktop.png'),full_page=True)

@@ -80,7 +80,7 @@ cd Data-QA-Lab
 docker compose up -d --build --wait --wait-timeout 180
 ```
 
-Open **http://127.0.0.1:8000**. Sign up, select ENG or VIE, choose a course and start a lesson.
+Open **http://127.0.0.1:8000**. Explore the landing page and course catalog, then sign up and start a lesson. First-time visitors use English (ENG); explicitly saved ENG/VIE preferences persist through navigation and refresh. Missing or invalid preferences fall back to ENG, independent of browser language or location. Demo accounts are created by the host; public signup remains disabled in demo mode.
 
 A fresh packaged setup creates **1,000 deterministic orders**. An existing usable pipeline run is retained. Lesson sessions use isolated workspaces. The first build may take several minutes; the built app uses local assets.
 

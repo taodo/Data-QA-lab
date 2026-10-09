@@ -18,3 +18,6 @@ e2e-artifacts/
 e2e-server.log
 backups/
 .container-smoke-state.json
+
+# Project-local design tooling (version recorded in design system docs)
+.agents/skills/ui-ux-pro-max/
