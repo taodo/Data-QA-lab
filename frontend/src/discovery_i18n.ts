@@ -1,0 +1,53 @@
+import type {Language} from './types';
+
+const ENG = {
+  eyebrow:'A hands-on lab for data quality',
+  title:'Trust the data.',accent:'Prove the quality.',
+  intro:'Learn to test the data behind the dashboard. Write SQL, investigate pipelines and API responses, and explain your findings with observable evidence.',
+  explore:'Explore the courses',pipeline:'Open the pipeline lab',
+  courses:'executable courses',lessons:'guided lessons',languages:'English & Vietnamese',
+  example:'Illustrative pipeline · example data, not live telemetry',
+  source:'Source',transform:'Transform',target:'Target',check:'QA check',
+  sourceNote:'Expected keys',transformNote:'Execution SUCCESS',targetNote:'Published keys',checkNote:'Quality FAIL',
+  missing:'Missing key 30',unexpected:'Unexpected key 40',
+  statement:'The job finished. Is the data right?',
+  explanation:'A successful pipeline can still lose, duplicate or misroute records. Compare keys and values before you trust a green execution status.',
+  capability:'Built for investigation',capabilityTitle:'Go beyond “it ran.”',
+  features:[
+    {code:'01 / SQL',title:'Ask better questions of your data',text:'Practice reconciliation, duplicates, exact totals, UTC boundaries and version history with bounded, read-only PostgreSQL queries.'},
+    {code:'02 / ETL + API',title:'Follow the data, end to end',text:'Inspect source and target snapshots, local HTTP traces, rejects, retries and replay. Keep execution status separate from quality.'},
+    {code:'03 / EVIDENCE',title:'Make your answer observable',text:'Compare independent expectations, inspect query results and revisit your saved attempts. Reveal the explanation when you need it.'},
+  ],
+  cloudTitle:'Cloud concepts. Local evidence.',cloudText:'Fabric, ADF, OneLake, Databricks, Synapse and Azure exercises use SIMULATED / IMPORTED PostgreSQL evidence. No live cloud connection, Spark/Delta execution or cloud authorization.',
+  flowEyebrow:'Your learning loop',flowTitle:'Understand it. Then prove it.',
+  flow:[{title:'Understand',text:'Read the rule, the purpose and a small worked example.'},{title:'Practice',text:'Use the SQL or JSON editor and the available simulation controls.'},{title:'Inspect evidence',text:'Compare actual output with the independent contract.'},{title:'Answer',text:'Submit your check and save your reasoning. Written answers are saved, not semantically graded.'}],
+  finalTitle:'Build confidence, one check at a time.',finalText:'Start with SQL foundations or explore the subject you use at work.',
+  catalogEyebrow:'The course catalog',catalogTitle:'Choose your next investigation.',catalogIntro:'Start with the foundations. Build up to pipelines, APIs and cloud evidence—at your own pace.',
+  all:'All courses',cloudLabel:'Local simulated / imported evidence',localLabel:'Local hands-on exercises',
+};
+const VIE:typeof ENG = {
+  eyebrow:'Thực hành kiểm tra chất lượng dữ liệu',
+  title:'Tin vào dữ liệu.',accent:'Chứng minh chất lượng.',
+  intro:'Học cách kiểm tra dữ liệu phía sau dashboard. Viết SQL, điều tra pipeline và response API, rồi giải thích kết quả bằng bằng chứng quan sát được.',
+  explore:'Khám phá các course',pipeline:'Mở lab pipeline',
+  courses:'course thực hành',lessons:'bài học có hướng dẫn',languages:'Tiếng Anh & tiếng Việt',
+  example:'Pipeline minh họa · dữ liệu ví dụ, không phải telemetry trực tiếp',
+  source:'Source',transform:'Biến đổi',target:'Target',check:'Kiểm tra QA',
+  sourceNote:'Key kỳ vọng',transformNote:'Thực thi SUCCESS',targetNote:'Key đã publish',checkNote:'Chất lượng FAIL',
+  missing:'Thiếu key 30',unexpected:'Thừa key 40',
+  statement:'Job đã xong. Dữ liệu có đúng?',
+  explanation:'Pipeline thành công vẫn có thể làm mất, trùng hoặc đưa dòng sai đích. So key và giá trị trước khi tin vào trạng thái thực thi màu xanh.',
+  capability:'Dành cho việc điều tra',capabilityTitle:'Hiểu hơn việc “đã chạy”.',
+  features:[
+    {code:'01 / SQL',title:'Đặt câu hỏi đúng cho dữ liệu',text:'Thực hành đối soát, duplicate, tổng chính xác, biên UTC và lịch sử version bằng truy vấn PostgreSQL chỉ đọc có giới hạn.'},
+    {code:'02 / ETL + API',title:'Theo dữ liệu từ đầu đến cuối',text:'Xem snapshot source/target, trace HTTP local, reject, retry và replay. Tách trạng thái thực thi khỏi chất lượng.'},
+    {code:'03 / EVIDENCE',title:'Đưa ra câu trả lời có bằng chứng',text:'So kỳ vọng độc lập, xem kết quả query và trở lại attempt đã lưu. Mở phần giải thích khi cần.'},
+  ],
+  cloudTitle:'Khái niệm cloud. Bằng chứng local.',cloudText:'Bài Fabric, ADF, OneLake, Databricks, Synapse và Azure dùng evidence PostgreSQL SIMULATED / IMPORTED. Không kết nối cloud thật, chạy Spark/Delta hay đánh giá quyền cloud.',
+  flowEyebrow:'Vòng học của bạn',flowTitle:'Hiểu trước. Chứng minh sau.',
+  flow:[{title:'Hiểu',text:'Đọc quy tắc, mục đích và ví dụ nhỏ đã giải.'},{title:'Thực hành',text:'Dùng editor SQL hoặc JSON cùng các điều khiển mô phỏng hiện có.'},{title:'Xem bằng chứng',text:'So output thực tế với contract độc lập.'},{title:'Trả lời',text:'Nộp check và lưu lập luận. Câu trả lời viết được lưu, không chấm ngữ nghĩa.'}],
+  finalTitle:'Tự tin hơn qua từng lần kiểm tra.',finalText:'Bắt đầu với SQL nền tảng hoặc khám phá chủ đề bạn dùng trong công việc.',
+  catalogEyebrow:'Danh mục course',catalogTitle:'Chọn bài điều tra tiếp theo.',catalogIntro:'Bắt đầu từ nền tảng. Tiến tới pipeline, API và evidence cloud theo nhịp học của bạn.',
+  all:'Tất cả course',cloudLabel:'Evidence mô phỏng / import local',localLabel:'Bài thực hành local',
+};
+export const discoveryCopy=(language:Language)=>language==='VIE'?VIE:ENG;

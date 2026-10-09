@@ -362,11 +362,69 @@ class BrowserTests(unittest.TestCase):
         expect(self.page.locator('.course-intro-content').nth(0)).to_contain_text('is a language')
         self.page.screenshot(path=str(self.artifacts/'course-introduction-desktop.png'), full_page=True)
 
+    def test_task18_discovery_language_responsive_keyboard_and_motion(self):
+        from playwright.sync_api import expect
+        vietnamese_browser=self.browser.new_context(locale='vi-VN')
+        try:
+            fresh=vietnamese_browser.new_page();fresh.goto(self.url)
+            expect(fresh.get_by_label('Select language')).to_have_value('ENG')
+            expect(fresh.locator('.landing-hero h1')).to_contain_text('Prove the quality.')
+        finally:
+            vietnamese_browser.close()
+        self.context.clear_cookies()
+        self.page.goto(self.url)
+        self.page.evaluate("localStorage.removeItem('dqa-language')")
+        self.page.reload()
+        expect(self.page.get_by_label('Select language')).to_have_value('ENG')
+        expect(self.page.locator('html')).to_have_attribute('lang','en')
+        expect(self.page.locator('.landing-hero h1')).to_contain_text('Prove the quality.')
+        expect(self.page.locator('.landing-metrics')).to_contain_text('36')
+        expect(self.page.locator('.landing-metrics')).to_contain_text('9')
+        self.page.keyboard.press('Tab')
+        expect(self.page.locator('.skip-link')).to_be_focused()
+        self.assertNotEqual(self.page.locator('.skip-link').evaluate('(e)=>getComputedStyle(e).outlineStyle'),'none')
+        self.page.keyboard.press('Enter')
+        self.page.locator('.landing-hero a.primary').click()
+        expect(self.page).to_have_url(self.url+'/courses')
+        expect(self.page.locator('.course-library .course-card')).to_have_count(9)
+        expect(self.page.locator('.course-provenance')).to_have_count(6)
+        for language in ('ENG','VIE'):
+            self.page.get_by_label('Select language').select_option(language);self.idle()
+            for route in ('/','/courses','/courses/sql-data-qa'):
+                self.page.goto(self.url+route);self.idle()
+                for width in (375,768,1024,1440):
+                    self.page.set_viewport_size({'width':width,'height':900})
+                    self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),width,(route,language,width))
+                    if language=='ENG' and route in ('/','/courses') and width in (375,1440):
+                        slug='landing' if route=='/' else 'catalog'
+                        self.page.screenshot(path=str(self.artifacts/f'task18-{slug}-{width}.png'),full_page=True)
+                    if language=='VIE' and route in ('/','/courses') and width==375:
+                        slug='landing' if route=='/' else 'catalog'
+                        self.page.screenshot(path=str(self.artifacts/f'task18-{slug}-vie-375.png'))
+                expect(self.page.get_by_label('Select language')).to_have_value(language)
+            self.page.reload();expect(self.page.get_by_label('Select language')).to_have_value(language)
+        self.page.get_by_role('button',name=__import__('re').compile('SQL là gì')).focus()
+        toggle=self.page.locator('.course-intro-toggle').first
+        toggle.press('Enter');expect(toggle).to_have_attribute('aria-expanded','false')
+        toggle.press('Space');expect(toggle).to_have_attribute('aria-expanded','true')
+        self.page.evaluate("localStorage.setItem('dqa-language','invalid')")
+        self.page.reload();expect(self.page.get_by_label('Select language')).to_have_value('ENG')
+        self.page.emulate_media(reduced_motion='reduce')
+        self.page.goto(self.url)
+        expect(self.page.locator('.hero-copy')).to_be_visible()
+        self.assertEqual(self.page.locator('.accent-dot').evaluate('(e)=>getComputedStyle(e).animationName'),'none')
+        self.page.locator('.landing-hero a.secondary').click()
+        expect(self.page).to_have_url(self.url+'/pipeline')
+        expect(self.page.locator('.access-prompt')).to_be_visible()
+        self.assertEqual(self.page.locator('.pipeline-example').count(),0)
+
     def test_public_courses_search_routes_and_real_signup_login(self):
         from playwright.sync_api import expect
         self.context.clear_cookies()
         self.page.goto(self.url)
         self.page.get_by_label('Select language').select_option('ENG')
+        expect(self.page.locator('.landing-hero')).to_be_visible()
+        self.page.locator('.landing-hero').get_by_role('link',name='Explore the courses',exact=False).click()
         expect(self.page.locator('.catalog-hero')).to_be_visible()
         expect(self.page.locator('.subject-tile')).to_have_count(9)
         self.page.screenshot(path=str(self.artifacts/'task9-home-desktop.png'),full_page=True)

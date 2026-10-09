@@ -5,4 +5,5 @@ import './style.css';
 import './review.css';
 import './advanced.css';
 import './platform.css';
+import './discovery.css';
 createRoot(document.getElementById('root')!).render(<React.StrictMode><App/></React.StrictMode>);
