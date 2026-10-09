@@ -242,6 +242,8 @@ class BrowserTests(unittest.TestCase):
         expect(self.page.get_by_label("SQL editor",exact=True)).to_have_text("SELECT COUNT(*) FROM source_orders")
         expect(self.page.get_by_label("Answer the challenge",exact=True)).to_have_value("I will compare business keys in both directions.")
         self.page.get_by_role("navigation",name="Breadcrumb",exact=True).get_by_role("link",name="Data QA Lab",exact=True).click()
+        expect(self.page.locator(".landing-hero")).to_be_visible()
+        self.page.locator('.landing-hero a.primary').click()
         expect(self.page.locator(".catalog-hero")).to_be_visible()
         self.page.get_by_role("navigation",name="Main navigation").get_by_role("link",name="Pipeline & QA",exact=True).click();self.idle()
         expect(self.page.get_by_role("heading",name="What is this pipeline for?",exact=True)).to_be_visible()

@@ -72,6 +72,13 @@ modified. No merge or next task authorized.
   Focused checks only; not a formal accessibility or screen-reader audit.
 - Full suite deferred to exact final-head CI; PR will record commit/run/results.
   No duplicate local full-suite run. No Nexus asset available for fidelity testing.
+- Initial CI at 0942eb3: 67 unit and 79 integration tests PASS; packaged-v1 PASS.
+  Browser suite found one obsolete assertion in review navigation: clicking the
+  home breadcrumb expected catalog, although / now intentionally shows landing.
+  Updated it to assert landing, follow the catalog CTA, then retain all existing
+  challenge/history/pipeline checks. Affected test re-run locally PASS (one test,
+  10.789s); final exact-head CI remains required. UI files unchanged, so no duplicate
+  local build or screenshot run for this test-only correction.
 - Caches/temp/tooling/generated artifacts on D. Learner DB/accounts/history and
   Docker data preserved. No public tunnel opened.
 
