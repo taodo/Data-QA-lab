@@ -1,6 +1,7 @@
 import type {Language} from './types';
 import {translator} from './i18n';
 const ENG={
+  darkTheme:'Dark',lightTheme:'Light',switchLight:'Switch to Light theme',switchDark:'Switch to Dark theme',
   signupSoon:'Sign Up — Coming Soon',demoGateHelp:'Registration is coming soon. Log in with an existing account or try a public shared demo account.',tryDemoAccounts:'Try Demo Accounts',demoSharedHelp:'These credentials are intentionally public. Anyone using the same account shares its progress, answers and history. Do not enter personal information or reuse these passwords elsewhere. Busy accounts may reach session or practice limits.',demoUnavailable:'No public demo accounts are available. Use an existing login or contact the host.',useDemoAccount:'Use this account',revealDemoPassword:'Show password',hideDemoPassword:'Hide password',copyDemoPassword:'Copy password',demoCopied:'Password copied.',demoCopyFailed:'Copy is unavailable. Show the password and copy it manually.',PUBLIC_DEMO_PASSWORD_LOCKED:'Shared demo passwords can only be changed by the local operator.',
   localCloudEvidence:'SIMULATED / IMPORTED · Local evidence',
   INTERMEDIATE:'Intermediate',
@@ -13,6 +14,7 @@ const ENG={
   AUTH_REQUIRED:'Please log in to continue.',AUTH_INVALID:'Username or password is incorrect.',USERNAME_TAKEN:'This username is already in use.',AUTH_RATE_LIMIT:'Too many attempts. Please wait 15 minutes and try again.',CSRF_DENIED:'Your session changed. Reload the page and try again.',ACCOUNT_CHANGED:'The signed-in account changed. Reloading your account…',STALE_REQUEST:'The account changed during this request. Please try again.',READ_ONLY_BASELINE:'This shared sample is read-only. Run pipeline to create your own run.',COURSE_PLANNED:'This course is planned; practical labs are not yet available.',
 };
 const VIE:typeof ENG={
+  darkTheme:'Tối',lightTheme:'Sáng',switchLight:'Chuyển sang giao diện Sáng',switchDark:'Chuyển sang giao diện Tối',
   signupSoon:'Đăng ký — Sắp có',demoGateHelp:'Tính năng đăng ký sẽ có sau. Đăng nhập bằng tài khoản hiện có hoặc thử tài khoản demo dùng chung.',tryDemoAccounts:'Thử tài khoản demo',demoSharedHelp:'Thông tin đăng nhập này được công khai có chủ đích. Mọi người dùng cùng tài khoản đều chia sẻ tiến độ, câu trả lời và lịch sử. Không nhập thông tin cá nhân hoặc dùng lại mật khẩu này ở nơi khác. Tài khoản đông người dùng có thể đạt giới hạn phiên hoặc thực hành.',demoUnavailable:'Chưa có tài khoản demo công khai. Dùng tài khoản hiện có hoặc liên hệ người tổ chức.',useDemoAccount:'Dùng tài khoản này',revealDemoPassword:'Hiện mật khẩu',hideDemoPassword:'Ẩn mật khẩu',copyDemoPassword:'Sao chép mật khẩu',demoCopied:'Đã sao chép mật khẩu.',demoCopyFailed:'Không thể sao chép tự động. Hãy hiện mật khẩu và sao chép thủ công.',PUBLIC_DEMO_PASSWORD_LOCKED:'Chỉ người quản trị local mới được đổi mật khẩu demo dùng chung.',
   localCloudEvidence:'SIMULATED / IMPORTED · Evidence local',
   INTERMEDIATE:'Trung cấp',

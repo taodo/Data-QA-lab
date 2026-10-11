@@ -91,8 +91,11 @@ class DemoBrowserTests(unittest.TestCase):
                     page.set_viewport_size({"width": 1440, "height": 900})
                     self.assertLessEqual(page.evaluate("document.documentElement.scrollWidth"), 1440)
                     page.screenshot(path=str(artifacts / "public-demo-login-desktop-ENG.png"), full_page=True)
-                    for width, language, button in ((375, "ENG", "Use this account"), (390, "VIE", "Dùng tài khoản này")):
+                    for width, language, button, theme in ((375, "ENG", "Use this account", "dark"), (390, "VIE", "Dùng tài khoản này", "light")):
                         page.set_viewport_size({"width": width, "height": 844})
+                        if page.locator('html').get_attribute('data-theme') != theme:
+                            page.locator('.theme-toggle').click()
+                        expect(page.locator('html')).to_have_attribute('data-theme', theme)
                         page.get_by_label("Select language").select_option(language)
                         card.get_by_role("button", name=button, exact=False).click()
                         self.assertTrue(page.locator('input[name="username"]').input_value() == entries[0]["username"])
@@ -101,9 +104,11 @@ class DemoBrowserTests(unittest.TestCase):
                         self.assertEqual(page.url, origin + "/login")
                         self.assertLessEqual(page.evaluate("document.documentElement.scrollWidth"), width)
                         page.screenshot(path=str(artifacts / f"public-demo-login-{width}-{language}.png"), full_page=True)
+                        page.screenshot(path=str(artifacts / f"task20-{theme}-public-demo-{width}-{language}.png"), full_page=True)
                     page.get_by_label("Select language").select_option("ENG")
                     page.locator(".auth-form button.primary").click()
                     page.wait_for_url(origin + "/my-learning")
+                    expect(page.locator('html')).to_have_attribute('data-theme', 'light')
                     page.goto(origin + "/account")
                     expect(page.get_by_text("Shared demo passwords can only be changed by the local operator.")).to_be_visible()
                     expect(page.locator(".auth-form")).to_have_count(0)

@@ -1,0 +1,183 @@
+/* Shared component treatment after the retained responsive layout styles.
+   Palette lives exclusively in theme.css; discovery does not override it. */
+body,.platform,.discovery {background:var(--page);color:var(--ink);min-height:100vh}
+* {box-sizing:border-box}
+.platform {display:flow-root}
+.platform :is(h1,h2,h3,h4) {color:var(--ink);text-wrap:balance}
+.platform h1 {font-weight:750;letter-spacing:-.035em}
+.platform h2 {font-size:1.5rem;line-height:1.35}
+.platform h3 {font-size:1.125rem;line-height:1.45}
+.platform :is(p,li) {line-height:1.7}
+.platform :is(.muted,.empty,.working) {color:var(--muted);font-size:var(--text-meta);line-height:1.65}
+.platform :is(a,button,summary,input,select,textarea):focus-visible {outline:3px solid var(--focus);outline-offset:4px}
+.platform :is(button,.primary,.secondary,.text-button,summary,select,input:not([type=file])) {min-height:44px}
+.platform :is(button,.primary,.secondary,.text-button,select) {font-size:var(--text-meta)}
+.platform :is(input,select,textarea) {color:var(--ink);background:var(--code-surface);border-color:var(--control-line);border-radius:var(--radius-control);font-size:1rem;max-width:100%}
+.platform :is(input,textarea)::placeholder {color:var(--muted);opacity:1}
+.platform button:disabled {opacity:.55}
+.platform .primary,.platform .site-header .primary {background:var(--brand-solid);border-color:var(--brand-solid);color:var(--on-brand);font-weight:650}
+.platform .primary:hover,.platform button.primary:hover:enabled,.platform .site-header .primary:hover {background:var(--brand-hover);border-color:var(--brand-hover)}
+.platform .secondary,.platform .site-header .secondary {background:var(--surface);border-color:var(--control-line);color:var(--ink)}
+.platform .secondary:hover,.platform button.secondary:hover:enabled {background:var(--soft)}
+.platform .text-button {color:var(--brand);padding:.6rem .3rem}
+.platform :is(.eyebrow,.course-kicker,.technical-label) {color:var(--accent);font-size:var(--text-label);font-weight:600;letter-spacing:.06em;line-height:1.4;margin-bottom:12px;overflow-wrap:anywhere}
+.platform .technical-label {font-size:var(--text-small);letter-spacing:.03em}
+.platform :is(.panel,.course-card,.course-outline,.course-intro-item) {background:var(--surface);border-color:var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.platform .panel {padding:var(--space-3);margin-bottom:var(--space-3)}
+.platform-main,.discovery .platform-main {max-width:var(--content-width);padding:32px 32px 64px;min-width:0}
+.platform .site-header {display:flex;flex-wrap:wrap;width:calc(100% - 32px);max-width:var(--content-width);margin:16px auto 0;padding:16px 20px;gap:16px;background:var(--nav);border:1px solid var(--line);border-radius:var(--radius);isolation:isolate;box-shadow:var(--shadow)}
+.platform .header-primary {display:flex;flex:1 1 800px;gap:20px;flex-wrap:wrap;min-width:0}
+.platform .header-links {gap:20px;font-size:var(--text-meta);padding:0}
+.platform .header-links a {min-height:44px;display:flex;align-items:center}
+.platform .header-links a[aria-current=page] {color:var(--brand);text-decoration:underline;text-underline-offset:8px}
+.platform .site-mark {background:var(--brand-solid);color:var(--on-brand)}
+.platform .site-brand strong {color:var(--brand)}
+.platform .header-search {flex:1 1 180px;max-width:320px;min-width:140px;background:var(--code-surface);border-color:var(--control-line);padding:0 12px}
+.platform .header-search input {background:transparent;border:0;font-size:var(--text-meta)}
+.platform .site-header .header-account {position:static;display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-left:auto;min-width:0}
+.platform .header-account>select {background:var(--surface);color:var(--ink);border-color:var(--control-line)}
+.platform .theme-toggle {display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.platform .header-subjects {margin-left:0}
+.platform .header-subjects summary,.platform .account-menu summary {color:var(--ink);gap:8px}
+.platform .header-subjects summary:after,.platform .account-menu summary:after {content:'⌄';color:var(--muted)}
+.platform .site-header details[open] {z-index:1}
+.platform .site-header details[open]>summary {color:var(--brand)}
+.platform .header-subjects nav,.platform .account-menu>div {background:var(--surface-raised);border-color:var(--control-line);box-shadow:var(--overlay-shadow);top:calc(100% + 8px);max-height:min(70dvh,32rem);overflow-y:auto;overscroll-behavior:contain}
+.platform .header-subjects nav {width:320px;max-width:calc(100vw - 64px);min-width:0}
+.platform .header-subjects nav a {color:var(--ink)}
+.platform .header-subjects nav small {color:var(--muted);font-size:var(--text-small)}
+.platform .account-menu>div {width:220px;max-width:calc(100vw - 64px)}
+.platform .account-menu a,.platform .account-menu button {background:transparent;color:var(--ink);min-height:44px}
+.platform .account-menu a:hover,.platform .account-menu button:hover,.platform .header-subjects nav a:hover {background:var(--soft)}
+.platform .account-menu button {border-top:1px solid var(--line);color:var(--error)}
+.platform .avatar {background:var(--soft);color:var(--brand)}
+.platform .skip-link {background:var(--surface);color:var(--ink);border:1px solid var(--control-line)}
+.platform .breadcrumb-bar {background:transparent;border:0}
+.platform .platform-crumbs {max-width:var(--content-width);padding:20px 32px;font-size:var(--text-meta)}
+.platform .site-footer {max-width:var(--content-width);padding:32px;color:var(--muted);font-size:var(--text-meta);gap:24px}
+.platform .site-footer small {font-size:var(--text-small)}
+
+/* Discovery retains its authored compositions, now blue rather than orange paint. */
+.landing-hero h1 em {color:var(--brand)}
+.accent-dot {background:var(--brand);box-shadow:none}
+.pipeline-example:before {display:none}
+.example-window {background:var(--code-surface);border-color:var(--control-line);box-shadow:var(--shadow)}
+.window-bar {background:var(--code-gutter);color:var(--muted)}
+.example-stages li+li {border-color:var(--line)}
+.example-stages b,.example-check strong {color:var(--accent)}
+.example-status.success {color:var(--success)}
+.example-check {background:var(--surface-raised)}
+.example-check b {background:var(--accent-soft);color:var(--accent)}
+.example-findings {color:var(--ink)}
+.feature-card,.landing-final {background:var(--surface);border-color:var(--line)}
+.platform .discovery-heading h2,.platform .landing-final h2 {font-size:clamp(1.9rem,3vw,2.75rem);line-height:1.25}
+.feature-lines i {background:var(--line)}
+.feature-lines i:nth-child(2) {background:var(--brand)}
+.feature-lines i:nth-child(3) {background:var(--accent)}
+.cloud-subjects a,.learning-loop li {border-color:var(--line)}
+.cloud-subjects a:hover {background:var(--soft);border-color:var(--brand)}
+.platform .course-cover {color:var(--brand);background:var(--soft)}
+.platform .course-cover>span {color:var(--brand)}
+.platform .course-card:hover {box-shadow:var(--shadow);border-color:var(--brand)}
+.platform .course-card {display:flex;flex-direction:column}
+.platform .course-card-body {display:flex;flex-direction:column;flex:1;padding:24px}
+.platform .course-card h3 {font-size:var(--text-card-title)}
+.platform .course-card p {font-size:1rem;line-height:1.6;color:var(--muted)}
+.platform .course-card-link {margin-top:auto;padding-top:20px;color:var(--brand);font-size:var(--text-meta);min-height:44px}
+.platform .course-metadata,.platform .course-progress small,.platform .course-cover>small {font-size:var(--text-meta)}
+.platform .subject-tile strong {font-size:1rem}
+.platform .subject-tile small {font-size:var(--text-small)}
+.platform .subject-links a {font-size:var(--text-meta);min-height:44px}
+.platform .subject-links a[aria-current=page] {color:var(--brand);background:var(--soft)}
+.platform .course-detail-hero {background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
+.platform .chapter-heading {background:var(--surface-raised)}
+.platform .chapter-heading h3 {font-size:1.125rem}
+.platform .chapter-heading small,.platform .curriculum .lesson-card>.muted {font-size:var(--text-meta)}
+.platform .curriculum .lesson-card {background:var(--surface);border-color:var(--line)}
+.platform .curriculum .lesson-card h3 {font-size:1rem}
+.platform .curriculum .lesson-card p {font-size:var(--text-meta)}
+.platform .lesson-number {background:var(--soft);color:var(--brand)}
+.platform .course-intro-toggle {background:var(--surface);color:var(--ink)}
+.platform .course-intro-toggle[aria-expanded=true] {color:var(--brand);background:var(--soft)}
+.platform .course-intro-content :is(p,li) {font-size:1rem;color:var(--muted)}
+.platform .course-intro-state {font-size:var(--text-small)}
+.platform .course-intro-example {background:var(--surface-raised);border-color:var(--brand)}
+
+/* Learning surfaces use the same palette, with distinct challenge/evidence roles. */
+.platform .instructions {border-top:3px solid var(--brand)}
+.platform .instructions :is(p,li),.platform .solution :is(p,li),.platform .guidance-text p {font-size:1rem;line-height:1.75}
+.platform .challenge-box {background:var(--soft);border-left-color:var(--brand);padding:20px;color:var(--ink)}
+.platform .challenge-box h2 {font-size:1.25rem}
+.platform .challenge-box p {font-size:1rem}
+.platform .example,.platform .solution pre,.platform .json {background:var(--code-surface);color:var(--code-text);border:1px solid var(--line)}
+.platform pre {font-size:var(--text-meta);line-height:1.75;max-width:100%;overflow:auto}
+.platform .editor {border:1px solid var(--control-line);background:var(--code-surface);border-radius:10px;overflow:hidden;min-width:0}
+.platform .editor.locked {opacity:1}
+.platform .editor-panel .section-title>.muted {font-size:var(--text-meta);letter-spacing:0;line-height:1.6}
+.platform .section-title>span:not(.badge) {font-size:var(--text-meta);letter-spacing:0;line-height:1.6}
+.platform .form-row {flex-wrap:wrap;gap:16px}
+.platform .form-row label {min-width:140px;font-size:var(--text-meta);color:var(--muted)}
+.platform .answer-help,.platform .history-item,.platform details,.platform .fixture-clock,.platform .track-label {font-size:var(--text-meta);color:var(--muted)}
+.platform summary {color:var(--ink)}
+.platform .course-outline nav a {font-size:var(--text-meta);min-height:44px;line-height:1.55}
+.platform .course-outline nav h3 {font-size:var(--text-meta);color:var(--ink)}
+.platform .course-outline nav a.current {color:var(--brand)}
+.platform .lesson-heading {align-items:flex-start;gap:16px}
+.platform .attempt-controls {flex-shrink:0}
+.platform table {font-size:var(--text-meta);font-variant-numeric:tabular-nums;background:var(--surface);color:var(--ink)}
+.platform th {background:var(--code-gutter);color:var(--ink);font-size:var(--text-meta)}
+.platform td,.platform th {padding:10px 12px;border-color:var(--line)}
+.platform .table-scroll {max-width:100%;overflow-x:auto;border-radius:8px}
+.platform .null {color:var(--muted)}
+.platform :is(.badge,.availability) {font-size:var(--text-small);line-height:1.4;letter-spacing:.02em;background:var(--soft);color:var(--ink);border:1px solid var(--line)}
+.platform :is(.badge.pass,.badge.success,.badge.completed,.badge.available,.availability.available) {background:var(--success-soft);color:var(--success);border-color:var(--success)}
+.platform :is(.badge.fail,.badge.error,.badge.failed) {background:var(--error-soft);color:var(--error);border-color:var(--error)}
+.platform :is(.badge.not_run,.badge.revealed,.badge.active,.availability.planned) {background:var(--warning-soft);color:var(--warning);border-color:var(--warning)}
+.platform .notice {background:var(--warning-soft);color:var(--warning);border-color:var(--warning);font-size:var(--text-meta)}
+.platform .notice.pass {background:var(--success-soft);color:var(--success);border-color:var(--success)}
+.platform .notice.error,.platform .notice.fail {background:var(--error-soft);color:var(--error);border-color:var(--error)}
+.platform .run-status {font-size:1rem;flex-wrap:wrap;gap:24px}
+.platform .stage {padding:20px;gap:10px}
+.platform .stage strong {font-size:2rem;color:var(--ink);font-variant-numeric:tabular-nums}
+.platform .stage>span:not(.badge),.platform .stage .json,.platform .pipeline-times,.platform .pipeline-times code {font-size:var(--text-meta);color:var(--muted)}
+.platform .pipeline-guide {font-size:1rem;line-height:1.75}
+.platform .run-selector {font-size:1rem;flex-wrap:wrap}
+.platform .session-row strong {font-size:1rem}
+.platform .session-row p {font-size:var(--text-meta)}
+.platform .auth-story h1 {font-size:clamp(2rem,4vw,3.5rem);line-height:1.15}
+.platform .auth-story>p {max-width:48ch}
+.platform .auth-form {padding:32px}
+.platform .auth-form p,.platform .auth-form label {font-size:1rem}
+.platform .auth-form small {font-size:var(--text-small);line-height:1.6}
+.platform .auth-proof span {background:var(--soft);color:var(--brand)}
+.platform .demo-accounts {margin-bottom:0}
+.platform .demo-account-card {background:var(--surface-raised)}
+.platform .demo-password code {color:var(--ink)}
+.platform .signup-soon {font-size:var(--text-small);color:var(--muted)}
+
+@media(min-width:1600px){.platform .header-primary {flex-wrap:nowrap}.platform .header-account {flex-wrap:nowrap}}
+@media(max-width:1350px){.platform .header-primary {flex-basis:100%}.platform .header-search {max-width:none}.platform .header-account {margin-left:auto}}
+@media(max-width:900px){.platform .header-search {order:4;flex-basis:100%}.platform .header-links {order:5;flex-basis:100%}.platform .header-primary {gap:12px}.platform .header-subjects {margin-left:auto}.platform .header-subjects nav {left:auto;right:0}.platform .auth-layout {align-items:start}.platform .stage-grid {grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){
+  .platform .site-header {width:calc(100% - 24px);padding:12px;margin-top:12px}
+  .platform .header-account {margin-left:0;width:100%;gap:8px}
+  .platform .header-links {gap:12px;font-size:var(--text-small);justify-content:space-between;white-space:normal}
+  .platform .header-subjects nav {max-width:calc(100vw - 48px)}
+  .platform .account-menu {margin-left:auto}
+  .platform .account-menu summary>span:last-child {max-width:110px}
+  .platform-main,.discovery .platform-main {padding:16px 16px 40px}
+  .platform .platform-crumbs {padding:16px;font-size:var(--text-small)}
+  .platform .site-footer {padding:24px 16px;gap:12px}
+  .platform .panel,.platform .auth-form,.player-main .panel {padding:20px}
+  .platform .workspace {gap:16px}
+  .platform .lesson-heading {flex-wrap:wrap}
+  .platform .attempt-controls {flex-direction:row;align-items:center;margin-left:0;flex-wrap:wrap}
+  .platform .stage-grid {grid-template-columns:1fr}
+  .platform .stage {padding:20px}
+  .platform .run-status button {margin-left:0}
+  .platform .course-detail-hero {padding:24px 20px}
+  .platform .curriculum-filters label {min-width:140px}
+  .platform .course-intro-toggle {flex-wrap:wrap}
+  .platform .example-stages li+li {border-color:var(--line)}
+}
+@media(prefers-reduced-motion:reduce){.platform *, .platform *:before,.platform *:after {animation:none!important;transition:none!important;scroll-behavior:auto!important}}
