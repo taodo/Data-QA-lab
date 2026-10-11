@@ -114,6 +114,9 @@ Set-DemoAccessSetting 'DEMO_PUBLIC_ACCOUNTS_ENABLED' '0'
 Set-DemoAccessSetting 'DEMO_MAX_ACCOUNTS' '15'
 docker @demo build app
 if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
+# Brief maintenance window. Free the app's fixed .3 IP before a one-off container.
+docker @demo stop app
+if ($LASTEXITCODE -ne 0) { throw 'Could not stop app for migration' }
 # Additive, idempotent schema/bootstrap; refuses a non-demo database.
 docker @demo run --rm --no-deps --entrypoint python app -m backend.app.bootstrap
 if ($LASTEXITCODE -ne 0) { throw 'Migration failed; keep access disabled' }
@@ -125,6 +128,9 @@ if ($LASTEXITCODE -ne 0) { throw 'Status failed' }
 
 Shared login/listing remain disabled, normal existing accounts remain available,
 public registration stays blocked, PostgreSQL is not recreated/published.
+The app is briefly unavailable during migration/recreation; arrange a maintenance
+window. On migration failure it stays stopped: resolve the failure or follow the
+rollback procedure, rather than enabling an unverified image. Do not stop PostgreSQL.
 
 ## 3. Provision, then enable
 
@@ -202,7 +208,8 @@ if ($LASTEXITCODE -ne 0) { throw 'Rollback failed; keep shared access disabled' 
 
 If the new app is unavailable, use its built new image in a one-off `run --rm
 --no-deps --entrypoint python app -m backend.app.main public-demo disable --all`
-before adding the rollback override. Never fall back to an older image with active
+before adding the rollback override. First `docker @demo stop app` to free its fixed
+IP even if the container is unhealthy; check exit status. Never fall back to an older image with active
 shared identities. Test ordinary login/history and host/proxy controls afterward.
 Old cap-five code may refuse new accounts while retaining all existing ones;
 normal learning continues within its original quotas. Keep the backup for separate,
