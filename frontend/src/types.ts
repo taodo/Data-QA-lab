@@ -10,7 +10,7 @@ export interface Run {run_id:string;is_shared?:boolean;execution_status:string;d
 export interface Quality {status:string;results:{rule_id:string;status:string;expected:unknown;actual:unknown;evidence:unknown;error?:string}[]}
 export interface Fault {fault_run_id:string;pipeline_run_id:string;scenario_id:string;status:string;mutation_evidence:unknown}
 export interface SimulationState {as_of:string; step_count:number; batch_no:number; steps:{step_no:number;batch_no:number;operation:string;execution_status:string;selected_events:number;target_rows:number;watermark:string}[]}
-export interface Account {user_id:string;username:string;display_name:string}
+export interface Account {user_id:string;username:string;display_name:string;public_shared?:boolean}
 export interface AuthState {user:Account|null;csrf_token:string|null}
 export interface Subject {id:string;title:string;summary:string;family:string;course_id:string;available:boolean}
 export interface Chapter {id:string;title:string;minutes:number;lessons:Lesson[]}

@@ -3,7 +3,7 @@ import os
 from fastapi import HTTPException
 from backend.app.persistence.database import transaction
 
-MAX_ACCOUNTS = 5
+MAX_ACCOUNTS = 10
 MAX_AUTH_SESSIONS = 5
 MAX_LABS_PER_ACCOUNT = 12
 MAX_WRITES = 500
@@ -14,6 +14,13 @@ def enabled():
     return os.getenv("DATA_QA_DEMO_MODE", "0") == "1"
 
 
+def account_limit():
+    value = os.getenv("DATA_QA_DEMO_MAX_ACCOUNTS", str(MAX_ACCOUNTS))
+    if not value.isascii() or not value.isdecimal() or not 10 <= int(value) <= 50:
+        raise ValueError("DATA_QA_DEMO_MAX_ACCOUNTS must be an integer from 10 to 50")
+    return int(value)
+
+
 def require_demo_database(connection):
     if not connection.execute("SELECT current_database()").fetchone()[0].startswith("data_qa_demo"):
         raise RuntimeError("Demo mode requires a separate data_qa_demo database; learner database refused")
@@ -21,6 +28,7 @@ def require_demo_database(connection):
 
 def initialize(db):
     if enabled():
+        account_limit()
         with transaction(db) as connection:
             require_demo_database(connection)
             connection.execute("CREATE TABLE IF NOT EXISTS metadata.demo_budget (id BOOLEAN PRIMARY KEY CHECK(id), writes INTEGER NOT NULL)")
@@ -31,7 +39,7 @@ def account_slot(connection):
     if enabled():
         require_demo_database(connection)
         connection.execute("LOCK TABLE metadata.accounts IN SHARE ROW EXCLUSIVE MODE")
-        if connection.execute("SELECT COUNT(*) FROM metadata.accounts").fetchone()[0] >= MAX_ACCOUNTS:
+        if connection.execute("SELECT COUNT(*) FROM metadata.accounts").fetchone()[0] >= account_limit():
             raise HTTPException(429, "DEMO_ACCOUNT_LIMIT")
 
 

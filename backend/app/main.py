@@ -68,6 +68,12 @@ def build_parser() -> argparse.ArgumentParser:
     demo_account = subparsers.add_parser("demo-account", help="Create a bounded demo account with hidden password prompts")
     demo_account.add_argument("--username", required=True)
     demo_account.add_argument("--display-name", default="Demo learner")
+    public_demo = subparsers.add_parser("public-demo", help="Trusted operator: public shared demo accounts; never prints passwords")
+    public_demo.add_argument("action", choices=("provision", "status", "rotate", "disable"))
+    public_demo.add_argument("--count", type=int, default=10)
+    public_demo.add_argument("--username")
+    public_demo.add_argument("--all", action="store_true", help="Explicitly disable all public demo accounts")
+    public_demo.add_argument("--enable", action="store_true", help="Explicitly re-enable the selected account during rotation")
     return parser
 
 def main() -> None:
@@ -87,7 +93,40 @@ def main() -> None:
         return
 
     database_url = Settings.from_env().database_url
-    if args.command == "demo-account":
+    if args.command == "public-demo":
+        from backend.app import public_demo
+        from fastapi import HTTPException
+        from psycopg import Error as DatabaseError
+        if args.action in {"rotate", "disable"} and not args.username and not (args.action == "disable" and args.all):
+            raise SystemExit("Select --username, or --all for disable")
+        if args.all and args.action != "disable":
+            raise SystemExit("--all is only valid with disable")
+        if args.username and args.all:
+            raise SystemExit("Choose --username or --all, not both")
+        if args.enable and args.action != "rotate":
+            raise SystemExit("--enable is only valid with rotate")
+        try:
+            if args.action == "provision":
+                result = public_demo.provision(database_url, args.count)
+            elif args.action == "status":
+                result = public_demo.status(database_url)
+            elif args.action == "rotate":
+                result = public_demo.rotate(database_url, args.username, args.enable)
+            else:
+                result = public_demo.disable(database_url, args.username)
+        except HTTPException as exc:
+            raise SystemExit(str(exc.detail)) from None
+        except ValueError as exc:
+            raise SystemExit(str(exc)) from None
+        except DatabaseError as exc:
+            raise SystemExit("PUBLIC_DEMO_DATABASE_ERROR: " + (exc.sqlstate or "unavailable")) from None
+        except Exception as exc:
+            # Database error details can contain a rejected plaintext public credential.
+            raise SystemExit("PUBLIC_DEMO_OPERATION_FAILED: " + type(exc).__name__) from None
+        _print(result)
+        if result.get("error") or result.get("conflicts"):
+            raise SystemExit(1)
+    elif args.command == "demo-account":
         from getpass import getpass
         from backend.app import demo, accounts
         if not demo.enabled():

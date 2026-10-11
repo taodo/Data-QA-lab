@@ -245,6 +245,15 @@ CREATE TABLE IF NOT EXISTS metadata.account_sessions (
     expires_at TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+-- Deliberately public credentials only. Ordinary accounts never enter this table.
+-- Additive migration; existing accounts/history are neither promoted nor changed.
+CREATE TABLE IF NOT EXISTS metadata.public_demo_accounts (
+    user_id UUID PRIMARY KEY REFERENCES metadata.accounts(user_id),
+    password TEXT CHECK (password IS NULL OR length(password) BETWEEN 12 AND 128),
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CHECK (NOT enabled OR password IS NOT NULL)
+);
 CREATE INDEX IF NOT EXISTS idx_account_sessions_user ON metadata.account_sessions(user_id);
 CREATE TABLE IF NOT EXISTS metadata.auth_budgets (
     budget_key TEXT PRIMARY KEY,

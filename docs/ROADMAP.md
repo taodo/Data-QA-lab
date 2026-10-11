@@ -46,4 +46,5 @@ Task 13 is merged as PR #18 at 2588f03, adding beginner ENG/VIE guidance to all
 explained in ENG/VIE. Task 15 is merged as PR #20 at deab838 with all four API lessons explained in ENG/VIE.
 Task 16 is merged as PR #21 at e0be176 with eight Fabric/ADF/OneLake lessons explained in ENG/VIE.
 Task 17 is merged as PR #22, completing beginner guidance for all 36 lessons.
-Active approved task: Task 18 on feature/task-18-ui-redesign. Scoped design system, landing, catalog/overview and ENG fallback; preserve existing learning/backend/demo behavior. See TASK_18_PROGRESS.md and ../design-system/data-qa-lab/MASTER.md. Stop at review-ready PR; no merge or next task.
+Task 18 is merged as PR #25; custom-domain hotfix is merged as PR #27 at 9a4361e.
+Active approved task: Task 19 on feature/task-19-public-demo-access. Opt-in public shared demo identities, Coming Soon registration and login autofill. Preserve existing accounts/history, isolated demo DB and security/quotas. See TASK_19_PROGRESS.md and TASK_19_DEPLOYMENT.md. Stop at review-ready PR; no merge, live deployment or next task.

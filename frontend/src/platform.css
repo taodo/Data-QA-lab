@@ -31,3 +31,16 @@
 
 /* Exact CSV headers and evidence identifiers must fit narrow guidance/import panels. */
 .guidance-text p,.cloud-import p {overflow-wrap:anywhere}
+:where(.auth-column){min-width:0;display:flex;flex-direction:column;gap:1rem}
+.auth-column .auth-form{box-sizing:border-box;width:100%;max-width:none}
+.demo-accounts{box-sizing:border-box;min-width:0}
+.demo-accounts>summary{cursor:pointer;min-height:44px;display:list-item;font-weight:650;line-height:1.5;padding:.5rem 0}
+.demo-accounts>p{font-size:1rem;line-height:1.6}
+.demo-account-card{border:1px solid var(--line);border-radius:10px;padding:1rem;margin-top:1rem;min-width:0}
+.demo-account-card h3{font-size:1.15rem;margin:0 0 .75rem}
+.demo-password{overflow-wrap:anywhere;font-size:1rem}
+.demo-account-card .button-row{display:flex;flex-wrap:wrap;gap:.65rem}
+.demo-account-card button{min-height:44px;white-space:normal}
+.demo-account-card [role=status]{margin:.5rem 0 0;font-size:.9rem}
+.signup-soon{line-height:1.5;max-width:170px}
+.demo-auth-layout{align-items:start}
