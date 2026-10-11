@@ -27,12 +27,15 @@ def main():
     parser.add_argument("--hostname", required=True)
     parser.add_argument("--username", default="demo_learner")
     parser.add_argument("--self-test", action="store_true", help="Provision one random test account through existing signup; no password is saved")
+    parser.add_argument("--public-account", help="Use one explicitly public shared account from the read-only listing; never prints credentials")
     parser.add_argument("--restart", action="store_true", help="Restart only the demo app and verify retained history")
     args = parser.parse_args()
     if not valid_demo_hostname(args.hostname):
         raise SystemExit("Supply one exact lowercase generated trycloudflare.com hostname or data-qa-lab.store")
+    if args.public_account and args.self_test:
+        raise SystemExit("Choose --public-account or --self-test")
     name = "probe_" + secrets.token_hex(6) if args.self_test else args.username
-    password = secrets.token_urlsafe(24) if args.self_test else getpass("Demo password: ")
+    password = secrets.token_urlsafe(24) if args.self_test else (None if args.public_account else getpass("Demo password: "))
     if args.self_test:
         code = "import json,sys; from backend.app import accounts; from backend.app.config import Settings; name,password=json.load(sys.stdin); db=Settings.from_env().database_url; payload,token=accounts.signup(db,name,'Proxy verification',password); accounts.logout(db,{'token_hash':accounts.token_hash(token)})"
         subprocess.run([*COMPOSE, "exec", "-T", "app", "python", "-c", code], input=json.dumps([name, password]), text=True, check=True, cwd=ROOT)
@@ -48,16 +51,28 @@ def main():
             result = urllib.request.urlopen(request, timeout=35)
         except urllib.error.HTTPError as error:
             result = error
-        assert result.status == status, (path, result.status, result.read().decode())
+        assert result.status == status, (path, result.status)  # Never log credential responses.
         raw = result.read()
         payload = json.loads(raw) if result.headers.get_content_type() == "application/json" else raw.decode()
         return payload, result.headers
 
+    if args.public_account:
+        catalog, catalog_headers = api("/auth/demo")
+        assert catalog_headers["Cache-Control"] == "no-store"
+        assert 0 < len(catalog["accounts"]) <= 10
+        entry = next((e for e in catalog["accounts"] if e["username"] == args.public_account), None)
+        if not entry:
+            raise SystemExit("Selected public demo account unavailable")
+        name, password = entry["username"], entry["password"]
     auth, cookies = api("/auth/login", {"username": name, "password": password})
     cookie = cookies["Set-Cookie"]
     assert "Secure" in cookie and "HttpOnly" in cookie and "SameSite=lax" in cookie
     headers.update({"Cookie": cookie.split(";", 1)[0], "X-CSRF-Token": auth["csrf_token"]})
     assert api("/auth/me")[0]["user"]["username"] == name
+    if args.public_account:
+        assert auth["user"]["public_shared"]
+        denied, _ = api("/auth/password", {"current_password": password, "new_password": secrets.token_urlsafe(24)}, status=403)
+        assert denied["error"]["code"] == "PUBLIC_DEMO_PASSWORD_LOCKED"
     for language in ("ENG", "VIE"):
         assert len(api("/courses?language=" + language)[0]) == 9
         api("/courses/sql-data-qa?language=" + language)
@@ -86,6 +101,8 @@ def main():
         else:
             raise RuntimeError("Demo app did not recover")
     assert before == [api(path + "/history/" + kind)[0] for kind in ("queries", "submissions")]
+    if args.public_account:
+        assert api("/auth/demo")[0] == catalog
     api("/auth/logout", {})
     assert api("/auth/me")[0]["user"] is None
     print("PASS: real demo proxy HTTPS-origin login, ENG/VIE courses, SQL, submission, saved history, CSRF, exact hosts, logout" + (", restart retention" if args.restart else ""))

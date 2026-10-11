@@ -14,6 +14,8 @@ services:
       POSTGRES_USER: data_qa_demo
       POSTGRES_PASSWORD: ${DEMO_DB_PASSWORD:?Run scripts/demo.ps1 Prepare first}
       DATA_QA_DEMO_MODE: "1"
+      DATA_QA_DEMO_MAX_ACCOUNTS: ${DEMO_MAX_ACCOUNTS:-10}
+      DATA_QA_PUBLIC_DEMO_ENABLED: ${DEMO_PUBLIC_ACCOUNTS_ENABLED:-0}
       DATA_QA_PUBLIC_HOSTS: ${DEMO_PUBLIC_HOST:-}
       DATA_QA_TRUSTED_PROXIES: "172.29.246.2"
     command: ["sh", "-c", "python -m backend.app.bootstrap && exec python -m uvicorn backend.app.api:app --host 0.0.0.0 --port 8000 --workers 1 --no-proxy-headers"]

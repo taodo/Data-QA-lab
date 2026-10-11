@@ -36,7 +36,8 @@ def token_hash(value):
 
 
 def public_user(user):
-    return {key: user[key] for key in ("user_id", "username", "display_name")}
+    return {**{key: user[key] for key in ("user_id", "username", "display_name")},
+            "public_shared": bool(user.get("public_shared", False))}
 
 
 def _issue(connection, user):
@@ -73,11 +74,14 @@ def signup(db, name, display_name, password):
 
 
 def login(db, name, password):
+    from backend.app import public_demo
     name = username(name)
     validate_password(password)
     with transaction(db) as connection:
         row = connection.execute(
-            "SELECT user_id,username,display_name,password_hash FROM metadata.accounts WHERE username=%s AND active",
+            """SELECT a.user_id,a.username,a.display_name,a.password_hash,p.enabled FROM metadata.accounts a
+               LEFT JOIN metadata.public_demo_accounts p USING(user_id)
+               WHERE a.username=%s AND a.active FOR UPDATE OF a""",
             (name,),
         ).fetchone()
         hashed = row[3] if row else DUMMY_HASH
@@ -85,25 +89,29 @@ def login(db, name, password):
             valid = HASHER.verify(hashed, password)
         except (VerificationError, InvalidHashError):
             valid = False
-        if not row or not valid:
+        if not row or not valid or (row[4] is not None and (not row[4] or not public_demo.enabled())):
             raise HTTPException(401, "AUTH_INVALID")
         if HASHER.check_needs_rehash(hashed):
             connection.execute("UPDATE metadata.accounts SET password_hash=%s WHERE user_id=%s", (HASHER.hash(password), row[0]))
-        return _issue(connection, dict(zip(("user_id", "username", "display_name"), row[:3], strict=True)))
+        return _issue(connection, {**dict(zip(("user_id", "username", "display_name"), row[:3], strict=True)),
+                                   "public_shared": row[4] is not None})
 
 
 def current_user(db, request):
+    from backend.app import public_demo
     token = request.cookies.get(COOKIE, "")
     if not re.fullmatch(r"[A-Za-z0-9_-]{43}", token):
         return None
     with connect(db) as connection:
         row = connection.execute(
-            """SELECT a.user_id,a.username,a.display_name,s.csrf_token,s.token_hash
+            """SELECT a.user_id,a.username,a.display_name,s.csrf_token,s.token_hash,p.user_id IS NOT NULL
                FROM metadata.account_sessions s JOIN metadata.accounts a USING(user_id)
-               WHERE s.token_hash=%s AND s.expires_at>NOW() AND a.active""",
-            (token_hash(token),),
+               LEFT JOIN metadata.public_demo_accounts p USING(user_id)
+               WHERE s.token_hash=%s AND s.expires_at>NOW() AND a.active
+               AND (p.user_id IS NULL OR (p.enabled AND %s))""",
+            (token_hash(token), public_demo.enabled()),
         ).fetchone()
-    return dict(zip(("user_id", "username", "display_name", "csrf_token", "token_hash"), row, strict=True)) if row else None
+    return dict(zip(("user_id", "username", "display_name", "csrf_token", "token_hash", "public_shared"), row, strict=True)) if row else None
 
 
 def require_csrf(request, user):
@@ -157,7 +165,10 @@ def logout(db, user):
 def change_password(db, user, old_password, new_password):
     validate_password(new_password)
     with transaction(db) as connection:
-        row = connection.execute("SELECT password_hash FROM metadata.accounts WHERE user_id=%s FOR UPDATE", (user["user_id"],)).fetchone()
+        row = connection.execute("""SELECT a.password_hash,p.user_id IS NOT NULL FROM metadata.accounts a
+            LEFT JOIN metadata.public_demo_accounts p USING(user_id) WHERE a.user_id=%s FOR UPDATE OF a""", (user["user_id"],)).fetchone()
+        if row[1]:
+            raise HTTPException(403, "PUBLIC_DEMO_PASSWORD_LOCKED")
         try:
             HASHER.verify(row[0], old_password)
         except (VerificationError, InvalidHashError) as exc:
@@ -175,6 +186,9 @@ def reset_password(db, name, new_password):
         if not row:
             raise ValueError("Unknown local account")
         connection.execute("DELETE FROM metadata.account_sessions WHERE user_id=%s", (row[0],))
+        # Operator recovery keeps the deliberately public display in sync; never enables a disabled account.
+        connection.execute("""UPDATE metadata.public_demo_accounts SET password=CASE WHEN enabled THEN %s ELSE NULL END,
+            updated_at=NOW() WHERE user_id=%s""", (new_password, row[0]))
     return {"username": name, "password_reset": True, "sessions_revoked": True}
 
 

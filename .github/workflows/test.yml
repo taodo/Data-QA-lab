@@ -76,6 +76,12 @@ jobs:
           python -c "from pathlib import Path; p=Path('data/generated/demo/.env.demo'); p.write_text(p.read_text().replace('DEMO_PUBLIC_HOST=ci-demo.trycloudflare.com', 'DEMO_PUBLIC_HOST=data-qa-lab.store'))"
           docker compose -p data-qa-demo --env-file data/generated/demo/.env.demo -f docker-compose.demo.yml up -d --no-deps --force-recreate --wait --wait-timeout 180 app proxy
           python -m scripts.demo_verify --hostname data-qa-lab.store --self-test --restart
+      - name: Verify explicitly public shared accounts through real proxy (CI demo only)
+        run: |
+          python -c "from pathlib import Path; p=Path('data/generated/demo/.env.demo'); p.write_text(p.read_text()+'DEMO_MAX_ACCOUNTS=15\nDEMO_PUBLIC_ACCOUNTS_ENABLED=1\n')"
+          docker compose -p data-qa-demo --env-file data/generated/demo/.env.demo -f docker-compose.demo.yml up -d --no-deps --force-recreate --wait --wait-timeout 180 app proxy
+          docker compose -p data-qa-demo --env-file data/generated/demo/.env.demo -f docker-compose.demo.yml exec -T app python -m backend.app.main public-demo provision
+          python -m scripts.demo_verify --hostname data-qa-lab.store --public-account demo_01 --restart
       - run: docker compose -p data-qa-demo --env-file data/generated/demo/.env.demo -f docker-compose.demo.yml logs --no-color --tail 100 app proxy postgres
         if: always()
       - run: docker compose -p data-qa-demo --env-file data/generated/demo/.env.demo -f docker-compose.demo.yml down
