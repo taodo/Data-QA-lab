@@ -25,9 +25,23 @@ class DemoSecurityTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     WebSettings.from_env()
 
-    def client(self, peer):
-        with patch.dict(os.environ, ENV):
-            return TestClient(create_app("postgresql://invalid"), base_url="http://" + HOST, client=(peer, 1234))
+    def client(self, peer, host=HOST):
+        with patch.dict(os.environ, {**ENV, "DATA_QA_PUBLIC_HOSTS": host}):
+            return TestClient(create_app("postgresql://invalid"), base_url="http://" + host, client=(peer, 1234))
+
+    def test_named_tunnel_exact_host_scheme_and_origin(self):
+        host = "data-qa-lab.store"
+        with patch.dict(os.environ, {**ENV, "DATA_QA_PUBLIC_HOSTS": host}):
+            self.assertEqual(WebSettings.from_env().allowed_hosts, (*LOCAL_HOSTS, host))
+        client = self.client("172.29.246.2", host)
+        headers = {"X-Forwarded-Proto": "https", "Origin": "https://" + host}
+        self.assertEqual(client.get("/api/courses", headers=headers).status_code, 200)
+        for bad_host in ("www." + host, "evil.example", HOST):
+            self.assertEqual(client.get("/api/courses", headers={**headers, "Host": bad_host}).status_code, 400)
+        self.assertEqual(client.get("/api/courses", headers={"X-Forwarded-Proto": "http"}).status_code, 400)
+        self.assertEqual(self.client("192.0.2.1", host).get("/api/courses", headers=headers).status_code, 400)
+        self.assertEqual(client.post("/api/sessions", json={}, headers=headers).status_code, 401)
+        self.assertEqual(client.post("/api/sessions", json={}, headers={**headers, "Origin": "https://evil.example"}).status_code, 403)
 
     def test_only_exact_host_and_trusted_scheme(self):
         client = self.client("172.29.246.2")

@@ -36,8 +36,8 @@ $env:TMP = $env:TEMP
 switch ($Action) {
     'Start' { & docker @compose up -d --build --wait --wait-timeout 180 }
     'SetHostname' {
-        if ($Hostname -cnotmatch '^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.trycloudflare\.com$') {
-            throw 'Supply only the exact generated lowercase trycloudflare.com hostname; no URL, port or wildcard'
+        if ($Hostname -cne 'data-qa-lab.store' -and $Hostname -cnotmatch '\A[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.trycloudflare\.com\z') {
+            throw 'Supply the exact lowercase generated trycloudflare.com hostname or data-qa-lab.store; no URL, port, whitespace or wildcard'
         }
         $text = [IO.File]::ReadAllText($envFile) -replace '(?m)^DEMO_PUBLIC_HOST=.*$', "DEMO_PUBLIC_HOST=$Hostname"
         [IO.File]::WriteAllText($envFile, $text)
