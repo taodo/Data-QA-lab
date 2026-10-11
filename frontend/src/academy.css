@@ -34,12 +34,19 @@ body,.platform,.discovery {background:var(--page);color:var(--ink);min-height:10
 .platform .site-brand strong {color:var(--brand)}
 .platform .header-search {flex:1 1 180px;max-width:320px;min-width:140px;background:var(--code-surface);border-color:var(--control-line);padding:0 12px}
 .platform .header-search input {background:transparent;border:0;font-size:var(--text-meta)}
+.platform .header-search:focus-within {outline:3px solid var(--focus);outline-offset:3px}
+.platform .header-search input:focus {outline:none;box-shadow:none}
 .platform .site-header .header-account {position:static;display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-left:auto;min-width:0}
 .platform .header-account>select {background:var(--surface);color:var(--ink);border-color:var(--control-line)}
 .platform .theme-toggle {display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
 .platform .header-subjects {margin-left:0}
 .platform .header-subjects summary,.platform .account-menu summary {color:var(--ink);gap:8px}
-.platform .header-subjects summary:after,.platform .account-menu summary:after {content:'⌄';color:var(--muted)}
+.platform .header-subjects summary,.platform .account-menu summary {list-style:none}
+.platform .site-header summary::marker {content:''}
+.platform .site-header summary::-webkit-details-marker {display:none}
+.platform .disclosure-chevron {display:block;flex-shrink:0;color:var(--muted);transform:rotate(0deg)}
+.platform .site-header details[open]>summary .disclosure-chevron {transform:rotate(180deg)}
+.platform .account-menu .account-name {max-width:120px;overflow:hidden;text-overflow:ellipsis}
 .platform .site-header details[open] {z-index:1}
 .platform .site-header details[open]>summary {color:var(--brand)}
 .platform .header-subjects nav,.platform .account-menu>div {background:var(--surface-raised);border-color:var(--control-line);box-shadow:var(--overlay-shadow);top:calc(100% + 8px);max-height:min(70dvh,32rem);overflow-y:auto;overscroll-behavior:contain}
@@ -164,7 +171,7 @@ body,.platform,.discovery {background:var(--page);color:var(--ink);min-height:10
   .platform .header-links {gap:12px;font-size:var(--text-small);justify-content:space-between;white-space:normal}
   .platform .header-subjects nav {max-width:calc(100vw - 48px)}
   .platform .account-menu {margin-left:auto}
-  .platform .account-menu summary>span:last-child {max-width:110px}
+  .platform .account-menu .account-name {max-width:110px}
   .platform-main,.discovery .platform-main {padding:16px 16px 40px}
   .platform .platform-crumbs {padding:16px;font-size:var(--text-small)}
   .platform .site-footer {padding:24px 16px;gap:12px}
