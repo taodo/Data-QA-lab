@@ -220,6 +220,11 @@ docker compose -p data-qa-demo --env-file D:\Data-QA-Lab\data\generated\demo\.en
 
 ## Verification checkpoint
 
+Task 19 adds optional deliberately public shared logins, default disabled. Follow
+[Task 19 deployment/backup/rollback](TASK_19_DEPLOYMENT.md) for provisioning, the
+account-cap adjustment, rotation and emergency disable. Do not run Prepare on the
+existing Named Tunnel deployment. Existing accounts are never silently promoted.
+
 Targeted security/API and disposable PostgreSQL demo/account tests are recorded
 in DEMO_PROGRESS.md. Final-head CI covers required full suites and packaged proxy
 verification. External-device/real-edge checks remain pending; no public tunnel is

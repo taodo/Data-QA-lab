@@ -220,6 +220,15 @@ def create_app(database_url=None):
         accounts.set_cookie(result,token,request)
         return result
 
+    @app.get("/api/auth/demo")
+    def public_demo_credentials():
+        from backend.app import public_demo
+        return response({"demo_mode": demo.enabled(), "accounts": public_demo.listing(db)})
+
+    @app.get("/api/auth/config")
+    def auth_configuration():
+        return response({"demo_mode": demo.enabled()})
+
     @app.post("/api/auth/login")
     def login(body: Login,request: Request):
         accounts.auth_intent(request)
