@@ -1,32 +1,45 @@
 # Data QA Lab design system
 
-Task 18 targets React 19 + TypeScript + Vite with the existing plain CSS approach.
-Nexus direction: near-black, orange, thin borders, deliberate typography and
-layered bento surfaces. No Nexus screenshot or HTML asset was available in the
-request or repository; this is an interpretation, not pixel-perfect reproduction.
+Task 20 evolves the accepted Task 18 layouts into **Premium Tech Academy** across
+all React/TypeScript routes. Blue identity, navy/slate depth, restrained orange
+technical labels and consistent readable learning surfaces. Plain CSS; no new
+framework, assets, external fonts or dependencies.
 
 ## Tokens and scope
 
-| Role | Token/value | Use |
+| Role | Dark | Light |
 |---|---|---|
-| Background | `#0d0e10` | Discovery pages only |
-| Surface | `--surface: #171615` | Cards, overview, illustration |
-| Raised surface | `--surface-raised: #201d1a` | Warm layered surfaces |
-| Text | `--ink: #f7f4f0` | Headings/body emphasis |
-| Secondary text | `--muted: #b7b2ac` | Supporting copy |
-| Accent | `--accent: #ff8a4c` | CTA, technical labels, highlights |
-| On accent | `--on-accent: #1b100a` | Dark CTA text |
-| Divider | `--line: #38332f` | Decorative thin borders |
-| Focus | `--focus: #ff9f6e` | 3px outline, 4px offset |
-| Control boundary | `#74685b` | Inputs, secondary controls |
+| Page `--page` | `#0b1424` | `#f1f5fb` |
+| Card `--surface` | `#121f33` | `#ffffff` |
+| Raised `--surface-raised` | `#1a2b43` | `#f6f9fe` |
+| Selected `--soft` | `#1c304a` | `#e9f0fc` |
+| Text `--ink` | `#eef4ff` | `#172b48` |
+| Secondary `--muted` | `#b0bfd3` | `#52647c` |
+| Link `--brand` | `#86b7ff` | `#2058b5` |
+| Primary fill / text | `#245cc4` / white | same |
+| Accent `--accent` | `#ffb078` | `#a64716` |
+| Divider `--line` | `#344863` | `#cbd6e5` |
+| Input boundary | `#607896` | `#7d90ac` |
+| Focus | `#9ac5ff` | `#2058b5` |
+| Code surface / text | `#0e1a2d` / `#e4edfa` | `#f6f9fe` / `#172b48` |
 
-Tokens live in frontend/src/discovery.css. `.discovery` wraps landing, catalog,
-subjects and course overview. Learning/editor/pipeline/account surfaces retain
-their existing light theme. The distinct dark navigation and visible focus
-styles are shared. Do not apply discovery surface overrides to `.player-main`.
-PASS/FAIL/SUCCESS/UNKNOWN/RUNNING and related statuses retain explicit text;
-green/red alone never communicate a result. The landing example is labelled
-illustrative and is never live telemetry.
+Complete success/warning/error pairs, code gutter/active/selection/syntax colors,
+elevation, radius, typography and spacing tokens live in `frontend/src/theme.css`.
+Every route consumes these document tokens. Historical mint/purple/orange paint
+in layout files was replaced; `.discovery` now marks layout only. Shared component
+refinements live in `academy.css`, loaded last after retained responsive layouts.
+
+Dark is the first-visit/invalid-preference fallback. A blocking self-hosted
+`theme-init.js` applies the saved `dqa-theme` before React/styles paint, compatible
+with script-src self. ThemeProvider handles explicit changes and cross-tab theme
+sync, independently of account and `dqa-language`. Storage failure still allows
+switching in the current page. The translated toggle shows state and sun/moon
+SVGs. CodeMirror reconfigures an appearance compartment, retaining editor state
+and undo history; token definitions reuse its existing default highlight specs.
+
+PASS/FAIL/SUCCESS/UNKNOWN/RUNNING retain explicit text; green/red alone never
+communicate a result. Execution SUCCESS and QA PASS remain distinct. The landing
+example stays illustrative, never live telemetry.
 
 ## Typography, space and layout
 
@@ -34,14 +47,14 @@ illustrative and is never live telemetry.
   system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif. Vietnamese
   uses system glyph support. No font/CDN fetches; no serif lesson/editor text.
 - Heading size uses clamp; hero about 42–76px, section titles 30–44px. Body about
-  16px, line-height 1.6. Discovery tokens: section labels 14px/600/1.4 with .06em
+  16px, line-height 1.6. Global tokens: section labels 14px/600/1.4 with .06em
   tracking, small card labels 13px/.03em, metadata/captions 14px and card titles
   21px. Labels sit 12–16px above headings. Essential text stays the same size on
   mobile; reflow instead of shrinking to fit.
 - Monospace only for identifiers, code, stage numbers and technical labels.
 - Spacing rhythm: 8/12/16/20/24/32/40/48/56/64/88px. Cards use 20–28px padding,
   8–16px radii, 1px borders; shadows are restrained and used for hierarchy.
-- Max content 1360px with adaptive gutters. Hero two columns → one at 800px;
+- Max content 1440px with adaptive gutters. Hero two columns → one at 800px;
   bento three columns → stacked; course grid existing three/two/one columns.
 - Navigation wraps in document flow; never overlays content with pinned sections.
   At small widths search/navigation span a row and account controls wrap.
@@ -53,12 +66,12 @@ illustrative and is never live telemetry.
 - Mobile pipeline evidence stacks Source → Transform → Target vertically, with
   readable 14px labels and 16px key values. The example is always illustrative.
 - Essential content reflows; table/code scrolling stays within the workspace.
-  Test both locales at 375/768/1024/1440px; do not hide overflow to mask defects.
+  Test both themes/locales at 375/768/1280/1920px; do not hide overflow to mask defects.
 
 ## Components and interaction
 
-- Primary: orange fill/dark text, 48px discovery target; secondary: outlined
-  surface/white text. Shared header controls at least 44px high.
+- Primary: blue fill/white text, 48px discovery target; secondary: outlined
+  semantic surface/text. Shared header controls at least 44px high.
 - Cards keep separate real links, clear titles, metadata, availability, progress
   and SIMULATED/IMPORTED disclosure for cloud exercises. No fake logos or claims.
 - Course card bodies use flex columns and automatic space above the CTA, aligning
@@ -108,7 +121,8 @@ imports, testimonials, pricing or certifications from generated suggestions.
 
 ## Verification
 
-See docs/TASK_18_PROGRESS.md for observed commands/results and screenshot paths.
+See docs/TASK_20_PROGRESS.md for current commands/results and screenshots;
+TASK_18_PROGRESS.md records the earlier accepted discovery pass.
 Accessibility checks are focused behavior/contrast/layout checks, not a claim of
 formal WCAG certification or a full screen-reader audit. External-device demo
 verification remains user-operated; no tunnel is started.

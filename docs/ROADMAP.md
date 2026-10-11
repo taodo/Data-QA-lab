@@ -47,4 +47,11 @@ explained in ENG/VIE. Task 15 is merged as PR #20 at deab838 with all four API l
 Task 16 is merged as PR #21 at e0be176 with eight Fabric/ADF/OneLake lessons explained in ENG/VIE.
 Task 17 is merged as PR #22, completing beginner guidance for all 36 lessons.
 Task 18 is merged as PR #25; custom-domain hotfix is merged as PR #27 at 9a4361e.
-Active approved task: Task 19 on feature/task-19-public-demo-access. Opt-in public shared demo identities, Coming Soon registration and login autofill. Preserve existing accounts/history, isolated demo DB and security/quotas. See TASK_19_PROGRESS.md and TASK_19_DEPLOYMENT.md. Stop at review-ready PR; no merge, live deployment or next task.
+Task 19 is merged as PR #29 at 9e47ede with opt-in public shared demo identities,
+Coming Soon registration and explicit login autofill. See TASK_19_PROGRESS.md and
+TASK_19_DEPLOYMENT.md for retained policies.
+Active approved task: Task 20 on feature/task-20-global-ui-redesign. Global Premium
+Tech Academy frontend with persistent Dark/Light, shared semantic tokens and
+responsive accessible navigation/learning surfaces. Preserve Task 19 and all data,
+security and learning behavior. See TASK_20_PROGRESS.md. No backend changes,
+merge, live deployment or next task.
