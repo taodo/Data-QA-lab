@@ -95,6 +95,138 @@ class BrowserTests(unittest.TestCase):
         self.idle()
         self.page.screenshot(path=str(self.artifacts/"task9-lesson-player.png"),full_page=True)
 
+    def test_task20_theme_before_app_storage_fallback_and_persistence(self):
+        from playwright.sync_api import expect
+        # Block React bundles: initialization must happen in the document head,
+        # rather than waiting for the application or an auth request.
+        for preference, expected in ((None,'dark'),('invalid','dark'),('dark','dark'),('light','light')):
+            with self.browser.new_context() as context:
+                context.add_init_script("localStorage.setItem('dqa-theme',"+__import__('json').dumps(preference)+")" if preference else "localStorage.removeItem('dqa-theme')")
+                context.route('**/assets/*.js',lambda route:route.abort())
+                page=context.new_page();response=page.goto(self.url+'/login')
+                self.assertIn("script-src 'self'",response.headers['content-security-policy'])
+                expect(page.locator('html')).to_have_attribute('data-theme',expected)
+                self.assertEqual(page.evaluate('document.documentElement.style.colorScheme'),expected)
+                self.assertEqual(page.locator('#root').inner_html(),'')
+        with self.browser.new_context() as context:
+            context.add_init_script("Object.defineProperty(window,'localStorage',{get(){throw new Error('storage blocked')}})")
+            page=context.new_page();page.goto(self.url+'/login')
+            expect(page.locator('html')).to_have_attribute('data-theme','dark')
+            page.locator('.theme-toggle').click()
+            expect(page.locator('html')).to_have_attribute('data-theme','light')
+        self.page.goto(self.url+'/login')
+        expect(self.page.locator('.theme-toggle')).to_have_text('Dark')
+        self.page.locator('.theme-toggle').focus();self.page.keyboard.press('Space')
+        expect(self.page.locator('.theme-toggle')).to_have_attribute('aria-pressed','false')
+        expect(self.page.locator('html')).to_have_attribute('data-theme','light')
+        self.page.get_by_label('Select language').select_option('VIE')
+        expect(self.page.locator('.theme-toggle')).to_have_text('Sáng')
+        expect(self.page.locator('.theme-toggle')).to_have_attribute('aria-label','Chuyển sang giao diện Tối')
+        self.page.reload()
+        expect(self.page.locator('html')).to_have_attribute('data-theme','light')
+        expect(self.page.get_by_label('Select language')).to_have_value('VIE')
+        other=self.context.new_page();other.goto(self.url+'/courses')
+        other.locator('.theme-toggle').click()
+        expect(self.page.locator('html')).to_have_attribute('data-theme','dark')
+        expect(self.page.get_by_label('Select language')).to_have_value('VIE')
+        other.close()
+        self.page.locator('.account-menu summary').click()
+        self.page.get_by_role('button',name='Đăng xuất',exact=True).click()
+        expect(self.page).to_have_url(self.url+'/')
+        expect(self.page.locator('html')).to_have_attribute('data-theme','dark')
+        self.page.goto(self.url+'/login')
+        expect(self.page.locator('.theme-toggle')).to_have_text('Tối')
+
+    def test_task20_global_theme_routes_contrast_and_responsive(self):
+        from playwright.sync_api import expect
+        self.page.goto(self.url)
+        routes=('/', '/courses', '/subjects/sql', '/courses/sql-data-qa', '/login', '/signup', '/my-learning', '/history', '/account', '/pipeline', '/courses/not-a-course')
+        for theme in ('dark','light'):
+            if self.page.locator('html').get_attribute('data-theme')!=theme:self.page.locator('.theme-toggle').click()
+            for language in ('ENG','VIE'):
+                self.page.get_by_label('Select language').select_option(language)
+                for route in routes:
+                    self.page.goto(self.url+route);self.idle()
+                    expect(self.page.locator('.account-menu')).to_be_visible()
+                    expect(self.page.locator('html')).to_have_attribute('data-theme',theme)
+                    expect(self.page.get_by_label('Select language')).to_have_value(language)
+                    expect(self.page.locator('main')).to_be_visible()
+                    for width in (375,768,1280,1920):
+                        self.page.set_viewport_size({'width':width,'height':960})
+                        self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),width,(theme,language,route,width))
+                        self.assertTrue(self.page.locator('.header-account').evaluate('''e=>{
+                            const r=e.getBoundingClientRect(),h=e.closest('header').getBoundingClientRect();
+                            return r.top>=h.top && r.bottom<=h.bottom && r.left>=h.left && r.right<=h.right;
+                        }'''),(theme,language,route,width,'Account controls must stay inside the header'))
+                        self.assertTrue(self.page.evaluate("getComputedStyle(document.body).backgroundColor===getComputedStyle(document.querySelector('.platform')).backgroundColor"))
+                        if language=='ENG' and width in (375,1280) and route in ('/','/courses','/login','/pipeline','/account'):
+                            slug=route.strip('/') or 'landing'
+                            self.page.screenshot(path=str(self.artifacts/f'task20-{theme}-{slug}-{width}.png'),full_page=True)
+            # Measure paired semantic text, status and code colors, not just names.
+            ratios=self.page.evaluate('''()=>{
+                const s=getComputedStyle(document.documentElement), c=n=>s.getPropertyValue('--'+n).trim();
+                const luminance=h=>{const rgb=h.slice(1).match(/../g).map(x=>parseInt(x,16)/255).map(x=>x<=.04045?x/12.92:((x+.055)/1.055)**2.4);return rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722;};
+                const pairs=[['ink','page'],['ink','surface'],['muted','surface'],['muted','surface-raised'],['brand','soft'],['accent','accent-soft'],['on-brand','brand-solid'],['success','success-soft'],['warning','warning-soft'],['error','error-soft'],['code-text','code-surface'],...['keyword','name','string','number','comment','error'].map(n=>['syntax-'+n,'code-active'])];
+                return pairs.map(([a,b])=>{const x=luminance(c(a)),y=luminance(c(b));return [a,b,(Math.max(x,y)+.05)/(Math.min(x,y)+.05)];});
+            }''')
+            for foreground,background,ratio in ratios:self.assertGreaterEqual(ratio,4.5,(theme,foreground,background,ratio))
+        self.page.emulate_media(reduced_motion='reduce')
+        self.page.goto(self.url)
+        self.assertEqual(self.page.locator('.accent-dot').evaluate('e=>getComputedStyle(e).animationName'),'none')
+
+    def test_task20_mobile_disclosures_and_editor_theme_reconfiguration(self):
+        from playwright.sync_api import expect
+        self.page.goto(self.url+'/courses')
+        for theme in ('dark','light'):
+            if self.page.locator('html').get_attribute('data-theme')!=theme:self.page.locator('.theme-toggle').click()
+            for language in ('ENG','VIE'):
+                self.page.get_by_label('Select language').select_option(language)
+                for width in (375,390):
+                    self.page.set_viewport_size({'width':width,'height':480})
+                    trigger=self.page.locator('.header-subjects summary');panel=self.page.locator('#header-subject-links')
+                    trigger.focus();trigger.press('Enter')
+                    expect(trigger).to_have_attribute('aria-expanded','true')
+                    expect(panel.locator('a')).to_have_count(9)
+                    bounds=panel.bounding_box()
+                    self.assertGreaterEqual(bounds['x'],0);self.assertLessEqual(bounds['x']+bounds['width'],width)
+                    self.assertLessEqual(bounds['y']+bounds['height'],480)
+                    for index in range(9):
+                        link=panel.locator('a').nth(index);link.scroll_into_view_if_needed()
+                        self.assertTrue(link.evaluate('e=>{const r=e.getBoundingClientRect();return e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))}'))
+                    panel.locator('a').last.focus();self.page.keyboard.press('Escape')
+                    expect(trigger).to_be_focused();expect(trigger).to_have_attribute('aria-expanded','false')
+                    account=self.page.locator('.account-menu summary')
+                    account.focus();account.press('Space');expect(account).to_have_attribute('aria-expanded','true')
+                    account.press('Tab');expect(self.page.locator('#header-account-links a').first).to_be_focused()
+                    self.page.keyboard.press('Escape');expect(account).to_be_focused()
+                    expect(account).to_have_attribute('aria-expanded','false')
+                    account.click();self.page.locator('.site-brand').click()
+                    expect(account).to_have_attribute('aria-expanded','false')
+        self.page.set_viewport_size({'width':1280,'height':960})
+        self.select_lab()
+        editor=self.page.get_by_label('SQL editor',exact=True)
+        original=editor.text_content()
+        editor.fill('SELECT 1 AS example;')
+        self.page.locator('#conclusion').fill('Theme must preserve this saved answer.')
+        self.page.evaluate("window.task20Editor=document.querySelector('.cm-content')")
+        self.page.locator('.theme-toggle').click()
+        self.assertTrue(self.page.evaluate("window.task20Editor===document.querySelector('.cm-content')"))
+        expect(editor).to_have_text('SELECT 1 AS example;')
+        editor.focus();editor.press('Control+z')
+        expect(editor).to_have_text(original)
+        editor.fill('SELECT 1 AS example;')
+        expect(self.page.locator('#conclusion')).to_have_value('Theme must preserve this saved answer.')
+        self.assertGreaterEqual(self.page.locator('.editor-panel .section-title>.muted').evaluate('e=>parseFloat(getComputedStyle(e).fontSize)'),14)
+        for theme in ('dark','light'):
+            if self.page.locator('html').get_attribute('data-theme')!=theme:self.page.locator('.theme-toggle').click()
+            for width in (375,768,1280,1920):
+                self.page.set_viewport_size({'width':width,'height':960})
+                self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),width,(theme,width))
+                self.page.screenshot(path=str(self.artifacts/f'task20-{theme}-lesson-{width}.png'),full_page=True)
+                if width in (375,1280):self.page.locator('.editor-panel').screenshot(path=str(self.artifacts/f'task20-{theme}-editor-{width}.png'))
+        self.page.reload();expect(editor).to_have_text('SELECT 1 AS example;')
+        expect(self.page.locator('#conclusion')).to_have_value('Theme must preserve this saved answer.')
+
     def test_sql_beginner_guidance_keyboard_language_and_reveal(self):
         from playwright.sync_api import expect
         self.page.goto(self.url+'/courses/sql-data-qa/lessons/lab_004_duplicates')

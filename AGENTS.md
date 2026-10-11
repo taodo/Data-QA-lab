@@ -14,7 +14,19 @@ New dependencies require a concrete use in the active task. Prefer small modules
 
 Task 12 is merged as PR #14 at b0863f8798c8bba2c0ed0f8fc5d37c5e1e158fab; demo preparation is merged as PR #15. Task 13 is merged as PR #18 at 2588f03. Task 14 is merged as PR #19 at 221e1b4. Task 15 is merged as PR #20 at deab838. Task 16 is merged as PR #21 at e0be176. Task 17 is merged as PR #22. Task 18 is merged as PR #25; custom-domain hotfix is merged as PR #27 at 9a4361e. See docs/TASK_18_PROGRESS.md and design-system/data-qa-lab/MASTER.md for accepted frontend design.
 
-Active approved scope: Task 19 public demo accounts/login UX on feature/task-19-public-demo-access. See docs/TASK_19_PROGRESS.md and docs/TASK_19_DEPLOYMENT.md. Additive public-account designation, opt-in bounded credential delivery, local operator CLI, password protection and demo-only signup/login UI are approved. Preserve existing accounts, sessions/history and learner data; never silently promote or rotate ordinary accounts. Public credentials are deliberately shared, but must never be committed or logged. Keep existing learning content, graders, fixtures, SQL permissions and budgets. English stays the frontend fallback; explicit ENG/VIE preferences persist. No new dependencies. Keep tooling/artifacts/caches on D. Use targeted checks, screenshots and final-head CI. No merge, live deployment/provisioning or next task without user instruction. Never alter DNS/tunnel credentials/configuration or open a public tunnel automatically; external-device verification remains user-operated.
+Task 19 is merged as PR #29 at 9e47ede. Its public shared-account disclosure,
+explicit-login autofill, Coming Soon signup and restrictions remain mandatory.
+Active approved scope: Task 20 global frontend UI and persistent Dark/Light on
+feature/task-20-global-ui-redesign. See docs/TASK_20_PROGRESS.md and the design
+system MASTER.md. Use document-level semantic tokens on every route; default
+Dark and independently preserve explicit theme/language preferences. Keep learning
+content, nine authored visuals, editor state/history and Task 19 behavior. No
+backend, schema, grader, auth policy, provisioning, Docker, tunnel or live environment
+changes. No new dependencies. Keep tooling/artifacts/caches on D. Run targeted
+browser/theme regressions and frontend build; no full local suite unless required
+to investigate an actual failure. Stop at review-ready PR: no merge, deployment,
+public tunnel or next task without user instruction. External-device demo
+verification remains user-operated.
 
 Before SQL workspace implementation, design database read-only permissions, allowlisted lab schemas, row/time limits and cancellation. Do not rely on SQL text filtering alone.
 
