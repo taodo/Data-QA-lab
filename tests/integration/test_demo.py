@@ -50,6 +50,7 @@ class DemoIntegrationTests(unittest.TestCase):
         return result
 
     def test_https_navigation_sql_submission_history_and_csrf(self):
+        host = self.client.base_url.host
         self.login()
         self.assertEqual(self.client.get("/api/auth/me").json()["user"]["username"], "demo_learner")
         for language in ("ENG", "VIE"):
@@ -63,16 +64,25 @@ class DemoIntegrationTests(unittest.TestCase):
         result = self.client.post(path + "/submit", json={"sql": check, "conclusion": "Compared independent source and target keys."})
         self.assertEqual(result.json()["status"], "PASS", result.text)
         before = [self.client.get(path + "/history/" + kind).json() for kind in ("queries", "submissions")]
-        restarted = TestClient(create_app(self.db), base_url="https://" + HOST, client=("172.29.246.2", 123))
+        restarted = TestClient(create_app(self.db), base_url="https://" + host, client=("172.29.246.2", 123))
         restarted.cookies.update(self.client.cookies)
         restarted.headers.update(self.client.headers)
         self.assertEqual(before, [restarted.get(path + "/history/" + kind).json() for kind in ("queries", "submissions")])
         for headers in ({"X-CSRF-Token": "wrong"}, {"Origin": "https://other.trycloudflare.com"}):
             self.assertEqual(self.client.post(path + "/hint", headers=headers).status_code, 403)
-        anonymous = TestClient(create_app(self.db), base_url="https://" + HOST, client=("172.29.246.2", 123))
+        anonymous = TestClient(create_app(self.db), base_url="https://" + host, client=("172.29.246.2", 123))
         anonymous.headers["X-Forwarded-Proto"] = "https"
         self.assertEqual(anonymous.get(path).status_code, 401)
         self.assertEqual(self.client.post("/api/auth/signup", json={"username": "new_user", "display_name": "new", "password": PASSWORD}).status_code, 403)
+
+    def test_named_tunnel_https_navigation_history_and_restrictions(self):
+        host = "data-qa-lab.store"
+        with patch.dict(os.environ, {"DATA_QA_PUBLIC_HOSTS": host}):
+            self.client = TestClient(create_app(self.db), base_url="https://" + host, client=("172.29.246.2", 123))
+            self.client.headers.update({"Origin": "https://" + host, "X-Forwarded-Proto": "https", "X-DQA-Intent": "1"})
+            self.assertEqual(self.client.get("/api/courses", headers={"Host": HOST}).status_code, 400)
+            self.assertEqual(self.client.get("/api/courses", headers={"X-Forwarded-Proto": "http"}).status_code, 400)
+            self.test_https_navigation_sql_submission_history_and_csrf()
 
     def test_account_tokens_labs_storage_and_restart_limits(self):
         for _ in range(8):
