@@ -18,6 +18,10 @@ ROOT = Path(__file__).resolve().parents[1]
 COMPOSE = ["docker", "compose", "-p", "data-qa-demo", "--env-file", str(ROOT / "data/generated/demo/.env.demo"), "-f", str(ROOT / "docker-compose.demo.yml")]
 
 
+def valid_demo_hostname(hostname):
+    return hostname == "data-qa-lab.store" or re.fullmatch(r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.trycloudflare\.com", hostname) is not None
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--hostname", required=True)
@@ -25,8 +29,8 @@ def main():
     parser.add_argument("--self-test", action="store_true", help="Provision one random test account through existing signup; no password is saved")
     parser.add_argument("--restart", action="store_true", help="Restart only the demo app and verify retained history")
     args = parser.parse_args()
-    if not re.fullmatch(r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.trycloudflare\.com", args.hostname):
-        raise SystemExit("Supply one exact generated trycloudflare.com hostname")
+    if not valid_demo_hostname(args.hostname):
+        raise SystemExit("Supply one exact lowercase generated trycloudflare.com hostname or data-qa-lab.store")
     name = "probe_" + secrets.token_hex(6) if args.self_test else args.username
     password = secrets.token_urlsafe(24) if args.self_test else getpass("Demo password: ")
     if args.self_test:
@@ -65,8 +69,12 @@ def main():
     before = [api(path + "/history/" + kind)[0] for kind in ("queries", "submissions")]
     api(path + "/hint", {}, {"X-CSRF-Token": "wrong"}, status=403)
     api(path + "/hint", {}, {"Origin": "https://evil.example"}, status=403)
-    api("/courses", extra={"Host": "other.trycloudflare.com"}, status=400)
+    api("/courses", extra={"Host": "unapproved.invalid"}, status=400)
     api("/courses", extra={"X-Forwarded-Proto": "http"}, status=400)
+    api("/courses", extra={"X-Forwarded-Proto": "https,http"}, status=400)
+    api("/courses", extra={"X-Forwarded-Proto": "ftp"}, status=400)
+    api("/courses", extra={"Host": "localhost", "Origin": "http://localhost", "X-Forwarded-Proto": "http"})
+    api("/auth/signup", {"username": "public_signup", "display_name": "Public", "password": password}, status=403)
     if args.restart:
         subprocess.run([*COMPOSE, "restart", "app"], check=True, cwd=ROOT)
         for _ in range(60):

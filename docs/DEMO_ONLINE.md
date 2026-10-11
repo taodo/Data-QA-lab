@@ -129,6 +129,40 @@ This recreates only demo app/proxy with the hostname allowlist; no wildcard,
 forwarded-host override or CSRF bypass. Share `https://<exact-hostname>` only
 after verification. Repeat SetHostname for each new tunnel hostname.
 
+## Existing Named Tunnel: data-qa-lab.store
+
+The same demo supports the approved exact custom hostname `data-qa-lab.store`.
+Use this after your existing Named Tunnel is configured to route to
+`http://127.0.0.1:8001`. Keep its Cloudflare credentials, token, DNS and tunnel
+configuration unchanged; these commands do not provision or start a tunnel.
+Use the existing prepared demo env file. Do not run `Prepare` merely to change
+hostname: that action writes the Quick Tunnel config file.
+
+```powershell
+Set-Location D:\Data-QA-Lab
+.\scripts\demo.ps1 -Action SetHostname -Hostname data-qa-lab.store
+$demoHostname = 'data-qa-lab.store'
+.\.venv\Scripts\python.exe -m scripts.demo_verify --hostname $demoHostname --username demo_learner --restart
+```
+
+SetHostname accepts only an exact lowercase generated `*.trycloudflare.com`
+hostname (one DNS label before the suffix) or exactly `data-qa-lab.store`.
+The wildcard notation describes the Quick Tunnel family; a literal wildcard is
+never accepted. URLs/schemes, ports, uppercase, whitespace, malformed labels,
+`www.data-qa-lab.store`, other domains and multiple hosts are rejected before
+the env file is written or Docker called. It replaces the single
+`DEMO_PUBLIC_HOST`; Compose passes that exact value to `DATA_QA_PUBLIC_HOSTS`.
+It recreates only demo app/proxy, retaining the PostgreSQL data and credentials.
+
+TrustedHost, HTTPS enforcement, same-origin/CSRF, demo authentication/quotas and
+database isolation are unchanged. Nginx preserves Host, accepts only `http` or
+`https` forwarded schemes, and clears forwarded host/client identity headers.
+Only its exact trusted peer can supply the app's forwarded scheme. Local HTTP
+remains available; a configured public host with forwarded HTTP is rejected.
+The automated verifier simulates the external HTTPS origin through local Nginx;
+it does not prove public DNS, Cloudflare TLS or real-device behavior. Complete
+the external checklist below at `https://data-qa-lab.store` separately.
+
 ## Local proxy verification and external checklist
 
 This command simulates HTTPS-origin requests across the actual local nginx/app
@@ -161,6 +195,8 @@ on mobile data or another computer outside this machine:
 ## Stop access and resume local use
 
 Press **Ctrl+C in terminal A** first; stopping cloudflared ends public access.
+For a Named Tunnel, stop the connector/service using the mechanism you already
+use to run it; this repository does not manage that service or its credentials.
 Then clear the public host (defense if a tunnel was accidentally left running):
 
 ```powershell

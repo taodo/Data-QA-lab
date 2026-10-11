@@ -71,6 +71,11 @@ jobs:
           docker compose -p data-qa-demo --env-file data/generated/demo/.env.demo -f docker-compose.demo.yml up -d --build --wait --wait-timeout 180
       - name: Verify real demo proxy, HTTPS origin and restart retention
         run: python -m scripts.demo_verify --hostname ci-demo.trycloudflare.com --self-test --restart
+      - name: Verify approved Named Tunnel host with real proxy (no public tunnel)
+        run: |
+          python -c "from pathlib import Path; p=Path('data/generated/demo/.env.demo'); p.write_text(p.read_text().replace('DEMO_PUBLIC_HOST=ci-demo.trycloudflare.com', 'DEMO_PUBLIC_HOST=data-qa-lab.store'))"
+          docker compose -p data-qa-demo --env-file data/generated/demo/.env.demo -f docker-compose.demo.yml up -d --no-deps --force-recreate --wait --wait-timeout 180 app proxy
+          python -m scripts.demo_verify --hostname data-qa-lab.store --self-test --restart
       - run: docker compose -p data-qa-demo --env-file data/generated/demo/.env.demo -f docker-compose.demo.yml logs --no-color --tail 100 app proxy postgres
         if: always()
       - run: docker compose -p data-qa-demo --env-file data/generated/demo/.env.demo -f docker-compose.demo.yml down
