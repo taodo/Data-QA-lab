@@ -226,7 +226,7 @@ class BrowserTests(unittest.TestCase):
     def test_task20_global_theme_routes_contrast_and_responsive(self):
         from playwright.sync_api import expect
         self.page.goto(self.url)
-        routes=('/', '/courses', '/subjects/sql', '/courses/sql-data-qa', '/login', '/signup', '/my-learning', '/history', '/account', '/pipeline', '/courses/not-a-course')
+        routes=('/', '/learn/data', '/learn/banking', '/learn/automation', '/courses', '/subjects/sql', '/courses/sql-data-qa', '/login', '/signup', '/my-learning', '/history', '/account', '/pipeline', '/courses/not-a-course')
         for theme in ('dark','light'):
             if self.page.locator('html').get_attribute('data-theme')!=theme:self.page.locator('.theme-toggle').click()
             for language in ('ENG','VIE'):
@@ -460,6 +460,8 @@ class BrowserTests(unittest.TestCase):
         expect(self.page.get_by_label("SQL editor",exact=True)).to_have_text("SELECT COUNT(*) FROM source_orders")
         expect(self.page.get_by_label("Answer the challenge",exact=True)).to_have_value("I will compare business keys in both directions.")
         self.page.get_by_role("navigation",name="Breadcrumb",exact=True).get_by_role("link",name="Data QA Lab",exact=True).click()
+        expect(self.page.locator(".unified-home")).to_be_visible()
+        self.page.locator('.learning-track-nav a[href="/learn/data"]').click()
         expect(self.page.locator(".landing-hero")).to_be_visible()
         self.page.locator('.landing-hero a.primary').click()
         expect(self.page.locator(".catalog-hero")).to_be_visible()
@@ -586,13 +588,13 @@ class BrowserTests(unittest.TestCase):
         from playwright.sync_api import expect
         vietnamese_browser=self.browser.new_context(locale='vi-VN')
         try:
-            fresh=vietnamese_browser.new_page();fresh.goto(self.url)
+            fresh=vietnamese_browser.new_page();fresh.goto(self.url+'/learn/data')
             expect(fresh.get_by_label('Select language')).to_have_value('ENG')
             expect(fresh.locator('.landing-hero h1')).to_contain_text('Prove the quality.')
         finally:
             vietnamese_browser.close()
         self.context.clear_cookies()
-        self.page.goto(self.url)
+        self.page.goto(self.url+'/learn/data')
         self.page.evaluate("localStorage.removeItem('dqa-language')")
         self.page.reload()
         expect(self.page.get_by_label('Select language')).to_have_value('ENG')
@@ -610,16 +612,16 @@ class BrowserTests(unittest.TestCase):
         expect(self.page.locator('.course-provenance')).to_have_count(6)
         for language in ('ENG','VIE'):
             self.page.get_by_label('Select language').select_option(language);self.idle()
-            for route in ('/','/courses','/courses/sql-data-qa'):
+            for route in ('/learn/data','/courses','/courses/sql-data-qa'):
                 self.page.goto(self.url+route);self.idle()
                 for width in (375,768,1024,1440):
                     self.page.set_viewport_size({'width':width,'height':900})
                     self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),width,(route,language,width))
-                    if language=='ENG' and route in ('/','/courses') and width in (375,1440):
-                        slug='landing' if route=='/' else 'catalog'
+                    if language=='ENG' and route in ('/learn/data','/courses') and width in (375,1440):
+                        slug='landing' if route=='/learn/data' else 'catalog'
                         self.page.screenshot(path=str(self.artifacts/f'task18-{slug}-{width}.png'),full_page=True)
-                    if language=='VIE' and route in ('/','/courses') and width==375:
-                        slug='landing' if route=='/' else 'catalog'
+                    if language=='VIE' and route in ('/learn/data','/courses') and width==375:
+                        slug='landing' if route=='/learn/data' else 'catalog'
                         self.page.screenshot(path=str(self.artifacts/f'task18-{slug}-vie-375.png'))
                 expect(self.page.get_by_label('Select language')).to_have_value(language)
             self.page.reload();expect(self.page.get_by_label('Select language')).to_have_value(language)
@@ -630,7 +632,7 @@ class BrowserTests(unittest.TestCase):
         self.page.evaluate("localStorage.setItem('dqa-language','invalid')")
         self.page.reload();expect(self.page.get_by_label('Select language')).to_have_value('ENG')
         self.page.emulate_media(reduced_motion='reduce')
-        self.page.goto(self.url)
+        self.page.goto(self.url+'/learn/data')
         expect(self.page.locator('.hero-copy')).to_be_visible()
         self.assertEqual(self.page.locator('.accent-dot').evaluate('(e)=>getComputedStyle(e).animationName'),'none')
         self.page.locator('.landing-hero a.secondary').click()
@@ -720,7 +722,7 @@ class BrowserTests(unittest.TestCase):
             if language=='ENG':self.page.locator('.course-grid').screenshot(path=str(self.artifacts/'task18-review-course-banners.png'))
             self.page.set_viewport_size({'width':375,'height':844})
             self.page.screenshot(path=str(self.artifacts/f'task18-review-catalog-{language}-375.png'),full_page=True)
-            self.page.goto(self.url)
+            self.page.goto(self.url+'/learn/data')
             expect(self.page.locator('.example-stages li')).to_have_count(3)
             stages=self.page.locator('.example-stages li').evaluate_all('(items)=>items.map(e=>e.getBoundingClientRect().y)')
             self.assertEqual(stages,sorted(stages));self.assertGreater(stages[1],stages[0])
@@ -734,7 +736,7 @@ class BrowserTests(unittest.TestCase):
     def test_public_courses_search_routes_and_real_signup_login(self):
         from playwright.sync_api import expect
         self.context.clear_cookies()
-        self.page.goto(self.url)
+        self.page.goto(self.url+'/learn/data')
         self.page.get_by_label('Select language').select_option('ENG')
         expect(self.page.locator('.landing-hero')).to_be_visible()
         self.page.locator('.landing-hero').get_by_role('link',name='Explore the courses',exact=False).click()

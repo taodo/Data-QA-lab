@@ -1,6 +1,6 @@
 # Unified Platform Roadmap — U1 through U10
 
-U1 status: documentation-only blueprint for independent review. U2–U10 are **proposed tasks, not implementation authorization**. Three confirmed repositories: [Data-QA-lab](https://github.com/taodo/Data-QA-lab) (platform/UI/identity), [MiniBanking](https://github.com/taodo/MiniBanking) (bank domain/API/SQLite), [Automation-QA-Lab](https://github.com/taodo/Automation-QA-Lab) (future local/CI framework/examples). Follow the [authoritative contract](UNIFIED_PLATFORM_INTEGRATION_CONTRACT.md) and [current-state audit](UNIFIED_PLATFORM_ARCHITECTURE.md).
+U1 is approved and merged through PR #34 at `37734f528d9afec26d2c155c60b00af2ab1d67a4`. U2 is approved for implementation and prepared for review on `feature/u2-unified-learning-tracks`; see [U2 progress](TASK_U2_PROGRESS.md). U3–U10 remain **proposed tasks, not implementation authorization**. These development changes are not a deployment. Three confirmed repositories: [Data-QA-lab](https://github.com/taodo/Data-QA-lab) (platform/UI/identity), [MiniBanking](https://github.com/taodo/MiniBanking) (bank domain/API/SQLite), [Automation-QA-Lab](https://github.com/taodo/Automation-QA-Lab) (future local/CI framework/examples). Follow the [authoritative contract](UNIFIED_PLATFORM_INTEGRATION_CONTRACT.md) and [current-state audit](UNIFIED_PLATFORM_ARCHITECTURE.md).
 
 ## Baseline and sequencing
 
@@ -8,7 +8,7 @@ Platform accepted base `e4274a4` includes Task 20/20.1 and merged Task 21.1 PR #
 
 Recommended dependency order: U2 informational navigation can proceed after U1 approval without a bank/automation service. U3 content contract and U4 independent Automation bootstrap can be planned next. U5 must close public bank isolation/security decisions **before** U6 simulator writes. U7 depends on U3/U6 for assessed bank practice, with read-only recorded evidence possible first. U8 depends on domain-approved U4 releases; U9 depends on explicit identity/progress/evidence contracts. U10 is a release/security gate, not automatic deployment or a promised public runner.
 
-## Proposed implementation slices and acceptance
+## Implementation slices and acceptance (U2 review-ready; U3–U10 proposed)
 
 | Task | Owner / dependency | Bounded scope | Acceptance / stop gate |
 |---|---|---|---|
