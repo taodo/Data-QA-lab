@@ -257,7 +257,7 @@ class BrowserTests(unittest.TestCase):
             }''')
             for foreground,background,ratio in ratios:self.assertGreaterEqual(ratio,4.5,(theme,foreground,background,ratio))
         self.page.emulate_media(reduced_motion='reduce')
-        self.page.goto(self.url)
+        self.page.goto(self.url+'/learn/data')
         self.assertEqual(self.page.locator('.accent-dot').evaluate('e=>getComputedStyle(e).animationName'),'none')
 
     def test_task20_mobile_disclosures_and_editor_theme_reconfiguration(self):

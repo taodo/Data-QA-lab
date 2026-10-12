@@ -74,6 +74,10 @@ git diff --check
 - Final TypeScript/Vite build after the panel-spacing adjustment: **PASS**,
   74 modules; CSS 71.92 kB, main JS 143.05 kB before gzip.
 - Final U2 + existing tutorial browser regression: **PASS**, 3 tests in 38.539s.
+- Final regression assertion adjustment: original Data pipeline reduced-motion
+  check now targets `/learn/data`; U2 covers reduced motion on both home and Data.
+  `python -m unittest tests.e2e.test_unified_tracks.UnifiedTrackBrowserTests.test_tracks_discovery_preferences_keyboard_and_responsive -v`:
+  **PASS**, 1 test in 19.189s. Runtime code is unchanged after the final build.
 - Markdown fences/local references across five changed documents and final
   `git diff --check`: **PASS**.
 - Browser tests use Chromium and an actual random-port loopback FastAPI server,

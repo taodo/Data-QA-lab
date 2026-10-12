@@ -76,6 +76,8 @@ class UnifiedTrackBrowserTests(unittest.TestCase):
             page.emulate_media(reduced_motion='reduce');page.goto(self.url)
             expect(page.locator('.unified-home')).to_be_visible()
             self.assertEqual(page.locator('.learning-track-card').first.evaluate('e=>getComputedStyle(e).animationName'),'none')
+            page.goto(self.url+'/learn/data')
+            self.assertEqual(page.locator('.accent-dot').evaluate('e=>getComputedStyle(e).animationName'),'none')
             self.assertEqual([r for r in requests if r[0]!='GET'],[])
             self.assertTrue(all(urlparse(url).netloc==urlparse(self.url).netloc for _,url in requests))
 
