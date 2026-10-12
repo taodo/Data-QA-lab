@@ -3,7 +3,7 @@ import {discoveryCopy} from './discovery_i18n';
 import type {Course,Language} from './types';
 
 export function LandingPage({language,courses}:{language:Language;courses:Course[]}){
-  const c=discoveryCopy(language),available=courses.filter(course=>course.available);
+  const c=discoveryCopy(language),available=courses.filter(course=>course.available&&course.learning_kind==='executable_lab');
   return <div className="landing-page">
     <section className="landing-hero">
       <div className="hero-copy"><p className="eyebrow"><span className="accent-dot" aria-hidden="true"/>{c.eyebrow}</p>

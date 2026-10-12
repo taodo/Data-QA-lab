@@ -22,3 +22,4 @@ include = ["backend*", "pipeline*", "qa*", "faults*"]
 
 [tool.setuptools.package-data]
 "backend.app.persistence" = ["*.sql"]
+"backend.app.learning" = ["automation_curriculum.json"]

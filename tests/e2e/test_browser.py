@@ -272,11 +272,11 @@ class BrowserTests(unittest.TestCase):
                     trigger=self.page.locator('.header-subjects summary');panel=self.page.locator('#header-subject-links')
                     trigger.focus();trigger.press('Enter')
                     expect(trigger).to_have_attribute('aria-expanded','true')
-                    expect(panel.locator('a')).to_have_count(9)
+                    expect(panel.locator('a')).to_have_count(10)
                     bounds=panel.bounding_box()
                     self.assertGreaterEqual(bounds['x'],0);self.assertLessEqual(bounds['x']+bounds['width'],width)
                     self.assertLessEqual(bounds['y']+bounds['height'],480)
-                    for index in range(9):
+                    for index in range(10):
                         link=panel.locator('a').nth(index);link.scroll_into_view_if_needed()
                         self.assertTrue(link.evaluate('e=>{const r=e.getBoundingClientRect();return e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))}'))
                     panel.locator('a').last.focus();self.page.keyboard.press('Escape')
@@ -523,7 +523,7 @@ class BrowserTests(unittest.TestCase):
             self.page.goto(self.url+'/courses/sql-data-qa')
             expect(self.page.locator('.account-menu')).to_be_visible()
             self.page.get_by_label('Select language').select_option(language)
-            for course in catalog:
+            for course in (c for c in catalog if c['learning_kind']=='executable_lab'):
                 with self.subTest(language=language, course=course['id']):
                     self.page.goto(self.url+'/courses/'+course['id'])
                     # Authentication changes the course owner key on initial load.
@@ -606,7 +606,7 @@ class BrowserTests(unittest.TestCase):
         self.page.keyboard.press('Enter')
         self.page.locator('.landing-hero a.primary').click()
         expect(self.page).to_have_url(self.url+'/courses')
-        expect(self.page.locator('.course-library .course-card')).to_have_count(9)
+        expect(self.page.locator('.course-library .course-card')).to_have_count(10)
         expect(self.page.locator('.course-provenance')).to_have_count(6)
         for language in ('ENG','VIE'):
             self.page.get_by_label('Select language').select_option(language);self.idle()
@@ -651,7 +651,7 @@ class BrowserTests(unittest.TestCase):
                 trigger.focus();trigger.press('Enter')
                 expect(trigger).to_have_attribute('aria-expanded','true')
                 links=panel.locator('a')
-                expect(links).to_have_count(9)
+                expect(links).to_have_count(10)
                 bounds=panel.bounding_box()
                 self.assertGreaterEqual(bounds['x'],0)
                 self.assertLessEqual(bounds['x']+bounds['width'],width)
@@ -676,7 +676,7 @@ class BrowserTests(unittest.TestCase):
                 expect(self.page.locator('.site-brand')).to_be_focused()
                 # Every real item must receive pointer hits, even where the account
                 # summary lies behind the overlay. Check all nine routes, not z-index.
-                for index in range(9):
+                for index in range(10):
                     trigger.focus();trigger.press('Enter')
                     expect(trigger).to_have_attribute('aria-expanded','true')
                     link=panel.locator('a').nth(index)
@@ -702,10 +702,10 @@ class BrowserTests(unittest.TestCase):
                 self.page.screenshot(path=str(self.artifacts/f'task18-review-menu-{language}-{width}.png'))
                 trigger.press('Escape')
             self.page.goto(self.url+'/courses')
-            expect(self.page.locator('.course-grid .course-card')).to_have_count(9)
+            expect(self.page.locator('.course-grid .course-card')).to_have_count(10)
             expect(self.page.locator('.subject-links [aria-current=page]')).to_have_attribute('href','/courses')
             covers=self.page.locator('.course-grid .course-cover svg')
-            self.assertEqual(len(set(covers.evaluate_all('(items)=>items.map(e=>e.innerHTML)'))),9)
+            self.assertEqual(len(set(covers.evaluate_all('(items)=>items.map(e=>e.innerHTML)'))),10)
             expect(self.page.locator('.course-grid')).not_to_contain_text('FOUNDATION TO ADVANCED')
             for width in (375,390,768,1024,1440):
                 self.page.set_viewport_size({'width':width,'height':1000})
@@ -739,7 +739,7 @@ class BrowserTests(unittest.TestCase):
         expect(self.page.locator('.landing-hero')).to_be_visible()
         self.page.locator('.landing-hero').get_by_role('link',name='Explore the courses',exact=False).click()
         expect(self.page.locator('.catalog-hero')).to_be_visible()
-        expect(self.page.locator('.subject-tile')).to_have_count(9)
+        expect(self.page.locator('.subject-tile')).to_have_count(10)
         self.page.screenshot(path=str(self.artifacts/'task9-home-desktop.png'),full_page=True)
         self.page.set_viewport_size({'width':390,'height':844})
         self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),390)

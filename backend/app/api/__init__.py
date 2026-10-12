@@ -23,6 +23,7 @@ from backend.app.learning.cloud_contracts import MAX_REQUEST_BYTES
 from backend.app.persistence.database import connect, transaction
 from backend.app import accounts, courses as curriculum
 from backend.app import demo
+from backend.app.learning import tutorials
 from backend.app.web_security import WebSettings, TrustedScheme
 
 Language = Literal["ENG", "VIE"]
@@ -267,6 +268,16 @@ def create_app(database_url=None):
             raise HTTPException(404,"NOT_FOUND")
         return value
 
+    @app.get("/api/courses/{course_id}/tutorials/{lesson_id}")
+    def tutorial(course_id: str, lesson_id: str, language: Language="VIE"):
+        value = tutorials.lesson(lesson_id, language) if course_id == tutorials.COURSE_ID else None
+        if value is None:
+            raise HTTPException(404, "NOT_FOUND")
+        # Planned metadata is public in the overview, never served as a lesson.
+        if value["status"] == "planned":
+            raise HTTPException(409, "TUTORIAL_PLANNED")
+        return value
+
     @app.get("/api/enrollments")
     def enrollments(user=Depends(principal)):
         with connect(db) as connection:
@@ -275,6 +286,8 @@ def create_app(database_url=None):
 
     @app.post("/api/courses/{course_id}/enroll")
     def enroll(course_id: str,user=Depends(writer)):
+        if course_id == tutorials.COURSE_ID:
+            raise HTTPException(409,"TUTORIAL_PROGRESS_UNAVAILABLE")
         if not (curriculum.course(course_id) or {}).get("available"):
             raise HTTPException(409,"COURSE_PLANNED")
         def save_enrollment():

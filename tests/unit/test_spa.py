@@ -12,8 +12,8 @@ class SpaRoutesTests(unittest.TestCase):
             Path(folder,'index.html').write_text('<div id="root"></div>')
             app=FastAPI();app.mount('/',FrontendFiles(directory=folder,html=True))
             client=TestClient(app)
-            for path in ('/courses/fabric-testing','/courses/fabric-testing/lessons/lab_023_fabric_lineage','/subjects/onelake'):
+            for path in ('/courses/fabric-testing','/courses/fabric-testing/lessons/lab_023_fabric_lineage','/subjects/onelake','/courses/ai-test-automation','/courses/ai-test-automation/tutorials/m01-l01'):
                 self.assertEqual(client.get(path).status_code,200,path)
                 self.assertIn('id="root"',client.get(path).text)
-            for path in ('/api/missing','/assets/missing.js','/unknown'):
+            for path in ('/api/missing','/assets/missing.js','/unknown','/courses/sql-data-qa/tutorials/m01-l01','/courses/ai-test-automation/tutorials/invalid'):
                 self.assertEqual(client.get(path).status_code,404,path)

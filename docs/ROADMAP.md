@@ -50,8 +50,11 @@ Task 18 is merged as PR #25; custom-domain hotfix is merged as PR #27 at 9a4361e
 Task 19 is merged as PR #29 at 9e47ede with opt-in public shared demo identities,
 Coming Soon registration and explicit login autofill. See TASK_19_PROGRESS.md and
 TASK_19_DEPLOYMENT.md for retained policies.
-Active approved task: Task 20 on feature/task-20-global-ui-redesign. Global Premium
-Tech Academy frontend with persistent Dark/Light, shared semantic tokens and
-responsive accessible navigation/learning surfaces. Preserve Task 19 and all data,
-security and learning behavior. See TASK_20_PROGRESS.md. No backend changes,
-merge, live deployment or next task.
+Task 20 is merged as PR #30; Task 20.1 is merged as PR #32 at 72ea6d9.
+Active approved task: Task 21.1 on feature/task-21-1-automation-course-foundation.
+Hybrid Learning automation tutorial foundation: 10 modules, 30 ordered metadata
+entries, only M01.L01 authored and available in ENG/VIE. Source manifest, additive
+public catalog/tutorial API and dedicated renderer; no code execution, LLM calls,
+automatic grading or tutorial progress persistence. Existing nine executable
+courses/36 labs and public demo policies preserved. See TASK_21_1_PROGRESS.md.
+No merge, deployment or Task 21.2 without independent review and approval.

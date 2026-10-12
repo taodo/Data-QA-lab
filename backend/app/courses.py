@@ -1,6 +1,7 @@
 """Public curriculum taxonomy; availability reflects implemented executable labs."""
 from backend.app.learning.lessons import CATALOG, lesson, course_id as lesson_course
 from backend.app.course_introductions import introduction
+from backend.app.learning import tutorials
 
 # Subject, course and chapter are distinct; only executable courses are available.
 SUBJECTS = (
@@ -25,20 +26,29 @@ CHAPTERS = (
 
 
 def subjects(language="VIE"):
-    return [{"id": row[0], "title": row[1 if language == "ENG" else 2],
+    result = [{"id": row[0], "title": row[1 if language == "ENG" else 2],
              "summary": row[3 if language == "ENG" else 4], "family": row[5],
              "course_id": COURSE_IDS[row[0]], "available": any(lesson_course(k)==COURSE_IDS[row[0]] for k in CATALOG)}
             for row in SUBJECTS]
+    for item in result:
+        item["learning_kind"] = "executable_lab"
+    result.append({"id": tutorials.SUBJECT_ID, "course_id": tutorials.COURSE_ID,
+                   "title": "AI-Assisted Test Automation Engineering" if language == "ENG" else "Kỹ thuật tự động hóa kiểm thử với AI",
+                   "summary": tutorials.course(language)["summary"], "family": "tutorial", "available": True,
+                   "learning_kind": "tutorial"})
+    return result
 
 
 def courses(language="VIE"):
     result = []
     for subject in subjects(language):
+        if subject["learning_kind"] == "tutorial":
+            continue
         available = subject["available"]
         labs = [value for key,value in CATALOG.items() if lesson_course(key)==subject["course_id"]]
         title = ("SQL for Data QA" if language == "ENG" else "SQL cho QA Data") if subject["id"]=="sql" else subject["title"]
         result.append({"id": subject["course_id"], "subject_id": subject["id"],
-                       "title": title, "summary": subject["summary"], "available": available,
+                       "title": title, "summary": subject["summary"], "available": available, "learning_kind": "executable_lab",
                        "level": "foundation-to-advanced" if available else "planned",
                        "lesson_count": len(labs) if available else 0,
                        "minutes": sum(item["minutes"] for item in labs) if available else 0,
@@ -61,10 +71,13 @@ def courses(language="VIE"):
     for item in result:
         if item['subject_id'] in outcomes:
             item['objectives']=outcomes[item['subject_id']][0 if language=='ENG' else 1]
+    result.append(tutorials.course(language))
     return result
 
 
 def course(course_id, language="VIE"):
+    if course_id == tutorials.COURSE_ID:
+        return tutorials.course(language, detail=True)
     item = next((item for item in courses(language) if item["id"] == course_id), None)
     if item is None:
         return None

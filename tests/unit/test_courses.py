@@ -12,7 +12,7 @@ class CourseContractTests(unittest.TestCase):
         for language in ('ENG', 'VIE'):
             catalog = client.get('/api/courses?language='+language).json()
             subjects = {s['id']: s['title'] for s in client.get('/api/subjects?language='+language).json()}
-            for course in catalog:
+            for course in (c for c in catalog if c['learning_kind']=='executable_lab'):
                 with self.subTest(language=language, course=course['id']):
                     detail = client.get('/api/courses/'+course['id']+'?language='+language).json()
                     intro = detail['introduction']
@@ -37,10 +37,10 @@ class CourseContractTests(unittest.TestCase):
         client = TestClient(create_app('postgresql://invalid'))
         for language in ('ENG','VIE'):
             subjects = client.get('/api/subjects?language='+language).json()
-            self.assertEqual(len(subjects),9)
+            self.assertEqual(len(subjects),10)
             catalog = client.get('/api/courses?language='+language).json()
-            self.assertEqual(sum(c['available'] for c in catalog),9)
-            for c in catalog:
+            self.assertEqual(sum(c['available'] for c in catalog if c['learning_kind']=='executable_lab'),9)
+            for c in (item for item in catalog if item['learning_kind']=='executable_lab'):
                 detail=client.get('/api/courses/'+c['id']+'?language='+language).json()
                 if c['available']:
                     labs=[l for ch in detail['chapters'] for l in ch['lessons']]

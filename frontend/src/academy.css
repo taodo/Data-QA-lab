@@ -2,6 +2,15 @@
    Palette lives exclusively in theme.css; discovery does not override it. */
 body,.platform,.discovery {background:var(--page);color:var(--ink);min-height:100vh}
 * {box-sizing:border-box}
+.platform .tutorial-player {max-width:900px;margin:0 auto;min-width:0}
+.platform .tutorial-player h1 {font-size:clamp(1.8rem,4vw,2.8rem)}
+.platform .tutorial-toc {display:flex;flex-wrap:wrap;gap:12px;margin:24px 0}
+.platform .tutorial-toc a {padding:8px 0;min-height:44px}
+.platform .tutorial-section {scroll-margin-top:20px;overflow-wrap:anywhere}
+.platform .tutorial-code {min-width:0}
+.platform .tutorial-code pre {max-width:100%;overflow:auto;white-space:pre;padding:16px;background:var(--code-surface);color:var(--code-text);border:1px solid var(--line);border-radius:var(--radius-control);font-size:14px;line-height:1.6}
+.platform .copy-feedback {min-height:1.7em;font-size:var(--text-meta)}
+.platform .tutorial-entry h4 {font-size:1rem;margin:0;line-height:1.5}
 .platform {display:flow-root}
 .platform :is(h1,h2,h3,h4) {color:var(--ink);text-wrap:balance}
 .platform h1 {font-weight:750;letter-spacing:-.035em}

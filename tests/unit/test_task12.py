@@ -25,7 +25,7 @@ def encode(data):
 class Task12ContractTests(unittest.TestCase):
     def test_six_distinct_bilingual_executable_lessons_and_nine_courses(self):
         self.assertEqual(len(CATALOG),36)
-        self.assertEqual(sum(c['available'] for c in courses()),9)
+        self.assertEqual(sum(c['available'] for c in courses() if c['learning_kind']=='executable_lab'),9)
         for key in f.IDS:
             self.assertIn(key,PROFILES)
             self.assertEqual(set(PROFILES[key].datasets),set(f.DATASETS[key]))
