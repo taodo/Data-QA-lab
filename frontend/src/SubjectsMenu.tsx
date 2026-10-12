@@ -1,6 +1,7 @@
 import {useEffect,useRef,useState} from 'react';
 import {Link} from './router';
 import type {Subject} from './types';
+import {DisclosureChevron} from './DisclosureChevron';
 
 export function SubjectsMenu({subjects,t}:{subjects:Subject[];t:(key:string)=>string}){
   const menu=useRef<HTMLDetailsElement>(null),trigger=useRef<HTMLElement>(null);
@@ -18,7 +19,7 @@ export function SubjectsMenu({subjects,t}:{subjects:Subject[];t:(key:string)=>st
   return <details className="header-subjects" ref={menu}
     onToggle={event=>{setOpen(event.currentTarget.open);if(event.currentTarget.open)document.querySelectorAll<HTMLDetailsElement>('.account-menu[open]').forEach(item=>item.open=false);}}
     onBlur={event=>{if(!event.currentTarget.contains(event.relatedTarget as Node))event.currentTarget.open=false;}}>
-    <summary ref={trigger} aria-expanded={open} aria-controls="header-subject-links">{t('subjects')}</summary>
+    <summary ref={trigger} aria-expanded={open} aria-controls="header-subject-links"><span>{t('subjects')}</span><DisclosureChevron/></summary>
     <nav id="header-subject-links" aria-label={t('subjects')}>{subjects.map(subject=><Link key={subject.id} to={'/subjects/'+subject.id}><strong>{subject.title}</strong><small>{t(subject.available?'availableNow':'comingSoon')}</small></Link>)}</nav>
   </details>;
 }

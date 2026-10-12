@@ -95,6 +95,92 @@ class BrowserTests(unittest.TestCase):
         self.idle()
         self.page.screenshot(path=str(self.artifacts/"task9-lesson-player.png"),full_page=True)
 
+    def test_task20_1_header_focus_chevrons_and_interactions(self):
+        from playwright.sync_api import expect
+        self.page.goto(self.url+'/courses')
+        expect(self.page.locator('.account-menu')).to_be_visible()
+        search=self.page.locator('.header-search');field=search.locator('input')
+        subjects=self.page.locator('.header-subjects summary')
+        account=self.page.locator('.account-menu summary')
+        for theme in ('dark','light'):
+            if self.page.locator('html').get_attribute('data-theme')!=theme:self.page.locator('.theme-toggle').click()
+            for language in ('ENG','VIE'):
+                self.page.get_by_label('Select language').select_option(language)
+                for width in (375,768,1280):
+                    self.page.set_viewport_size({'width':width,'height':900})
+                    self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),width)
+                    baseline=search.bounding_box()
+                    # Keyboard Tab follows the closed Subjects trigger into search.
+                    subjects.focus();subjects.press('Tab');expect(field).to_be_focused()
+                    for pointer in (False,True):
+                        if pointer:
+                            self.page.locator('.site-brand').click();field.click()
+                        expect(field).to_be_focused()
+                        styles=search.evaluate('''e=>{
+                            const s=getComputedStyle(e),i=getComputedStyle(e.querySelector('input'));
+                            return {outer:s.outlineStyle,width:s.outlineWidth,offset:s.outlineOffset,color:s.outlineColor,inner:i.outlineStyle,shadow:i.boxShadow};
+                        }''')
+                        self.assertEqual(styles['outer'],'solid');self.assertEqual(styles['width'],'3px')
+                        self.assertEqual(styles['offset'],'3px');self.assertEqual(styles['inner'],'none')
+                        self.assertEqual(styles['shadow'],'none');self.assertEqual(search.bounding_box(),baseline)
+                        bounds=search.bounding_box();header=self.page.locator('.site-header').bounding_box()
+                        self.assertGreaterEqual(bounds['x']-6,header['x']);self.assertLessEqual(bounds['x']+bounds['width']+6,header['x']+header['width'])
+                        self.assertGreaterEqual(bounds['y']-6,header['y']);self.assertLessEqual(bounds['y']+bounds['height']+6,header['y']+header['height'])
+                        ratio=search.evaluate(r'''e=>{
+                            const rgb=s=>s.match(/[\d.]+/g).slice(0,3).map(Number).map(x=>x/255).map(x=>x<=.04045?x/12.92:((x+.055)/1.055)**2.4);
+                            const lum=s=>{const c=rgb(s);return c[0]*.2126+c[1]*.7152+c[2]*.0722;};
+                            const a=lum(getComputedStyle(e).outlineColor),b=lum(getComputedStyle(e.closest('header')).backgroundColor);
+                            return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);
+                        }''')
+                        self.assertGreaterEqual(ratio,3)
+                    self.page.locator('.site-header').screenshot(path=str(self.artifacts/f'task20-1-after-search-{theme}-{language}-{width}.png'))
+                    field.fill('SQL');field.press('Enter')
+                    expect(self.page).to_have_url(self.url+'/courses?q=SQL')
+                    expect(self.page.locator('.course-grid .course-card')).to_have_count(1)
+                    for trigger in (subjects,account):
+                        icon=trigger.locator('svg.disclosure-chevron')
+                        expect(icon).to_have_count(1);expect(icon).to_be_visible()
+                        expect(icon).to_have_attribute('aria-hidden','true')
+                        self.assertEqual(icon.get_attribute('stroke-width'),'2')
+                        self.assertEqual(trigger.evaluate("e=>getComputedStyle(e,'::after').content"),'none')
+                        self.assertEqual(trigger.evaluate("e=>getComputedStyle(e,'::marker').content"),'""')
+                        self.assertEqual(trigger.evaluate('e=>getComputedStyle(e).listStyleType'),'none')
+                        bounds=icon.bounding_box();label=trigger.locator('span').last.bounding_box()
+                        self.assertEqual(bounds['width'],16);self.assertEqual(bounds['height'],16)
+                        self.assertLess(abs(bounds['y']+8-label['y']-label['height']/2),1)
+                        self.assertAlmostEqual(bounds['x']-(label['x']+label['width']),8,delta=1)
+                        self.assertEqual(icon.evaluate('e=>getComputedStyle(e).transform'),'matrix(1, 0, 0, 1, 0, 0)')
+                        trigger.focus();trigger.press('Enter')
+                        expect(trigger).to_have_attribute('aria-expanded','true')
+                        self.assertEqual(icon.evaluate('e=>getComputedStyle(e).transform'),'matrix(-1, 0, 0, -1, 0, 0)')
+                        panel=self.page.locator('#'+trigger.get_attribute('aria-controls'))
+                        p=panel.bounding_box();self.assertGreaterEqual(p['x'],0)
+                        self.assertLessEqual(p['x']+p['width'],width);self.assertLessEqual(p['y']+p['height'],900)
+                        for link in panel.locator('a').all():
+                            link.scroll_into_view_if_needed()
+                            self.assertTrue(link.evaluate('e=>{const r=e.getBoundingClientRect();return e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))}'))
+                        self.page.screenshot(path=str(self.artifacts/f'task20-1-after-{trigger.get_attribute("aria-controls")}-{theme}-{language}-{width}.png'))
+                        panel.locator('a').first.focus();self.page.keyboard.press('Escape')
+                        expect(trigger).to_be_focused();expect(trigger).to_have_attribute('aria-expanded','false')
+                        trigger.press('Space');expect(trigger).to_have_attribute('aria-expanded','true')
+                        self.page.locator('.site-brand').click();expect(trigger).to_have_attribute('aria-expanded','false')
+                    # Mobile Subjects intentionally overlays the account row.
+                    # Use keyboard focus to reach its covered trigger; desktop
+                    # also checks switching directly with the pointer.
+                    subjects.click()
+                    if width<=768:account.focus();account.press('Enter')
+                    else:account.click()
+                    expect(subjects).to_have_attribute('aria-expanded','false')
+                    expect(account).to_have_attribute('aria-expanded','true')
+                    account.click();subjects.click()
+                    expect(account).to_have_attribute('aria-expanded','false')
+                    expect(subjects).to_have_attribute('aria-expanded','true')
+                    self.page.locator('#header-subject-links a').last.focus();self.page.keyboard.press('Tab')
+                    expect(subjects).to_have_attribute('aria-expanded','false');expect(field).to_be_focused()
+                    self.page.locator('.site-brand').click()
+                    self.assertEqual(search.evaluate('e=>getComputedStyle(e).outlineStyle'),'none')
+                    expect(self.page.get_by_label('Select language')).to_have_value(language)
+
     def test_task20_theme_before_app_storage_fallback_and_persistence(self):
         from playwright.sync_api import expect
         # Block React bundles: initialization must happen in the document head,
