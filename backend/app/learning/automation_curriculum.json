@@ -1,0 +1,842 @@
+{
+  "id": "ai-test-automation",
+  "level": "beginner",
+  "content": {
+    "ENG": {
+      "title": "Build Automation Tests from Scratch with AI",
+      "summary": "Learn to design, run and independently review Python automation with AI assistance. Start with a real foundations tutorial; the rest of the roadmap is planned.",
+      "hybrid_explanation": "Hybrid Learning: read tutorials, code examples and prompt templates here; run Python tests on your own machine. Only M01.L01 is available. No code execution, AI connection, automatic grading or saved tutorial progress on this site. Quizzes and personal progress are future work.",
+      "objectives": [
+        "Choose valuable automation candidates using risk and repeatability.",
+        "Build toward API, database, UI and CI testing through the planned roadmap.",
+        "Review AI-generated tests against independent requirements and local evidence."
+      ],
+      "prerequisites": [
+        "Basic manual testing knowledge; no automation experience required.",
+        "A local computer with Python 3 and PowerShell for the available example.",
+        "Internet access to install pytest locally; an AI account is optional, not needed for this tutorial."
+      ]
+    },
+    "VIE": {
+      "title": "Xây dựng kiểm thử tự động từ đầu với AI",
+      "summary": "Học cách thiết kế, chạy và review độc lập automation Python với hỗ trợ AI. Bắt đầu bằng tutorial nền tảng đã có nội dung; phần còn lại là lộ trình dự kiến.",
+      "hybrid_explanation": "Hybrid Learning: đọc tutorial, ví dụ code và mẫu prompt tại đây; chạy kiểm thử Python trên máy của bạn. Chỉ M01.L01 sẵn sàng. Website không chạy code, kết nối AI, chấm tự động hoặc lưu tiến độ tutorial. Quiz và tiến độ cá nhân là phần dự kiến.",
+      "objectives": [
+        "Chọn kiểm tra đáng tự động hóa theo rủi ro và mức độ lặp lại.",
+        "Tiến tới kiểm thử API, database, UI và CI qua lộ trình dự kiến.",
+        "Review test AI theo yêu cầu độc lập và bằng chứng chạy local."
+      ],
+      "prerequisites": [
+        "Biết kiểm thử thủ công cơ bản; không yêu cầu kinh nghiệm automation.",
+        "Máy local có Python 3 và PowerShell cho ví dụ đang sẵn sàng.",
+        "Internet để cài pytest local; tài khoản AI là tùy chọn, không cần cho tutorial này."
+      ]
+    }
+  },
+  "modules": [
+    {
+      "id": "m01",
+      "order": 1,
+      "title": {
+        "ENG": "Automation Foundations",
+        "VIE": "Nền tảng automation"
+      },
+      "lessons": [
+        {
+          "id": "m01-l01",
+          "order": 1,
+          "status": "available",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "Why automate? Test pyramid & ROI",
+              "summary": "Choose repeatable checks, estimate effort and independently verify a local pytest example.",
+              "sections": [
+                {
+                  "id": "purpose",
+                  "type": "concept",
+                  "title": "What are we checking?",
+                  "body": "Automation means writing repeatable checks that compare observed behavior with an expected result. An assertion is the comparison that can fail. Choose stable, frequent and consequential checks; exploratory testing and human judgment still matter."
+                },
+                {
+                  "id": "pyramid",
+                  "type": "concept",
+                  "title": "A test pyramid is a planning heuristic",
+                  "body": "Unit tests check small logic in isolation; integration tests check components working together; end-to-end tests check a full user journey. Usually keep many fast unit checks, fewer integration checks and a small set of critical UI journeys. There is no mandatory ratio. Data QA also needs database reconciliation and pipeline checks; a unit test cannot prove a deployed pipeline is correct."
+                },
+                {
+                  "id": "roi",
+                  "type": "concept",
+                  "title": "When is automation worth the cost?",
+                  "body": "ROI (return on investment) compares savings with building and maintaining the checks. Illustrative estimate: 20 repeats, 8 minutes manually versus 1 minute reviewing each automated run, 90 minutes to build and 20 minutes to maintain. Net saving = 20 × (8 − 1) − 90 − 20 = 30 minutes. Under these fixed assumptions, break-even is 16 repeats. Flaky failures, changing requirements and diagnosis time can remove that benefit. Prioritize repeated payment checks over a one-off visual exploration."
+                },
+                {
+                  "id": "example",
+                  "type": "concept",
+                  "title": "Illustrative example: order net amounts",
+                  "body": "Rule: net = gross − discount, both non-negative; discount cannot exceed gross. Three valid rows (100.00, 10.00), (50.00, 0.00), (0.00, 0.00) must yield exactly 90.00, 50.00, 0.00. A fourth input (10.00, 11.00) must raise ValueError. These are four local test cases, not a violation_count submission. Decimal avoids binary floating-point rounding for this subtraction."
+                },
+                {
+                  "id": "setup",
+                  "type": "code_sample",
+                  "title": "Local setup — Windows PowerShell",
+                  "body": "Prerequisite: Python 3 with the py launcher and internet access to install pytest from the Python package index. Use a fresh folder; if it exists, choose another learner-owned folder. The site runs nothing. Calling the virtual environment Python directly avoids changing PowerShell execution policy.",
+                  "code": "# Windows PowerShell; use a new learner-owned folder, not the app repository.\nNew-Item -ItemType Directory -Path D:\\automation-first-test\nSet-Location D:\\automation-first-test\npy -3 -m venv .venv\n.\\.venv\\Scripts\\python.exe -m pip install pytest\n# Save the next block as test_pricing.py in this folder, then run:\n.\\.venv\\Scripts\\python.exe -m pytest test_pricing.py -v\n",
+                  "language": "powershell"
+                },
+                {
+                  "id": "test",
+                  "type": "code_sample",
+                  "title": "Save as test_pricing.py",
+                  "body": "This small demonstration puts the function and its tests in one file. Parametrize creates three independent input/expected cases; pytest.raises verifies the required exception. The expected values are explicit, not computed by the same implementation. It proves only these cases of this local function.",
+                  "code": "from decimal import Decimal\nimport pytest\n\n\ndef net_amount(gross, discount):\n    gross, discount = Decimal(gross), Decimal(discount)\n    if gross < 0 or discount < 0 or discount > gross:\n        raise ValueError(\"invalid amounts\")\n    return gross - discount\n\n\n@pytest.mark.parametrize(\"gross,discount,expected\", [\n    (\"100.00\", \"10.00\", \"90.00\"),\n    (\"50.00\", \"0.00\", \"50.00\"),\n    (\"0.00\", \"0.00\", \"0.00\"),\n])\ndef test_net_amount(gross, discount, expected):\n    assert net_amount(gross, discount) == Decimal(expected)\n\n\ndef test_discount_cannot_exceed_gross():\n    with pytest.raises(ValueError, match=\"invalid amounts\"):\n        net_amount(\"10.00\", \"11.00\")\n",
+                  "language": "python"
+                },
+                {
+                  "id": "practice",
+                  "type": "steps",
+                  "title": "How to practice",
+                  "body": "Run the commands locally, then inspect the collected cases and assertions.",
+                  "items": [
+                    "Save the Python block as test_pricing.py, not test_pricing.py.txt. Run from the folder containing it.",
+                    "Expect four collected cases and four passed. A missing Python/pytest command or zero collected tests is a setup problem, not evidence of correctness.",
+                    "Temporarily change return gross - discount to return gross + discount. Rerun: the 100.00/10.00 case must fail (actual 110.00 vs expected 90.00); the other three pass. Restore subtraction and rerun: four pass."
+                  ]
+                },
+                {
+                  "id": "prompt",
+                  "type": "prompt_template",
+                  "title": "AI prompt template",
+                  "body": "A prompt is an instruction to an AI assistant. Copy this to an assistant you choose, without secrets or production data. No AI service is connected here. Review generated code against the rule before running it.",
+                  "code": "Requirement: gross and discount are decimal money strings. Return gross minus\n discount. Reject negative amounts or a discount greater than gross with\n ValueError(\"invalid amounts\"). Zero is allowed.\nDraft pytest tests for valid, invalid and boundary cases using Decimal.\nUse explicit independently calculated expected values. Do not derive expected\nvalues by calling the function under test. Explain each assertion and identify\ncoverage gaps. Do not claim the tests ran; I will run and review them locally.\nDo not request credentials, network access or production data.\n",
+                  "language": "text"
+                },
+                {
+                  "id": "verify",
+                  "type": "verification",
+                  "title": "Independent verification checklist",
+                  "body": "Viewing this page does not verify your tests. Verification here is learner self-verification, not automatically graded; this task saves no tutorial completion or written answers.",
+                  "items": [
+                    "Calculate each expected value by hand from the requirement. Check that the assertion compares the function result with that value.",
+                    "Read the collected test names and exit code: 0 means these cases passed, not complete coverage. The controlled mutation should produce a nonzero exit code.",
+                    "Restore the original file. Keep local terminal output with Python/pytest versions, command and result. Never paste credentials into prompts."
+                  ]
+                },
+                {
+                  "id": "challenge",
+                  "type": "challenge_preview",
+                  "title": "Review challenge and deterministic explanation",
+                  "body": "An AI proposes assert net_amount(\"100.00\", \"10.00\") == net_amount(\"100.00\", \"10.00\"). Explain why this is weak and replace it with an independent expected value. Also decide whether to automate a check run once or one run 20 times.",
+                  "items": [
+                    "Review explanation: comparing a function with itself can pass even when it returns the wrong amount. Use Decimal(\"90.00\") as the independent expectation; the addition mutation then fails.",
+                    "At one repeat the illustrative net saving is 7 − 110 = −103 minutes; at 20 it is 30 minutes. This estimate supports discussion, not a universal rule.",
+                    "Common mistake: trusting generated code, a green run or HTTP 200 as proof of correct data. Add independent expectations and test that meaningful defects actually fail. Quizzes and stored personal progress are future work."
+                  ]
+                }
+              ]
+            },
+            "VIE": {
+              "title": "Vì sao tự động hóa? Tháp kiểm thử & ROI",
+              "summary": "Chọn kiểm tra lặp lại, ước tính công sức và kiểm chứng độc lập ví dụ pytest local.",
+              "sections": [
+                {
+                  "id": "purpose",
+                  "type": "concept",
+                  "title": "Chúng ta kiểm tra điều gì?",
+                  "body": "Automation là viết các kiểm tra có thể chạy lặp lại, so sánh hành vi quan sát được với kết quả mong đợi. Assertion là phép so sánh có thể báo lỗi. Chọn kiểm tra ổn định, thường xuyên và có tác động lớn; kiểm thử khám phá và đánh giá của con người vẫn cần thiết."
+                },
+                {
+                  "id": "pyramid",
+                  "type": "concept",
+                  "title": "Tháp kiểm thử là gợi ý để lập kế hoạch",
+                  "body": "Unit test kiểm tra phần logic nhỏ riêng biệt; integration test kiểm tra các thành phần phối hợp; end-to-end test kiểm tra toàn bộ hành trình người dùng. Thường nên có nhiều unit test nhanh, ít integration test hơn và một số luồng UI quan trọng. Không có tỷ lệ bắt buộc. Data QA còn cần đối soát database và kiểm tra pipeline; unit test không chứng minh pipeline đã triển khai là đúng."
+                },
+                {
+                  "id": "roi",
+                  "type": "concept",
+                  "title": "Khi nào automation đáng với chi phí?",
+                  "body": "ROI (lợi ích so với chi phí đầu tư) so sánh thời gian tiết kiệm với thời gian xây dựng và bảo trì. Ước tính minh họa: chạy 20 lần, mỗi lần thủ công mất 8 phút, review kết quả tự động mất 1 phút, xây dựng mất 90 phút và bảo trì mất 20 phút. Tiết kiệm ròng = 20 × (8 − 1) − 90 − 20 = 30 phút. Với giả định cố định này, hòa vốn từ lần thứ 16. Lỗi thiếu ổn định, yêu cầu thay đổi và thời gian điều tra có thể làm mất lợi ích. Ưu tiên kiểm tra thanh toán lặp lại hơn việc khám phá giao diện chỉ một lần."
+                },
+                {
+                  "id": "example",
+                  "type": "concept",
+                  "title": "Ví dụ minh họa: số tiền net của đơn hàng",
+                  "body": "Quy tắc: net = gross − discount, cả hai không âm; discount không được lớn hơn gross. Ba dòng hợp lệ (100.00, 10.00), (50.00, 0.00), (0.00, 0.00) phải trả đúng 90.00, 50.00, 0.00. Đầu vào thứ tư (10.00, 11.00) phải báo ValueError. Đây là bốn ca kiểm thử local, không phải bài nộp violation_count. Decimal tránh sai số dấu phẩy động nhị phân trong phép trừ này."
+                },
+                {
+                  "id": "setup",
+                  "type": "code_sample",
+                  "title": "Thiết lập local — Windows PowerShell",
+                  "body": "Điều kiện: Python 3 có lệnh py và kết nối internet để cài pytest từ kho package Python. Dùng thư mục mới; nếu đã tồn tại, chọn thư mục khác của bạn. Website không chạy lệnh nào. Gọi trực tiếp Python của môi trường ảo giúp không phải đổi execution policy của PowerShell.",
+                  "code": "# Windows PowerShell; use a new learner-owned folder, not the app repository.\nNew-Item -ItemType Directory -Path D:\\automation-first-test\nSet-Location D:\\automation-first-test\npy -3 -m venv .venv\n.\\.venv\\Scripts\\python.exe -m pip install pytest\n# Save the next block as test_pricing.py in this folder, then run:\n.\\.venv\\Scripts\\python.exe -m pytest test_pricing.py -v\n",
+                  "language": "powershell"
+                },
+                {
+                  "id": "test",
+                  "type": "code_sample",
+                  "title": "Lưu thành test_pricing.py",
+                  "body": "Ví dụ nhỏ đặt hàm và bài kiểm thử trong cùng file. Parametrize tạo ba ca với đầu vào/kết quả mong đợi riêng; pytest.raises kiểm tra exception theo yêu cầu. Giá trị mong đợi được viết rõ, không tính bằng chính implementation đang kiểm tra. Kết quả chỉ chứng minh các ca này của hàm local.",
+                  "code": "from decimal import Decimal\nimport pytest\n\n\ndef net_amount(gross, discount):\n    gross, discount = Decimal(gross), Decimal(discount)\n    if gross < 0 or discount < 0 or discount > gross:\n        raise ValueError(\"invalid amounts\")\n    return gross - discount\n\n\n@pytest.mark.parametrize(\"gross,discount,expected\", [\n    (\"100.00\", \"10.00\", \"90.00\"),\n    (\"50.00\", \"0.00\", \"50.00\"),\n    (\"0.00\", \"0.00\", \"0.00\"),\n])\ndef test_net_amount(gross, discount, expected):\n    assert net_amount(gross, discount) == Decimal(expected)\n\n\ndef test_discount_cannot_exceed_gross():\n    with pytest.raises(ValueError, match=\"invalid amounts\"):\n        net_amount(\"10.00\", \"11.00\")\n",
+                  "language": "python"
+                },
+                {
+                  "id": "practice",
+                  "type": "steps",
+                  "title": "Cách thực hành",
+                  "body": "Chạy lệnh trên máy của bạn, sau đó xem số ca được thu thập và các assertion.",
+                  "items": [
+                    "Lưu block Python thành test_pricing.py, không phải test_pricing.py.txt. Chạy từ thư mục chứa file.",
+                    "Mong đợi thu thập bốn ca và cả bốn passed. Thiếu Python/pytest hoặc không thu thập được test là lỗi thiết lập, không phải bằng chứng đúng.",
+                    "Tạm đổi return gross - discount thành return gross + discount. Chạy lại: ca 100.00/10.00 phải fail (thực tế 110.00 so với mong đợi 90.00); ba ca còn lại pass. Khôi phục phép trừ và chạy lại: bốn ca pass."
+                  ]
+                },
+                {
+                  "id": "prompt",
+                  "type": "prompt_template",
+                  "title": "Mẫu prompt AI",
+                  "body": "Prompt là chỉ dẫn gửi cho trợ lý AI. Có thể copy mẫu sang trợ lý bạn chọn, không kèm bí mật hay dữ liệu production. Website không kết nối dịch vụ AI. Review code được tạo theo quy tắc trước khi chạy.",
+                  "code": "Yêu cầu: gross và discount là chuỗi tiền thập phân. Trả gross trừ discount.\nTừ chối số tiền âm hoặc discount lớn hơn gross bằng\nValueError(\"invalid amounts\"). Giá trị 0 được phép.\nHãy viết test pytest cho ca hợp lệ, không hợp lệ và giá trị biên, dùng Decimal.\nDùng giá trị mong đợi được tính độc lập và viết rõ. Không tính mong đợi bằng\nchính hàm đang kiểm thử. Giải thích từng assertion và chỉ ra khoảng trống bao phủ.\nKhông khẳng định đã chạy test; tôi sẽ chạy và review trên máy local.\nKhông yêu cầu thông tin đăng nhập, truy cập mạng hoặc dữ liệu production.\n",
+                  "language": "text"
+                },
+                {
+                  "id": "verify",
+                  "type": "verification",
+                  "title": "Checklist kiểm chứng độc lập",
+                  "body": "Xem trang này không chứng minh test của bạn đã đúng. Đây là tự kiểm chứng của người học, không chấm tự động; task này không lưu hoàn thành tutorial hoặc câu trả lời viết.",
+                  "items": [
+                    "Tính tay từng giá trị mong đợi từ yêu cầu. Kiểm tra assertion so sánh kết quả hàm với giá trị đó.",
+                    "Đọc tên test được thu thập và exit code: 0 nghĩa là các ca này pass, không phải bao phủ mọi trường hợp. Thay đổi cố ý gây lỗi phải tạo exit code khác 0.",
+                    "Khôi phục file gốc. Giữ output terminal local gồm phiên bản Python/pytest, lệnh và kết quả. Không đưa thông tin đăng nhập vào prompt."
+                  ]
+                },
+                {
+                  "id": "challenge",
+                  "type": "challenge_preview",
+                  "title": "Thử thách review và giải thích xác định",
+                  "body": "AI đề xuất assert net_amount(\"100.00\", \"10.00\") == net_amount(\"100.00\", \"10.00\"). Hãy giải thích điểm yếu và thay bằng giá trị mong đợi độc lập. Đồng thời cân nhắc tự động hóa một kiểm tra chạy một lần hay 20 lần.",
+                  "items": [
+                    "Giải thích review: so sánh hàm với chính nó có thể pass dù trả sai số tiền. Dùng Decimal(\"90.00\") làm mong đợi độc lập; khi đổi sang phép cộng, ca này sẽ fail.",
+                    "Chạy một lần tiết kiệm ròng minh họa là 7 − 110 = −103 phút; chạy 20 lần là 30 phút. Ước tính hỗ trợ thảo luận, không phải quy tắc chung.",
+                    "Lỗi thường gặp: tin code AI, kết quả xanh hoặc HTTP 200 là bằng chứng dữ liệu đúng. Cần mong đợi độc lập và kiểm tra rằng lỗi có ý nghĩa thực sự làm test fail. Quiz và tiến độ cá nhân được lưu sẽ làm ở task sau."
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "m01-l02",
+          "order": 2,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "Manual cases to automation candidates",
+              "summary": "Manual cases to automation candidates",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Chọn ca kiểm thử thủ công để tự động hóa",
+              "summary": "Chọn ca kiểm thử thủ công để tự động hóa",
+              "sections": []
+            }
+          }
+        },
+        {
+          "id": "m01-l03",
+          "order": 3,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "Positive, negative and boundary testing",
+              "summary": "Positive, negative and boundary testing",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Kiểm thử hợp lệ, không hợp lệ và giá trị biên",
+              "summary": "Kiểm thử hợp lệ, không hợp lệ và giá trị biên",
+              "sections": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "m02",
+      "order": 2,
+      "title": {
+        "ENG": "Development Environment",
+        "VIE": "Môi trường phát triển"
+      },
+      "lessons": [
+        {
+          "id": "m02-l01",
+          "order": 1,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "Python, venv, pip and project structure",
+              "summary": "Python, venv, pip and project structure",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Python, venv, pip và cấu trúc dự án",
+              "summary": "Python, venv, pip và cấu trúc dự án",
+              "sections": []
+            }
+          }
+        },
+        {
+          "id": "m02-l02",
+          "order": 2,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "Git/GitHub and branches",
+              "summary": "Git/GitHub and branches",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Git/GitHub và nhánh",
+              "summary": "Git/GitHub và nhánh",
+              "sections": []
+            }
+          }
+        },
+        {
+          "id": "m02-l03",
+          "order": 3,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "First pytest test",
+              "summary": "First pytest test",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Bài kiểm thử pytest đầu tiên",
+              "summary": "Bài kiểm thử pytest đầu tiên",
+              "sections": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "m03",
+      "order": 3,
+      "title": {
+        "ENG": "API Test Automation",
+        "VIE": "Tự động hóa kiểm thử API"
+      },
+      "lessons": [
+        {
+          "id": "m03-l01",
+          "order": 1,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "HTTP, JSON and assertions",
+              "summary": "HTTP, JSON and assertions",
+              "sections": []
+            },
+            "VIE": {
+              "title": "HTTP, JSON và assertion",
+              "summary": "HTTP, JSON và assertion",
+              "sections": []
+            }
+          }
+        },
+        {
+          "id": "m03-l02",
+          "order": 2,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "GET/POST pytest tests",
+              "summary": "GET/POST pytest tests",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Kiểm thử GET/POST bằng pytest",
+              "summary": "Kiểm thử GET/POST bằng pytest",
+              "sections": []
+            }
+          }
+        },
+        {
+          "id": "m03-l03",
+          "order": 3,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "Parameterized and negative tests",
+              "summary": "Parameterized and negative tests",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Kiểm thử tham số hóa và đầu vào không hợp lệ",
+              "summary": "Kiểm thử tham số hóa và đầu vào không hợp lệ",
+              "sections": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "m04",
+      "order": 4,
+      "title": {
+        "ENG": "AI-Assisted Development",
+        "VIE": "Phát triển với hỗ trợ AI"
+      },
+      "lessons": [
+        {
+          "id": "m04-l01",
+          "order": 1,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "Requirement-driven prompts",
+              "summary": "Requirement-driven prompts",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Viết prompt dựa trên yêu cầu",
+              "summary": "Viết prompt dựa trên yêu cầu",
+              "sections": []
+            }
+          }
+        },
+        {
+          "id": "m04-l02",
+          "order": 2,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "Generate and review tests",
+              "summary": "Generate and review tests",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Tạo và review bài kiểm thử",
+              "summary": "Tạo và review bài kiểm thử",
+              "sections": []
+            }
+          }
+        },
+        {
+          "id": "m04-l03",
+          "order": 3,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "Hallucinations, weak tests and false positives",
+              "summary": "Hallucinations, weak tests and false positives",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Thông tin AI bịa đặt, kiểm thử yếu và kết quả sai lệch",
+              "summary": "Thông tin AI bịa đặt, kiểm thử yếu và kết quả sai lệch",
+              "sections": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "m05",
+      "order": 5,
+      "title": {
+        "ENG": "Framework Architecture",
+        "VIE": "Kiến trúc framework"
+      },
+      "lessons": [
+        {
+          "id": "m05-l01",
+          "order": 1,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "Fixtures and isolation",
+              "summary": "Fixtures and isolation",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Fixture và sự cô lập",
+              "summary": "Fixture và sự cô lập",
+              "sections": []
+            }
+          }
+        },
+        {
+          "id": "m05-l02",
+          "order": 2,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "Configuration and reusable API clients",
+              "summary": "Configuration and reusable API clients",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Cấu hình và API client dùng lại",
+              "summary": "Cấu hình và API client dùng lại",
+              "sections": []
+            }
+          }
+        },
+        {
+          "id": "m05-l03",
+          "order": 3,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "Test data, logging and maintainability",
+              "summary": "Test data, logging and maintainability",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Dữ liệu kiểm thử, log và khả năng bảo trì",
+              "summary": "Dữ liệu kiểm thử, log và khả năng bảo trì",
+              "sections": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "m06",
+      "order": 6,
+      "title": {
+        "ENG": "Database & Data QA",
+        "VIE": "Database & Data QA"
+      },
+      "lessons": [
+        {
+          "id": "m06-l01",
+          "order": 1,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "Safe PostgreSQL access",
+              "summary": "Safe PostgreSQL access",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Truy cập PostgreSQL an toàn",
+              "summary": "Truy cập PostgreSQL an toàn",
+              "sections": []
+            }
+          }
+        },
+        {
+          "id": "m06-l02",
+          "order": 2,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "Reconciliation assertions",
+              "summary": "Reconciliation assertions",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Assertion đối soát dữ liệu",
+              "summary": "Assertion đối soát dữ liệu",
+              "sections": []
+            }
+          }
+        },
+        {
+          "id": "m06-l03",
+          "order": 3,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "ETL and idempotency validation",
+              "summary": "ETL and idempotency validation",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Kiểm tra ETL và tính idempotent",
+              "summary": "Kiểm tra ETL và tính idempotent",
+              "sections": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "m07",
+      "order": 7,
+      "title": {
+        "ENG": "Playwright UI Automation",
+        "VIE": "Tự động hóa UI với Playwright"
+      },
+      "lessons": [
+        {
+          "id": "m07-l01",
+          "order": 1,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "Locators and assertions",
+              "summary": "Locators and assertions",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Locator và assertion",
+              "summary": "Locator và assertion",
+              "sections": []
+            }
+          }
+        },
+        {
+          "id": "m07-l02",
+          "order": 2,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "Login flows and page objects",
+              "summary": "Login flows and page objects",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Luồng đăng nhập và page object",
+              "summary": "Luồng đăng nhập và page object",
+              "sections": []
+            }
+          }
+        },
+        {
+          "id": "m07-l03",
+          "order": 3,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "Flakiness, traces and screenshots",
+              "summary": "Flakiness, traces and screenshots",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Kiểm thử thiếu ổn định, trace và ảnh chụp",
+              "summary": "Kiểm thử thiếu ổn định, trace và ảnh chụp",
+              "sections": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "m08",
+      "order": 8,
+      "title": {
+        "ENG": "CI/CD and Reporting",
+        "VIE": "CI/CD và báo cáo"
+      },
+      "lessons": [
+        {
+          "id": "m08-l01",
+          "order": 1,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "GitHub Actions basics",
+              "summary": "GitHub Actions basics",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Nền tảng GitHub Actions",
+              "summary": "Nền tảng GitHub Actions",
+              "sections": []
+            }
+          }
+        },
+        {
+          "id": "m08-l02",
+          "order": 2,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "Reports, logs and artifacts",
+              "summary": "Reports, logs and artifacts",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Báo cáo, log và artifact",
+              "summary": "Báo cáo, log và artifact",
+              "sections": []
+            }
+          }
+        },
+        {
+          "id": "m08-l03",
+          "order": 3,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "CI failures and release gates",
+              "summary": "CI failures and release gates",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Lỗi CI và điều kiện phát hành",
+              "summary": "Lỗi CI và điều kiện phát hành",
+              "sections": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "m09",
+      "order": 9,
+      "title": {
+        "ENG": "AI Debugging and Review",
+        "VIE": "Debug và review với AI"
+      },
+      "lessons": [
+        {
+          "id": "m09-l01",
+          "order": 1,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "Analyze failures with AI",
+              "summary": "Analyze failures with AI",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Phân tích lỗi với AI",
+              "summary": "Phân tích lỗi với AI",
+              "sections": []
+            }
+          }
+        },
+        {
+          "id": "m09-l02",
+          "order": 2,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "Review generated code and security",
+              "summary": "Review generated code and security",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Review code được tạo và tính an toàn",
+              "summary": "Review code được tạo và tính an toàn",
+              "sections": []
+            }
+          }
+        },
+        {
+          "id": "m09-l03",
+          "order": 3,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "Refactoring and regression verification",
+              "summary": "Refactoring and regression verification",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Refactor và kiểm chứng regression",
+              "summary": "Refactor và kiểm chứng regression",
+              "sections": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "m10",
+      "order": 10,
+      "title": {
+        "ENG": "Capstone",
+        "VIE": "Dự án tổng kết"
+      },
+      "lessons": [
+        {
+          "id": "m10-l01",
+          "order": 1,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "Spec to test plan",
+              "summary": "Spec to test plan",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Từ đặc tả đến kế hoạch kiểm thử",
+              "summary": "Từ đặc tả đến kế hoạch kiểm thử",
+              "sections": []
+            }
+          }
+        },
+        {
+          "id": "m10-l02",
+          "order": 2,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "Build a complete framework",
+              "summary": "Build a complete framework",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Xây dựng framework hoàn chỉnh",
+              "summary": "Xây dựng framework hoàn chỉnh",
+              "sections": []
+            }
+          }
+        },
+        {
+          "id": "m10-l03",
+          "order": 3,
+          "status": "planned",
+          "minutes": 20,
+          "content": {
+            "ENG": {
+              "title": "Run, review and present evidence",
+              "summary": "Run, review and present evidence",
+              "sections": []
+            },
+            "VIE": {
+              "title": "Chạy, review và trình bày bằng chứng",
+              "summary": "Chạy, review và trình bày bằng chứng",
+              "sections": []
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

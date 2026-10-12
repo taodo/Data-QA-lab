@@ -12,9 +12,14 @@ export interface Fault {fault_run_id:string;pipeline_run_id:string;scenario_id:s
 export interface SimulationState {as_of:string; step_count:number; batch_no:number; steps:{step_no:number;batch_no:number;operation:string;execution_status:string;selected_events:number;target_rows:number;watermark:string}[]}
 export interface Account {user_id:string;username:string;display_name:string;public_shared?:boolean}
 export interface AuthState {user:Account|null;csrf_token:string|null}
-export interface Subject {id:string;title:string;summary:string;family:string;course_id:string;available:boolean}
+export interface Subject {id:string;title:string;summary:string;family:string;course_id:string;available:boolean;learning_kind:'executable_lab'|'tutorial'}
 export interface Chapter {id:string;title:string;minutes:number;lessons:Lesson[]}
 export interface CourseIntroductionContent {what_title:string;uses_title:string;definition:string;concepts:string[];example:string;uses:string[];qa:string;course_connection:string}
-export interface Course {id:string;subject_id:string;title:string;summary:string;available:boolean;level:string;lesson_count:number;minutes:number;objectives:string[];prerequisites:string[];chapters?:Chapter[];introduction?:CourseIntroductionContent}
+export interface Course {id:string;subject_id:string;title:string;summary:string;available:boolean;level:string;lesson_count:number;minutes:number;objectives:string[];prerequisites:string[];chapters?:Chapter[];introduction?:CourseIntroductionContent;learning_kind:'executable_lab'|'tutorial';available_lesson_count?:number}
+export interface TutorialSection {id:string;type:'concept'|'steps'|'code_sample'|'prompt_template'|'verification'|'challenge_preview';title:string;body:string;items:string[];code:string|null;language:'python'|'powershell'|'text'|null}
+export interface TutorialEntry {id:string;order:number;status:'available'|'planned';title:string;summary:string;minutes:number}
+export interface TutorialModule {id:string;order:number;title:string;lessons:TutorialEntry[]}
+export interface TutorialCourse extends Course {learning_kind:'tutorial';modules:TutorialModule[];hybrid_explanation:string;available_lesson_count:number}
+export interface TutorialLesson extends TutorialEntry {course_id:string;learning_kind:'tutorial';sections:TutorialSection[]}
 export interface Progress {course_id:string;lab_id:string;attempts:number;completed:boolean}
 export interface Enrollment {course_id:string;enrolled_at:string}

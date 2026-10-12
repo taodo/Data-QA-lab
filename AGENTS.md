@@ -16,17 +16,18 @@ Task 12 is merged as PR #14 at b0863f8798c8bba2c0ed0f8fc5d37c5e1e158fab; demo pr
 
 Task 19 is merged as PR #29 at 9e47ede. Its public shared-account disclosure,
 explicit-login autofill, Coming Soon signup and restrictions remain mandatory.
-Active approved scope: Task 20 global frontend UI and persistent Dark/Light on
-feature/task-20-global-ui-redesign. See docs/TASK_20_PROGRESS.md and the design
-system MASTER.md. Use document-level semantic tokens on every route; default
-Dark and independently preserve explicit theme/language preferences. Keep learning
-content, nine authored visuals, editor state/history and Task 19 behavior. No
-backend, schema, grader, auth policy, provisioning, Docker, tunnel or live environment
-changes. No new dependencies. Keep tooling/artifacts/caches on D. Run targeted
-browser/theme regressions and frontend build; no full local suite unless required
-to investigate an actual failure. Stop at review-ready PR: no merge, deployment,
-public tunnel or next task without user instruction. External-device demo
-verification remains user-operated.
+Task 20 is merged as PR #30; Task 20.1 header polish is merged as PR #32
+at 72ea6d9. Active approved scope: Task 21.1 Automation Course Foundation on
+feature/task-21-1-automation-course-foundation. See docs/TASK_21_1_PROGRESS.md.
+Add source-controlled ENG/VIE tutorial curriculum for ai-test-automation (10 modules,
+30 metadata lessons, only m01-l01 available), additive public APIs and a dedicated
+public tutorial renderer. Tutorials are separate from executable_lab courses,
+sessions and grading. No code runner, LLM calls/credentials, progress persistence,
+new dependencies or migrations. Preserve 36 executable labs, Task 19 policies,
+accounts/history and public demo data/configuration. Use existing semantic themes
+and design-system MASTER.md. Keep tooling/artifacts/caches on D. Focused unit/API/
+browser/build checks and final-head CI; no repeated full local suite. No merge,
+deploy, public tunnel or Task 21.2 without user instruction.
 
 Before SQL workspace implementation, design database read-only permissions, allowlisted lab schemas, row/time limits and cancellation. Do not rely on SQL text filtering alone.
 

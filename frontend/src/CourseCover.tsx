@@ -8,6 +8,7 @@ function Box({x,y,label,children}:{x:number;y:number;label:string;children?:Reac
 }
 // Authored local schematics, decorative beside the named course. No vendor logos.
 const illustrations:Record<string,ReactNode>={
+  'ai-test-automation':<><g transform="translate(24 65)"><rect width="165" height="112" rx="8"/><path d="M0 26h165"/><text x="12" y="18">pytest / local</text><text x="12" y="55">assert actual</text><text x="12" y="80">== expected</text><path d="m12 95 7 7 12-14"/></g><path d="M203 121h30m-7-6 7 6-7 6"/><g transform="translate(252 64)"><path d="m60 0 60 112H0Z M15 84h90M30 56h60"/><text x="60" y="-14" textAnchor="middle">review</text></g></>,
   sql:<><Table x={25} y={76} label="source"/><Table x={270} y={76} label="target"/><path d="M144 95h110m-8-6 8 6-8 6M254 124H144m8-6-8 6 8 6"/><text x="200" y="64" textAnchor="middle">SELECT / keys</text><text x="200" y="165" textAnchor="middle">missing + unexpected</text></>,
   etl:<><Box x={20} y={82} label="Source"/><path d="M123 113h30m-7-6 7 6-7 6"/><g transform="translate(165 76)"><path d="M35 0 70 37 35 74 0 37Z"/><text x="35" y="42" textAnchor="middle">f(x)</text></g><path d="M247 113h30m-7-6 7 6-7 6"/><Box x={286} y={82} label="Target"/><path d="M200 156v18h72" strokeDasharray="4 5"/><text x="280" y="179">rejects</text></>,
   api:<><g transform="translate(25 60)"><rect width="215" height="112" rx="8"/><path d="M0 27h215"/><text x="12" y="19">GET /orders</text><text x="14" y="52">200 · JSON</text><text x="14" y="76">{`{ id: 10,`}</text><text x="14" y="98">{`  amount: 12.50 }`}</text></g><path d="M252 115h22m-7-6 7 6-7 6"/><g transform="translate(290 73)"><path d="M35 0 68 12v43c0 18-33 38-33 38S2 73 2 55V12Z"/><path d="m18 44 13 13 23-26"/></g><text x="326" y="184" textAnchor="middle">contract</text></>,
@@ -19,7 +20,7 @@ const illustrations:Record<string,ReactNode>={
   synapse:<><g transform="translate(20 72)"><path d="m0 28 58-28 58 28Z M10 28v70h96V28M32 39v46M58 39v46M84 39v46M0 106h116"/><text x="58" y="-12" textAnchor="middle">warehouse</text></g><path d="M148 125h30m-7-6 7 6-7 6"/><Table x={192} y={89} label="aggregate"/><path d="M310 125h20"/><g transform="translate(344 84)"><path d="M0 0v78h47M9 65V43h8v22M24 65V24h8v41M39 65V8h8v57"/></g></>,
 };
 export function CourseCover({subject,large=false}:{subject:string;large?:boolean}){
-  const code:Record<string,string>={sql:'SQL',etl:'ETL / ELT',api:'API',fabric:'FABRIC',adf:'ADF',onelake:'ONELAKE',azure:'AZURE',databricks:'DATABRICKS',synapse:'SYNAPSE'};
+  const code:Record<string,string>={'ai-test-automation':'AUTOMATION',sql:'SQL',etl:'ETL / ELT',api:'API',fabric:'FABRIC',adf:'ADF',onelake:'ONELAKE',azure:'AZURE',databricks:'DATABRICKS',synapse:'SYNAPSE'};
   return <div className={'course-cover cover-'+subject+(large?' cover-large':'')} aria-hidden="true"><svg viewBox="0 0 420 230" focusable="false">
     <circle cx="370" cy="25" r="110" fill="currentColor" opacity=".05"/>
     <g fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{illustrations[subject]}</g>

@@ -54,7 +54,12 @@ class DemoIntegrationTests(unittest.TestCase):
         self.login()
         self.assertEqual(self.client.get("/api/auth/me").json()["user"]["username"], "demo_learner")
         for language in ("ENG", "VIE"):
-            self.assertEqual(len(self.client.get("/api/courses?language=" + language).json()), 9)
+            catalog = self.client.get("/api/courses?language=" + language).json()
+            self.assertEqual(len(catalog), 10)
+            executable = [c for c in catalog if c['learning_kind'] == 'executable_lab']
+            self.assertEqual(len(executable), 9)
+            self.assertEqual(sum(c['lesson_count'] for c in executable), 36)
+            self.assertEqual(next(c for c in catalog if c['id'] == 'ai-test-automation')['available_lesson_count'], 1)
             self.assertEqual(self.client.get("/api/courses/sql-data-qa?language=" + language).status_code, 200)
         result = self.client.post("/api/sessions", json={"lab_id": "lab_001_record_count", "mode": "SANDBOX", "scenario": "clean"})
         self.assertEqual(result.status_code, 201, result.text)

@@ -74,7 +74,12 @@ def main():
         denied, _ = api("/auth/password", {"current_password": password, "new_password": secrets.token_urlsafe(24)}, status=403)
         assert denied["error"]["code"] == "PUBLIC_DEMO_PASSWORD_LOCKED"
     for language in ("ENG", "VIE"):
-        assert len(api("/courses?language=" + language)[0]) == 9
+        courses = api("/courses?language=" + language)[0]
+        assert len(courses) == 10
+        executable = [c for c in courses if c["learning_kind"] == "executable_lab"]
+        assert len(executable) == 9 and sum(c["lesson_count"] for c in executable) == 36
+        tutorial = next(c for c in courses if c["id"] == "ai-test-automation")
+        assert tutorial["learning_kind"] == "tutorial" and tutorial["available_lesson_count"] == 1
         api("/courses/sql-data-qa?language=" + language)
     session, _ = api("/sessions", {"lab_id": "lab_001_record_count", "mode": "SANDBOX", "scenario": "clean"}, status=201)
     path = "/sessions/" + session["session_id"]
