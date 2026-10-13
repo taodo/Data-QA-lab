@@ -1,28 +1,30 @@
 # Banking integration decision checklist — U5-P
 
-Status: **PROPOSED / NOT IMPLEMENTED; READY FOR ARCHITECTURE REVIEW ONLY**.
-No checkbox below is approved by authorship. References:
+Status: **AMENDED PROPOSAL / NOT IMPLEMENTED**. D1–D7 have
+`USER_APPROVED_DIRECTION`; residual contract items remain `CONTRACT_PENDING`; all
+runtime work remains `IMPLEMENTATION_NOT_AUTHORIZED`. A checked direction is not
+an implementation, pilot, release or deployment approval. References:
 [Decisions](BANKING_ARCHITECTURE_DECISIONS_PROPOSED.md),
 [BIC candidate contract](BANKING_CROSS_REPO_IMPLEMENTATION_CONTRACT.md),
 [authoritative UPIC-1.0](UNIFIED_PLATFORM_INTEGRATION_CONTRACT.md).
-Only these three new documents are U5-P delivery; B2/U5 runtime work needs a new
+Only these three existing U5-P documents are amended; B2/U5 runtime work needs a new
 explicit user instruction and independent review in each owning repository.
 
-## 1. Joint decision approvals — all open
+## 1. Joint decision status and residual approvals
 
 Record decision, reviewer, approval date, exact contract revision and remaining
 scope restrictions in both projects before coding. Merge approval for a domain
 implementation is not platform integration/release approval.
 
-| ID | Proposed decision requiring approval | Approvers / closure evidence |
-|---|---|---|
-| D1 | Option A, app/engine/auth/SQLite per context; domain manager/dispatcher + platform registry; mTLS and fixed ES256 signed request grants; one runtime owner/context | Both architecture/security owners; agreed grant vectors/PKI/key custody/rotation/revocation/library/termination and no caller handle/URL authority |
-| D2 | Shared demo bound to individual authenticated session; named resume initially disabled, optional explicit recent-auth rebind; anonymous recorded/read-only | Platform product/security + domain grant owner; session expiry/logout/orphan hold/operator powers; two sessions one username negative matrix |
-| D3 | Domain-owned unique synthetic secrets/private login broker; server-memory token cache by context+epoch+actor+incarnation; fresh original-actor login after restart | Domain auth + platform adapter owners; real PBKDF2 verification, expiry/revocation/rotation/capacity and redacted credentials/token traces |
-| D4 | Numeric starting budgets/TTL/retention and durable allocation+browser intent protocol; caps cannot evict UNKNOWN/referenced state | Joint operations + platform persistence owners; storage/reservation/rate/queue tests, dependency-free decision now, measured B5 capacity later |
-| D5 | Frozen operation/attempt lifecycle, read-only expired-context recovery, matched backups/data epochs, no automatic UNKNOWN deletion | Domain recovery + platform pending-record owners; crash/loss/drain/restart/restore and independent SQL proof; operator authority and disposition reviewed |
-| D6 | Canonical decimal-string BFF money with exact signed64-bit domain integers; preserved SQL Decimal semantics | Joint API/UI owners; positive/negative/2^53/max-int/overflow consumer-producer vectors and no float coercion |
-| D7 | Platform-owned reviewed ENG/VIE rubric/progress, domain-owned content/observations; defer assessment to U3/U7/U9 | Curriculum/privacy owners; explicit deferred scope and metadata privacy rules first, full provenance/retention/rubric approval before assessed challenges |
+| ID | State | Approved direction | Residual owner / dependency / closure evidence |
+|---|---|---|---|
+| D1 | USER_APPROVED_DIRECTION / CONTRACT_PENDING | Option A, app/engine/auth/SQLite per context; bounded domain manager + platform registry; B2 isolation interface separated from B3 production mTLS+ES256 trust | Joint architecture/security/operations; approve library, PKI/certificate/signing-key custody, TLS termination, issuer/audience/typ/alg profile, rotation/revocation/replay and cross-repo vectors. No implementation authorization. |
+| D2 | USER_APPROVED_DIRECTION | Shared demo bound to individual authenticated session; anonymous recorded/read-only; named resume/rebind disabled for MVP | Platform product/security + domain grant owner; two-sessions/one-username negatives and orphan-hold access. Any future rebind is a new contract decision. |
+| D3 | USER_APPROVED_DIRECTION / CONTRACT_PENDING | Domain-owned unique synthetic secrets/private login broker; server-memory token cache by context+epoch+actor+incarnation+authorization revision | Domain auth + platform adapter; credential custody/rotation, operator access, expiry/revocation acknowledgement and redacted negative evidence. |
+| D4 | USER_APPROVED_DIRECTION / CONTRACT_PENDING | Configurable pilot budgets/TTL/retention and durable allocation+intent protocol; caps cannot evict UNKNOWN/referenced state | Owners/phases are assigned in Decisions; operations approves actual values only after enforcement tests, while B5 measures capacity before public release. |
+| D5 | USER_APPROVED_DIRECTION / CONTRACT_PENDING | Durable ACCEPT then explicit SUBMIT, frozen identity, conservative UNKNOWN, read-only recovery after expiry/drain | Domain recovery + platform registry + operator; approve NO_COMMIT_PROVEN authority, receipt/oracle evidence, restore checkpoints and retained-state disposition after crash matrix tests. |
+| D6 | USER_APPROVED_DIRECTION / CONTRACT_PENDING | Canonical decimal-string BFF money with exact signed64-bit domain integers; preserve Data QA SQL Decimal | Joint API/UI; approve schema revision and positive/negative/2^53/max-int/overflow producer-consumer vectors before implementation. |
+| D7 | USER_APPROVED_DIRECTION / CONTRACT_PENDING | Defer assessed learning progress/grading; retain eight challenge IDs and honest LIVE/RECORDED/IMPORTED provenance | Curriculum/privacy owners; later U3/U7/U9 approval for rubric, provenance, evidence access/retention and assessment. HTTP2xx/localStorage never imply PASS. |
 
 Security decisions needing **joint approval**, not implementation guesswork:
 
@@ -63,6 +65,17 @@ PBKDF2 costs, SQL contention, file/engine memory, disk reservations, response si
 and retention pressure must be measured by B5. Exceeding budgets returns explicit
 429/503/error/INCOMPLETE; never eviction, rounding or silent evidence truncation.
 
+The complete per-value owner/phase/exhaustion/gate classification is normative in
+[the D4 enforcement matrix](BANKING_ARCHITECTURE_DECISIONS_PROPOSED.md#d4-enforcement-ownership-and-phase-matrix).
+Its ownership groups are:
+
+| Enforcement group | Values owned | Earliest implementation phase | Full-capacity rule |
+|---|---|---|---|
+| Platform registry/BFF | Per-session/user context and creation budgets; request/submit/attempt rates;10000-operation/64MiB registry; platform intent/evidence portions | U5 | Fail before dispatch; retain references and UNKNOWN;429 for caller budgets,503 for unavailable durable capacity |
+| MiniBanking dispatcher/inventory |20 active/100 inventory; provisioning/request/queue/write concurrency; context TTL/drain;16MiB/context+2GiB total; actor token scope | B2 essential, with B3 transport/auth bounds | Stop allocation/admission, alert and hold. Never delete/evict retained or UNKNOWN state to recover capacity |
+| Joint producer/consumer boundary | HTTP sizes/account rows/history forwarding/timeouts; grant TTL/skew/size; operation/observation/evidence references | B3 + U5/U6 | Reject or contract-error without truncation; possible prior admission remains UNKNOWN |
+| Operations/release |>=7d resolved retention,30d evidence/audit,24h UNKNOWN alert; final numeric tuning | Policy before pilot, B5 measurement before public release | Non-destructive reconciliation and dual-owner disposition only; retained Data QA and non-manager bank data are excluded from cleanup |
+
 ## 3. Dependencies and exact future implementation boundaries
 
 All scopes below are **PROPOSED future Codex tasks requiring separate approval**.
@@ -72,11 +85,11 @@ and stops for independent review/user approval. No cross-repository Git merges.
 
 | Future task / repository | Dependencies | Allowed implementation / mandatory deliverable | Explicit exclusions |
 |---|---|---|---|
-| B2 — MiniBanking context isolation | B1 accepted; joint D1–D5 contract choices closed | Domain-owned durable inventory, fresh SQLite/app/auth scopes, bounded private dispatch/allocation, grants/fences, lifecycle/drain/restart/owned cleanup and private actor-login scope; producer isolation/recovery tests | Platform PG/identity/UI/progress, tenant schema redesign/pool optimization, retained DB init/reset, public controls/deploy |
-| B3 — MiniBanking private API hardening | B2 accepted; U5 contract agreement; D6 fixed | Private transport/service identity, capability/version/readiness contracts, request/resource/error/log bounds, actor token revocation policy; keep domain integer/business rules | Public bank port/docs/static proxy, SSO, new banking business features, unapproved infrastructure/deployment changes |
+| B2 — MiniBanking context isolation | Reviewed amendment + separate authoritative B2 Issue + explicit user approval; B1 accepted | Domain-owned durable inventory, fresh SQLite/app/auth scopes, bounded allocation/dispatch/lifecycle/drain/restart/owned cleanup, durable admission receipts and a fail-closed grant-verifier interface. Deterministic authorizer is test-only/non-deployable; capability OFF; producer isolation/recovery/negative tests | Production mTLS/JWS verifier, live platform/domain traffic, platform PG/identity/UI/progress, tenant schema redesign/pool optimization, retained DB init/reset, public controls/deploy |
+| B3 — MiniBanking private API hardening | Accepted B2 interface; U5 signer/contract agreement; approved security profile and D6 vectors | Production private transport identity, mTLS termination, strict ES256 JWS verifier, certificate/key custody/rotation/revocation/replay, capability/version/readiness and request/resource/error/log bounds | Public bank port/docs/static proxy, shared HMAC/network-only trust, SSO, new banking features, unapproved infrastructure/deployment changes |
 | B4 — MiniBanking producer verification | Accepted B2/B3 + approved BIC vectors | Real private HTTP producer tests, independent read-only ledger/SQL oracle, context/UNKNOWN/string-money boundaries, sanitized pinned evidence; retain required existing Task9/HIGH gates | Using posting service as expected truth, public SQL/fault APIs, progress grading, retained DB queries |
 | B5 — MiniBanking operational readiness | B2–B4 accepted; compatible U5/U6 pilot; decisions closed for release slice | Disposable-state measured capacity/drain/restart/backup/restore/outage/private-network rehearsal; exact-pin release/rollback runbook and local/public verdicts | Public tunnel/deploy, retained-data rehearsal, automatic main merge or test-gate waiver |
-| U5 — Data QA registry/security foundation | Joint D1–D6 approved contract; accepted B2/B3 before real domain activation | Platform user/session binding/grants, durable allocation intents/operation records, quotas/CSRF/authorization, pending crash/recovery holds, producer compatibility checks; separately reviewed additive preservation-safe migration only if needed | Banking posting/SQL/seed, simulator redesign, tutorial/Data QA grading changes, shared SSO/progress/D7 features/deploy |
+| U5 — Data QA registry/security foundation | Reviewed amendment + separate authoritative U5 Issue/user approval; fixed B2/B3 fixtures allowed before producer acceptance | Platform user/session binding/grants, durable allocation intents/operation records, quotas/CSRF/authorization, pending crash/recovery holds, producer compatibility checks; separately reviewed additive preservation-safe migration only if needed; real dispatch OFF until accepted B2/B3 | Banking posting/SQL/seed, simulator redesign, tutorial/Data QA grading changes, shared SSO/progress/D7 features/deploy |
 | U6 — Data QA BFF and simulator | Accepted U5+B2/B3; B4 producer evidence and joint vectors | Fixed adapter, string money/status mappings, actual consumer contract tests, secure existing-shell UI with ENG/VIE/theme/375–1280/a11y/recovery browser E2E | Generic proxy/direct bank browser calls, credentials or arbitrary URLs, domain business logic, public unsafe controls/automatic rollout |
 | U3/U7 — content and assessment | D7 + approved domain content/provenance; live parts require U6 | Eight stable challenge mappings, reviewed bilingual content/rubrics/independent expected evidence, honest recorded/imported/live status | Import PASS as truth, localStorage credit, AI/free-text semantic grading or automatic completion |
 | U9 — progress | Explicit D7 assessment/privacy approval, accepted U7 semantics | Additive platform-owned progress/evidence experience with separate self-report/execution/assessment/completeness and legacy preservation | Bank user/database migration, reading/API2xx completion, existing course/history rewrite |
@@ -84,7 +97,8 @@ and stops for independent review/user approval. No cross-repository Git merges.
 Ordering avoids a circular dependency: agree the contract first; U5 registry code
 may use pinned producer fixtures with capability OFF in parallel with B2/B3, but
 must not claim live verification until an accepted compatible producer exists.
-B4 producer tests can use a controlled authorizer before UI; U6 adds actual BFF
+B2/B4 producer tests can use the non-deployable deterministic authorizer before
+production trust exists; U6 adds actual BFF
 consumer tests. Both must pass before a live pilot. B5 rehearses the accepted
 pilot; platform U10/user-approved release gate remains separate. No runtime work
 or domain notification is sent by U5-P.
@@ -106,6 +120,20 @@ rehearsal are distinct from ASGI source/test inspection. Green CI or domain revi
 does not substitute for consumer failures, security approval or release approval.
 
 ## 5. Go/no-go gates
+
+### B2 readiness verdict
+
+- `READY_FOR_ISSUE_DRAFT = YES`: the amended documents define B2's isolated
+  runtime, deny-all grant-verifier interface, non-deployable test authorizer,
+  durable admission receipts, essential resource bounds and crash-window tests.
+- `READY_FOR_IMPLEMENTATION = NO`: implementation requires this amendment to be
+  independently reviewed/merged, then a separate authoritative MiniBanking B2
+  Issue with exact scope, acceptance tests and explicit user approval.
+- `LIVE_INTEGRATION = OFF`: a merged B2 cannot carry real platform traffic. B3
+  production trust and accepted U5/U6 producer-consumer gates are prerequisites.
+
+This verdict permits drafting the B2 Issue only. It does not create that Issue,
+notify/modify MiniBanking, authorize code, or approve a local/public pilot.
 
 ### Local pilot — CONDITIONAL, not authorized by U5-P
 
@@ -143,21 +171,24 @@ credentials to satisfy a gate. No release commands or public access are run here
 
 ## 6. U5-P documentation verification checkpoint
 
-Confirmed platform HEAD/base: `37734f528d9afec26d2c155c60b00af2ab1d67a4` before
-branching. Domain accepted baseline: `7a77ec579d7ff0edf2299d3755155573fee1ec15`.
-Final documentation HEAD/remote/PR are reported in handoff rather than embedding
-a self-referential SHA. Git diff must add exactly:
+Confirmed amendment base: platform `origin/feature/develop` at
+`8b5e6336ff1123dbf2e447114b7a47d815cc8bef`, containing U5-P PR #36 merge
+`fecd1671101c846fb6cd99d6c746925b9988b848`, C1 and U2. Domain accepted
+baseline remains `7a77ec579d7ff0edf2299d3755155573fee1ec15`. Final amendment HEAD,
+remote and PR are reported in handoff rather than embedding a self-referential SHA.
+Git diff must modify exactly:
 
 1. `docs/BANKING_ARCHITECTURE_DECISIONS_PROPOSED.md`
 2. `docs/BANKING_CROSS_REPO_IMPLEMENTATION_CONTRACT.md`
 3. `docs/BANKING_INTEGRATION_DECISION_CHECKLIST.md`
 
-EXECUTED audit: clean Git/remote/base checks, fetch platform only; read exact
-accepted U1/B1 documents through Git/source, GitHub PR18/19 merged metadata;
-inspect current routes/schemas/auth/transfer semantics and eight challenge IDs.
-Read-only source copies/check helper live in ignored `data/generated/u5p` on D.
-Local MiniBanking checkout lacks the newest Git object, so remote pinned source
-was used; no fetch/switch/write there. Production/main/deployed state not inferred.
+EXECUTED audit: clean Git/remote/base checks and platform fetch; read Issue #37,
+all current comments, accepted U5-P/U1 documents, PR #36 metadata, and MiniBanking
+B1 documents/source at the exact remote branch SHA through authenticated read-only
+GitHub access. Current `main.py`, Settings, AuthService and TransferService confirm
+one DB/app/token store and no context manager/grant verifier/domain receipt/BFF.
+No MiniBanking write/fetch/branch operation occurred. Production/main/deployed
+state is not inferred.
 
 Validation commands (PowerShell from `D:\Data-QA-Lab`, no runtime/database action):
 
@@ -165,28 +196,21 @@ Validation commands (PowerShell from `D:\Data-QA-Lab`, no runtime/database actio
 git status --short --branch
 git fetch origin
 git rev-parse origin/feature/develop
-git ls-remote https://github.com/taodo/MiniBanking.git refs/heads/feature/develop
-$env:PYTHONUTF8='1'
-.\.venv\Scripts\python.exe data/generated/u5p/check_docs.py
-git diff --check
+git diff --check origin/feature/develop
 git diff --name-status origin/feature/develop
+rg -n "USER_APPROVED_DIRECTION|CONTRACT_PENDING|IMPLEMENTATION_NOT_AUTHORIZED|READY_FOR_ISSUE_DRAFT|READY_FOR_IMPLEMENTATION" docs -g "BANKING_*.md"
 ```
 
-Lightweight checker verifies Markdown fences/tables/local links/heading fragments,
-pinned source-reference existence from inspected copies, all seven existing
-bank application endpoint pairs, mandatory provenance/decision/ownership/default
-sections, preserved original eight U1/B1 references and three-document-only scope.
-Results and source/merge evidence are recorded in the PR; no runtime assertion is
+The ignored, temporary amendment checker verified Markdown fence/table structure,
+local links/anchors, D1–D7/status/readiness terms, exact baseline pins, preserved
+numeric proposals and three-document-only scope. It was removed after execution;
+the command is provenance, not a committed runtime tool. No runtime assertion is
 derived from static checks. After commit also check committed diff whitespace,
 remote SHA and clean tree.
 
-Observed lightweight check: **PASS** — 3 documents, 14 local links/anchors,
-17 inspected pinned bank links, 18 tables, 7 source-declared bank application
-routes, 8 existing challenge IDs; zero errors. Original four platform documents
-match their accepted-base Git blobs; bank reference files are read-only pinned
-copies. `git diff --check` passes and Git scope contains exactly the three files.
-The initial helper had a cache-path mismatch for bank docs stored by basename;
-corrected its source-cache lookup and reran, without changing claimed APIs.
+Observed lightweight check: **PASS** — 3 documents,23 tables,15 local links,
+2 local anchors,13 required amendment terms,24 preserved limit tokens and exactly
+the three authorized changed files; zero errors. `git diff --check` passes.
 
 Manual eight-reference consistency review:
 

@@ -1,6 +1,9 @@
 # Banking cross-repository implementation contract — U5-P
 
-Status: **PROPOSED / NOT IMPLEMENTED**. Candidate identifier `BIC-1.0-proposed`;
+Status: **AMENDED PROPOSAL / NOT IMPLEMENTED**. Candidate identifier
+`BIC-1.1-proposed`; D1–D7 are `USER_APPROVED_DIRECTION`, while every runtime
+capability is `IMPLEMENTATION_NOT_AUTHORIZED` and the residual decisions below
+are `CONTRACT_PENDING`. This document does not activate or publish a contract;
 no endpoint, schema field, capability, migration or service below is implemented
 by this document. Producer: MiniBanking private integration boundary. Consumer:
 Data QA Lab Banking BFF. See [D1–D7 decisions](BANKING_ARCHITECTURE_DECISIONS_PROPOSED.md)
@@ -9,7 +12,9 @@ UPIC-1.0 remains authoritative until joint review explicitly accepts its deltas.
 
 ## 1. Existing verified contracts and ownership
 
-Source pins: platform `37734f528d9afec26d2c155c60b00af2ab1d67a4`, MiniBanking
+Source pins: current platform integration base
+`8b5e6336ff1123dbf2e447114b7a47d815cc8bef` (including U5-P merge
+`fecd1671101c846fb6cd99d6c746925b9988b848`), MiniBanking B1
 `7a77ec579d7ff0edf2299d3755155573fee1ec15`; merge provenance in Decisions.
 This inventory was checked against accepted source, not runtime OpenAPI.
 
@@ -145,6 +150,33 @@ operator-configured and rotated with an approved overlap/revocation policy;
 the grant cannot select an arbitrary verifier/key URL. Library/PKI choices remain
 joint security gates, not homemade crypto or installed dependencies in U5-P.
 
+### B2 grant-verification interface versus B3 production trust
+
+B2 defines an interface shaped around validated operation, context reference,
+epoch, actor, authorization revision, request ID and semantic digest. Its default
+implementation denies all requests. Unit/integration tests may inject a fixed,
+deterministic authorizer whose fixtures are test-configured only, cannot be
+selected through deployable environment/configuration, and never accept arbitrary
+caller claims. B2 private-route handlers remain unbound or return capability-OFF
+outside the test harness. Negative tests cover absent, malformed, foreign, stale,
+replayed and scope-mismatched grants before context routing.
+
+A B2 admission receipt proves only that the domain dispatcher durably accepted a
+specific request identity for processing. It is not proof that the context app ran,
+that SQLite began, or that a transfer committed. B2 may merge after independent
+review while live integration remains OFF; its acceptance evidence must show the
+deny-all production default and the non-deployable test-authorizer boundary.
+
+B3 supplies the production verifier and private transport: mutually authenticated
+TLS plus strict ES256 JWS verification with pinned trust configuration. It owns
+certificate/key provisioning and custody, issuer/audience/typ/algorithm allowlists,
+maximum token size/time/skew, request-ID replay control, authorization-revision
+revocation, overlap rotation, emergency capability-off behavior and operator test
+vectors. Network location alone does not authenticate a caller. Shared HMAC is not
+approved because a verifying peer could mint grants. No live traffic is allowed
+until B3 producer, U5 signer/registry and U6 consumer gates are independently
+accepted for exact revisions.
+
 ## 4. Durable operation lifecycle and HTTP semantics
 
 1. Browser creates and stores client_intent_id+draft before POST acceptance,
@@ -176,6 +208,38 @@ joint security gates, not homemade crypto or installed dependencies in U5-P.
 7. Ordinary restart preserves file+epoch and renews actor token; restored/replaced
    file changes epoch and blocks old submissions. Keep old records/holds for joint
    reconciliation; never relabel an old UNKNOWN operation with the restored epoch.
+
+### Crash-window and receipt matrix
+
+`ACCEPT` is the platform's durable frozen intent. `SUBMITTING` is the platform's
+durable attempt record written before dispatch. `ADMITTED` is the domain's durable
+dispatcher receipt. None alone proves a bank commit. Every recovery retains the
+original context/epoch/actor/key/body and earlier UNKNOWN observations.
+
+| Window | Durable evidence at the boundary | Possible financial effect | Only safe recovery | Primary owner / required test |
+|---|---|---|---|---|
+| 1. Before durable platform ACCEPT | No server intent; optional browser draft is an untrusted recovery aid | None, because dispatch is forbidden before ACCEPT | Re-submit the same client intent for acceptance; create no bank call/key until one mapping commits | U5; crash before/during registry transaction proves zero dispatch and one mapping |
+| 2. After ACCEPT, before submit | Frozen platform intent/key/context/epoch/actor/body; no SUBMITTING or domain receipt | None | Return NOT_SUBMITTED; allow explicit submit only while context is ACTIVE and authorization still matches | U5; restart/lost acceptance response/double-click coalescing |
+| 3. After platform SUBMITTING persist, before domain receipt | ACCEPT + attempt/request ID + SUBMITTING; domain may have no receipt, but transport delivery is uncertain | None or an about-to-be-admitted call; platform cannot prove which from absence alone | Mark UNKNOWN until domain receipt/inventory and transport evidence reconcile; duplicate submit joins the same attempt, never creates a key/actor/context | U5/U6 with B2 fixture; loss immediately before/after send |
+| 4. After domain admission, before SQLite write/commit | ACCEPT + SUBMITTING + durable ADMITTED receipt with request digest; possibly active-writer marker | No effect yet, or write may be in flight; admission is not commit | Observe the same receipt and writer lifecycle. Do not infer NO_COMMIT_PROVEN from a missing transfer while a writer may run. In ACTIVE state only, a later explicit same-operation POST is permitted after actual drain and policy authorization; never automatic | B2; crash at admission/app handoff/BEGIN and in-flight observer tests |
+| 5. After SQLite commit, before domain response | Domain idempotency row + transfer + two ledger sides + account deltas; receipt may still be active/response-pending | Financial effect committed exactly once | Read-only lookup plus independent SQL/oracle confirms MATCHING_COMMIT; same-key replay is allowed only by explicit ACTIVE recovery policy, not needed to establish commit | B2/B4; response-loss checkpoint and exact independent reconciliation |
+| 6. After domain response, before BFF confirmation | Domain result/receipt may be durable; platform remains SUBMITTING/UNKNOWN without a confirmed response record | Committed for matching201/200, or no effect for a conclusive precommit rejection; BFF has not durably classified it | Fetch durable receipt/status and independent observation; store confirmation idempotently. Later401/409/500 cannot overwrite earlier UNKNOWN | U5/U6+B2/B4; response received then platform crash, conflicting later observation |
+| 7. Expiry, drain, restart or restore at any earlier window | Existing platform intents/attempts and domain receipts/inventory; normal restart retains epoch, restore/replacement changes it | In-flight or committed effect may exist; an old snapshot may omit a commit/idempotency row | Stop new writes, actually drain, use read-only reconciliation. Expired/draining/retained contexts never POST. Restore fences the old epoch and holds it for operator disposition; INCONCLUSIVE remains UNKNOWN | B2/B5 + U5 operations; writer drain, restart, older-restore and full-capacity hold tests |
+
+`NO_COMMIT_PROVEN` requires all relevant writers drained, the original domain
+inventory/receipt chain intact, an unchanged data epoch, and independent account,
+transfer, idempotency and ledger evidence consistent with no effect. One missing
+row, an unavailable registry, a lost receipt, a changed epoch or a restored older
+snapshot is `INCONCLUSIVE`. Domain admission and an HTTP response are observations,
+not substitutes for the independent financial oracle.
+
+Duplicate submit requests coalesce on the stored platform attempt/request ID and
+domain digest. They do not create an additional domain call while one is active.
+After an earlier UNKNOWN, every later error is appended as a separate observation;
+it cannot downgrade uncertainty or replace frozen identity. A replay POST may be
+initiated only for the original operation in ACTIVE state, after reauthorization
+and bounded-policy admission. Expired, DRAINING, RETAINED and RECOVERY_HOLD states
+support read-only observation only.
 
 | PROPOSED BFF status / typed observation | Required operation effect |
 |---|---|
@@ -276,7 +340,7 @@ grant, token, raw bank key/body or physical path. Financial evidence is a separa
 authorized sanitized record; avoid embedding account bodies in access/error logs.
 Logging/collection failure cannot invent PASS or silently drop referenced evidence.
 
-## 7. Proposed UPIC-1.0 deltas — joint approval required
+## 7. Proposed UPIC-1.0 deltas — explicit amendment, runtime approval still required
 
 | Delta | Proposed change; existing blueprint remains unchanged |
 |---|---|
@@ -288,10 +352,21 @@ Logging/collection failure cannot invent PASS or silently drop referenced eviden
 | P6 D6 | Select canonical amount/balance strings at BFF boundary, retain domain integers and Data QA Decimal semantics |
 | P7 D7 | Gate bilingual content/rubric/trusted provenance/progress separately, preserve IDs, imports and references; no localStorage credit |
 
-No delta is approved by merging documentation alone without explicit joint
-decision record. New APIs/schema/migrations/runtime configuration need separately
-authorized implementation tasks. Rejected generic proxy/SSO/database consolidation
+The user-approved D1–D7 direction authorizes these deltas for contract and Issue
+drafting; it does not update UPIC-1.0 in place or approve implementation. New
+APIs/schema/migrations/runtime configuration need separately authorized
+implementation tasks. Rejected generic proxy/SSO/database consolidation
 and public unsafe controls remain rejected.
+
+| Decision | Amendment state | Remaining contract / authorization gate |
+|---|---|---|
+| D1 Option A and split B2/B3 trust | USER_APPROVED_DIRECTION | CONTRACT_PENDING for libraries, PKI/certificate/signing-key custody, termination, rotation/revocation and vectors; IMPLEMENTATION_NOT_AUTHORIZED |
+| D2 session-bound shared demo | USER_APPROVED_DIRECTION | Named-account rebind/resume disabled for MVP; any later rebind is a new approval |
+| D3 unique synthetic secrets/tokens | USER_APPROVED_DIRECTION | CONTRACT_PENDING for credential custody, rotation, operator access and revocation acknowledgement |
+| D4 pilot limits | USER_APPROVED_DIRECTION | Values remain configurable proposals; owner tests and B5 measurements required before pilot/public release |
+| D5 ACCEPT/SUBMIT/UNKNOWN | USER_APPROVED_DIRECTION | CONTRACT_PENDING for operator reconciliation authority, NO_COMMIT_PROVEN disposition and restore checkpoints |
+| D6 decimal strings/domain integers | USER_APPROVED_DIRECTION | Exact producer/consumer vectors and schema revision approval required before implementation |
+| D7 deferred assessment | USER_APPROVED_DIRECTION | No progress/grading implementation; privacy, rubric, provenance and retention require later U3/U7/U9 approval |
 
 ## 8. Testable per-repository acceptance
 

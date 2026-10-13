@@ -1,9 +1,17 @@
 # Banking architecture decisions — U5-P
 
-Status: **PROPOSED / NOT IMPLEMENTED**. Engineering objective: agree on an
+Status: **AMENDED PROPOSAL / NOT IMPLEMENTED**. The user has approved the
+**direction** of D1–D7; the implementable contract and residual security and
+operations choices remain pending. Engineering objective: agree on an
 isolated, recoverable banking boundary before B2/U5 code. Learning objective:
 distinguish platform learners, synthetic bank actors, observed execution and
 independently assessed financial evidence. This PR authorizes no runtime work.
+
+Status vocabulary used throughout this amendment:
+
+- `USER_APPROVED_DIRECTION`: D1–D7 may be used to draft later task Issues.
+- `CONTRACT_PENDING`: named residual choices or evidence still require joint review.
+- `IMPLEMENTATION_NOT_AUTHORIZED`: no B2, B3, U5, U6, deployment or live traffic.
 
 The [implementation contract](BANKING_CROSS_REPO_IMPLEMENTATION_CONTRACT.md)
 defines candidate wire behavior; the [decision checklist](BANKING_INTEGRATION_DECISION_CHECKLIST.md)
@@ -12,11 +20,11 @@ the deltas below require joint review, not an implicit upgrade or deployment.
 
 ## Verified provenance
 
-Audit date: 2026-10-12. These are development baselines, not deployed versions.
+Amendment audit date: 2026-10-13. These are development baselines, not deployed versions.
 
 | Repository / accepted branch | Exact SHA / evidence | Finding |
 |---|---|---|
-| `taodo/Data-QA-lab`, fetched `origin/feature/develop` | `37734f528d9afec26d2c155c60b00af2ab1d67a4` | U1 PR #34 merged; Task 20/20.1 and Task 21.1 present. Initial tree clean, branch `feature/u5p-banking-architecture-contract` created here. U2 PR #35 is not in this accepted base. |
+| `taodo/Data-QA-lab`, fetched `origin/feature/develop` | `8b5e6336ff1123dbf2e447114b7a47d815cc8bef` | U5-P PR #36 merge `fecd1671101c846fb6cd99d6c746925b9988b848`, C1 and U2 PR #35 are present. Amendment branch `feature/u5p-contract-amendment` starts here; U2 behavior is preserved. |
 | `taodo/MiniBanking`, remote `feature/develop` | `7a77ec579d7ff0edf2299d3755155573fee1ec15` | B1 PR #19 merged at this SHA; its base is the Task 9 merge below. Read through GitHub at this exact SHA; no domain checkout/fetch/modification. |
 | MiniBanking Task 9 / PR #18 | merge `afc759817ba9756ea9f72a54cfebc661b29abb65`, source `ef6ab1ec6bf1d85eba6e36babc6527732a6265f3` | GitHub metadata independently confirms merged, 2026-10-12 08:50:39 UTC. |
 | MiniBanking B1 / PR #19 | source `07067bc69be15fc1663a2e1e8788d009ddab6878`, merge as above | GitHub confirms merged, 2026-10-12 10:14:25 UTC. Docs remain proposals, not implemented B2–B5. |
@@ -84,6 +92,27 @@ and stale-state risk without measured need); per-visitor containers (unmeasured
 operational overhead); private network/IP alone; shared HMAC authority that lets
 the verifier mint platform grants. Capacity evidence may justify later changes.
 
+### D1 implementation split and acceptance boundary
+
+| Slice | May implement after its own Issue and approval | Must remain absent / disabled | Acceptance before merge or activation |
+|---|---|---|---|
+| **B2 isolation foundation** | Durable bounded inventory; one fresh owned SQLite/app/engine/AuthService per context; lifecycle/fences; owned cleanup; durable domain admission receipts; a fail-closed grant-verifier **interface** | No internet listener, no platform trust by network location, no shared-HMAC production trust, no mTLS/JWS key custody, no public/live BFF traffic | Default verifier denies every request. Tests may inject a deterministic in-process authorizer that is marked test-only, accepts fixed fixtures only, is excluded from deploy configuration/build paths, and has negative tests for missing/foreign/stale scope, epoch, actor and authorization revision. Capability stays OFF. |
+| **B3 production trust** | Private TLS topology; mutual certificate authentication; strict ES256 JWS verification; issuer/audience/typ/alg allowlists; bounded replay identifiers; key/certificate provisioning, overlap rotation, revocation and operator response | No header-selected algorithm/key URL, no bearer-only service trust, no browser-visible credentials, no public dispatcher | Approved libraries and cross-repo vectors; certificate/signing-key custody; private TLS termination point; peer SAN/issuer policy; clock/replay/revocation tests; operator rotation and emergency-off runbook. |
+| **U5/U6 consumer** | Platform registry/intents and fixed BFF adapter against versioned fixtures while capability is OFF | No real bank dispatch until accepted producer and consumer security gates pass | Exact producer pin, contract vectors, session/CSRF/IDOR negatives and explicit pilot approval. |
+
+B2 may be merged independently only when its production default is deny-all,
+the test authorizer cannot be selected by deployed configuration, all private
+integration routes are unbound or capability-OFF outside tests, and its receipts
+do not claim financial commit. B3 is the first slice allowed to supply production
+service identity and grant verification. Even then, live traffic requires U5/U6
+consumer acceptance and a separate pilot decision.
+
+Network-only trust is rejected because any reachable peer could select a context
+or actor. A shared HMAC is rejected for public use because every verifier holding
+the shared secret can also mint grants, weakening separation, rotation and audit.
+The approved direction is asymmetric signing plus independently authenticated
+transport, using reviewed libraries rather than homemade cryptography.
+
 ```mermaid
 flowchart LR
   Browser[Untrusted learner browser] --> Platform[Platform cookie auth + origin/CSRF]
@@ -105,12 +134,13 @@ browsers with one demo username cannot list, status-check, read, transfer, retry
 retrieve evidence or resume each other's contexts. Account quotas are budgets,
 not permission to share state. Anonymous visitors get recorded/read-only content.
 
-Named accounts initially remain session-bound. PROPOSED optional explicit rebind:
-recent platform reauthentication (PROPOSED window5min if enabled), same named account, old binding revoked and
-domain authorization-revision acknowledgement, then atomic binding transfer.
-Keep original context/epoch and frozen actor/key/body, including UNKNOWN. No
-username match, automatic rebind on login, parallel mutable binding or new-context
-recovery. Product/security approval is required before enabling this option.
+Named-account rebind/resume is **disabled for MVP**, including recent-login and
+same-account cases. A later contract may propose an atomic rebind only after a
+separate product/security approval, domain authorization-revision acknowledgement
+and recovery threat review. Until then, keep original context/epoch and frozen
+actor/key/body, including UNKNOWN, in a server-side hold unavailable to another
+browser session. No username match, automatic rebind, parallel mutable binding or
+new-context recovery.
 
 Every read/write/status/history/retry/evidence operation checks current session,
 binding, context state and actor scope; foreign IDs return non-enumerating 404.
@@ -175,6 +205,39 @@ Both reserve atomically before expensive work, including provisioning failures.
 | Resolved context / intent retention | >=7 days after closure/settlement | Keep original keys/replay scope through every allowed retry; deletion needs no unresolved/referenced obligation. |
 | Sanitized evidence/audit retention | 30 days | Bounded pilot diagnosis; later learner progress may require longer retained evidence, a separate D7 decision. |
 | UNKNOWN retention | No automatic TTL deletion; review alert at24h | Hold until conclusive reconciliation and approved disposition; global storage/inventory caps stop new work if needed. |
+
+### D4 enforcement ownership and phase matrix
+
+Every value above is retained. This table assigns enforcement responsibility;
+it does not convert a proposal into measured capacity or release approval.
+
+| Proposed limit | Enforcement owner | Earliest phase | Exhaustion semantics | Verification / approval gate |
+|---|---|---|---|---|
+| 1 active/session; 3/user | Platform registry/BFF | U5 | Atomic reservation; caller budget returns429 before allocation; no eviction | Two-session/shared-user races; platform product/operations approval |
+| 20 active/global | MiniBanking inventory is physical authority; platform mirrors admission | B2 essential + U5 | Reserve before provision;503 and alert at capacity; provisioning/draining count | Concurrent reservation/crash recovery; joint operations approval |
+| 100 inventory including holds | MiniBanking inventory | B2 essential | Stop new allocations; preserve UNKNOWN/retained entries; never delete to make room | Restart/rebuild inventory, full-capacity hold test, operator runbook |
+| Creation1/session/5min,2/user/10min,6/global/min | Session/user: platform; global physical admission: domain | U5 + B2 |429 for scoped budget,503 for global; failed attempts count | Clock-window/race tests; pilot policy approval |
+| Provision workers2, queue4, wait2s, deadline30s | MiniBanking dispatcher | B2 essential | Reject/track before expensive work; timed-out intent remains queryable | PBKDF2/partial-init/crash tests; B5 later measures values |
+| Requests4/context,16/global;1 write/context | MiniBanking dispatcher, with BFF pre-budget | B2 essential + U5 | Bounded queue/reject before admission; duplicate submit coalesces | Same-key concurrency and writer-admission receipt tests |
+| Queue2/context,32/global, wait200ms | MiniBanking dispatcher | B2 essential |503 before admission; if admission is uncertain preserve UNKNOWN | Saturation and cancellation tests; B5 measurement |
+|30 requests/session/min;6 submits/session/min | Platform BFF | U5 |429 before dispatch; status/reconcile remains bounded but available | Per-session isolation and bypass tests |
+|3 attempts/intent/5min;10 lifetime | Platform operation registry | U5 | No automatic retry; retain intent and allow read-only recovery/operator hold | Restart/lost-response tests; recovery-owner approval |
+| Idle30min; absolute4h | Domain lifecycle inventory is authoritative; platform reflects state | B2 essential + U5 | Stop new admission, drain then retain/hold; reads do not renew indefinitely | Boundary-time/drain/restart tests; pilot TTL approval |
+|16MiB/context DB+WAL+sidecars;2GiB domain total | MiniBanking storage/inventory | B2 essential | Reserve headroom; stop allocation/writes safely; UNKNOWN/full storage alerts, never eviction | WAL/sidecar/full-disk tests on disposable state; B5 measures |
+|100 intents,500 observations,2MiB evidence/context | Intent owner: platform; domain receipts: MiniBanking; sanitized evidence: platform | U5 + B2 receipt bound | Reject new intent/observation admission; mark collection INCOMPLETE; retain referenced records | Reference-preservation and exact export tests; privacy/retention approval |
+|10000 operations/64MiB platform registry | Platform PostgreSQL/operations | U5 | Fail closed before new dispatch; referenced/UNKNOWN records never truncated/evicted | Transactional quota/restart tests; existing demo caps may be lower |
+|16KiB request;256KiB response;100 accounts; history1–100/offset0–10000 | BFF validates browser/domain envelopes; domain enforces private ingress and existing history bounds | B3 + U6; history bound already domain-implemented | Reject before forwarding when possible; oversize/extra data is CONTRACT error, no truncation | Producer/consumer boundary vectors and malformed payload tests |
+| connect2s/read5s/total8s; SQLite wait1000ms | BFF transport; domain keeps SQLite setting | B3/U6; SQLite fact exists | Pre-admission timeout is NOT_SUBMITTED; possible admission is UNKNOWN | Timed loss at each receipt boundary; B5 network measurement |
+| Actor token300s,8/context,2 login attempts/actor/min | MiniBanking auth/runtime; BFF single-flight cache | B2 token scope + B3 controls | No actor substitution; bounded reauth; preserve UNKNOWN | Expiry/restart/revocation/capacity tests; security approval |
+| Grant30s, skew5s,4096 bytes | B3 verifier and U5 signer | B3 + U5 | Fail closed before routing; no fallback grant | Shared signed vectors, clock/replay/rotation negatives |
+| Drain15s | MiniBanking lifecycle | B2 essential | Deadline causes RECOVERY_HOLD unless writers are actually drained | In-flight writer/restart/Windows handle tests; B5 measures |
+| Resolved retention>=7d; evidence/audit30d; UNKNOWN alert24h/no auto-delete | Domain retains context/receipts; platform retains intent/evidence; operations owns disposition | B2/U5 policy; B5 operational gate | Full capacity stops admission and alerts; no deletion until both owners clear references/holds | Privacy/legal decision, reconciliation authority and non-destructive cleanup runbook |
+
+The operator runbook is a dependency, not a substitute for enforcement. It must
+name alert routing, inventory reconciliation, storage reservation, retained-data
+exclusions, dual-owner disposition, Windows/container handle closure and recovery
+when either registry is unavailable. Cleanup never touches existing Data QA
+PostgreSQL data or non-manager MiniBanking SQLite files.
 
 Persist browser `client_intent_id` before acceptance in session-namespaced local
 storage; persist its immutable mapping server-side before any upstream submit.
