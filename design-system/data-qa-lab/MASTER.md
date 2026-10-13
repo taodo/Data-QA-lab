@@ -121,6 +121,12 @@ imports, testimonials, pricing or certifications from generated suggestions.
 
 ## Verification
 
+U2 inherits this system unchanged for `/`, `/learn/data`, `/learn/banking` and
+`/learn/automation`. Shared track navigation reuses the shell, semantic tokens,
+44px controls, persisted themes/languages and responsive spacing. Decorative
+local SVGs distinguish tracks; no new palette, font, header or animation system.
+Banking stays Planned; Automation reuses Task 21.1. See docs/TASK_U2_PROGRESS.md.
+
 See docs/TASK_20_PROGRESS.md for current commands/results and screenshots;
 TASK_18_PROGRESS.md records the earlier accepted discovery pass.
 Accessibility checks are focused behavior/contrast/layout checks, not a claim of

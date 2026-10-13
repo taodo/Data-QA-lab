@@ -2,6 +2,29 @@
    Palette lives exclusively in theme.css; discovery does not override it. */
 body,.platform,.discovery {background:var(--page);color:var(--ink);min-height:100vh}
 * {box-sizing:border-box}
+.platform .learning-track-nav {display:flex;flex-wrap:wrap;gap:8px;max-width:var(--content-width);margin:0 auto;padding:0 32px 16px}
+.platform .learning-track-nav a {display:inline-flex;align-items:center;min-height:44px;padding:8px 12px;border-radius:var(--radius-control);color:var(--muted);font-size:var(--text-meta)}
+.platform .learning-track-nav a:hover,.platform .learning-track-nav a[aria-current=page] {background:var(--soft);color:var(--brand)}
+.platform .learning-track-nav a[aria-current=page] {text-decoration:underline;text-underline-offset:5px;font-weight:600}
+.platform .unified-hero {max-width:900px;margin-bottom:40px}
+.platform .unified-hero h1 {font-size:clamp(2.25rem,5vw,3.75rem);line-height:1.12;margin:0 0 20px}
+.platform .unified-hero>p:last-child {font-size:1.125rem;max-width:70ch;color:var(--muted)}
+.platform .learning-track-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.platform .learning-track-card {display:flex;flex-direction:column;min-width:0;padding:0;margin-bottom:0}
+.platform .track-artwork {color:var(--brand);background:var(--surface-raised);border-radius:var(--radius) var(--radius) 0 0;aspect-ratio:420/190;width:100%;max-width:480px}
+.platform .track-artwork svg {display:block;width:100%;height:100%}
+.platform .track-artwork-banking {color:var(--accent)}
+.platform .learning-track-body {display:flex;flex-direction:column;align-items:flex-start;flex:1;padding:24px}
+.platform .learning-track-body h3 {font-size:1.375rem;margin:16px 0 12px}
+.platform .learning-track-body p {font-size:1rem;margin:0 0 16px}
+.platform .learning-track-body :is(.muted,.track-facts) {font-size:var(--text-meta);color:var(--muted)}
+.platform .track-primary-action {margin-top:auto;display:inline-flex;align-items:center;align-self:stretch;min-height:44px;line-height:1.5}
+.platform .learning-approach {margin-top:32px}
+.platform .data-track-courses {margin-top:40px}
+.platform .planned-track-feature h2 {margin-top:16px}
+.platform :is(.banking-track,.automation-track)>.course-detail-hero {margin-bottom:24px}
+@media(max-width:1000px){.platform .learning-track-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.platform .learning-track-grid{grid-template-columns:minmax(0,1fr)}.platform .learning-track-nav{padding:0 16px 12px}.platform .learning-track-body{padding:20px}.platform .unified-hero{margin-bottom:28px}}
 .platform .tutorial-player {max-width:900px;margin:0 auto;min-width:0}
 .platform .tutorial-player h1 {font-size:clamp(1.8rem,4vw,2.8rem)}
 .platform .tutorial-toc {display:flex;flex-wrap:wrap;gap:12px;margin:24px 0}

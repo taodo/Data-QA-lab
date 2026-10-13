@@ -51,10 +51,14 @@ Task 19 is merged as PR #29 at 9e47ede with opt-in public shared demo identities
 Coming Soon registration and explicit login autofill. See TASK_19_PROGRESS.md and
 TASK_19_DEPLOYMENT.md for retained policies.
 Task 20 is merged as PR #30; Task 20.1 is merged as PR #32 at 72ea6d9.
-Active approved task: Task 21.1 on feature/task-21-1-automation-course-foundation.
-Hybrid Learning automation tutorial foundation: 10 modules, 30 ordered metadata
-entries, only M01.L01 authored and available in ENG/VIE. Source manifest, additive
-public catalog/tutorial API and dedicated renderer; no code execution, LLM calls,
-automatic grading or tutorial progress persistence. Existing nine executable
-courses/36 labs and public demo policies preserved. See TASK_21_1_PROGRESS.md.
-No merge, deployment or Task 21.2 without independent review and approval.
+Task 21.1 is merged through PR #33 at e4274a4, providing the Hybrid Learning
+foundation: 10 modules, 30 metadata entries, one ENG/VIE introductory tutorial.
+No tutorial grading or progress persistence; see TASK_21_1_PROGRESS.md.
+U1 architecture/integration blueprint is merged through PR #34 at
+37734f528d9afec26d2c155c60b00af2ab1d67a4.
+Active approved task: U2 on feature/u2-unified-learning-tracks. Review-ready
+unified homepage plus /learn/data, /learn/banking and /learn/automation reuse
+existing courses and tutorial presentation. Banking is informational/Planned;
+independent Automation framework integration remains future work. See
+TASK_U2_PROGRESS.md and UNIFIED_PLATFORM_ROADMAP.md. U3–U10 remain proposed.
+No merge, deployment, database/domain-repository changes or next task.

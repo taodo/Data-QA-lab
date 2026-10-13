@@ -17,17 +17,19 @@ Task 12 is merged as PR #14 at b0863f8798c8bba2c0ed0f8fc5d37c5e1e158fab; demo pr
 Task 19 is merged as PR #29 at 9e47ede. Its public shared-account disclosure,
 explicit-login autofill, Coming Soon signup and restrictions remain mandatory.
 Task 20 is merged as PR #30; Task 20.1 header polish is merged as PR #32
-at 72ea6d9. Active approved scope: Task 21.1 Automation Course Foundation on
-feature/task-21-1-automation-course-foundation. See docs/TASK_21_1_PROGRESS.md.
-Add source-controlled ENG/VIE tutorial curriculum for ai-test-automation (10 modules,
-30 metadata lessons, only m01-l01 available), additive public APIs and a dedicated
-public tutorial renderer. Tutorials are separate from executable_lab courses,
-sessions and grading. No code runner, LLM calls/credentials, progress persistence,
-new dependencies or migrations. Preserve 36 executable labs, Task 19 policies,
-accounts/history and public demo data/configuration. Use existing semantic themes
-and design-system MASTER.md. Keep tooling/artifacts/caches on D. Focused unit/API/
-browser/build checks and final-head CI; no repeated full local suite. No merge,
-deploy, public tunnel or Task 21.2 without user instruction.
+at 72ea6d9. Task 21.1 is merged through PR #33 at e4274a4; U1 is merged
+through PR #34 at 37734f5. Active approved scope: U2 Unified Learning Tracks on
+feature/u2-unified-learning-tracks; see docs/TASK_U2_PROGRESS.md and the four
+UNIFIED_PLATFORM architecture/contract/roadmap/test documents. Reuse the shared
+Task 20/20.1 shell/tokens and existing Data QA courses and Task 21.1 tutorials.
+Banking remains bilingual informational/Planned, with no banking calls/state.
+Automation uses existing platform course APIs; independent framework integration
+remains future work. Backend changes are limited to exact SPA route allowlisting.
+Preserve nine executable courses/36 labs, tutorial contracts, auth, Task 19 policies,
+accounts/history and public demo data/configuration. No dependencies, migrations,
+execution services, domain repository changes or deployment. Keep artifacts/cache
+on D. Focused browser/catalog/SPA tests and frontend build; final-head CI covers
+full regression. No merge, deploy, public tunnel or U3 without user instruction.
 
 Before SQL workspace implementation, design database read-only permissions, allowlisted lab schemas, row/time limits and cancellation. Do not rely on SQL text filtering alone.
 
