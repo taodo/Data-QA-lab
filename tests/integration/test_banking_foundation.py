@@ -192,3 +192,69 @@ class BankingFoundationPostgresTests(unittest.TestCase):
                 "WHERE context_id=%s AND status='PENDING'",
                 (UUID(ctx["context_id"]),)).fetchone()[0],1)
             self.assertEqual(bf.fence_orphaned_bindings(tx),0)
+
+    def test_f2_allocation_quota_session_and_user_windows(self):
+        # All rows are disposable. Retained contexts still consume per-user quota.
+        first_intent=uuid4()
+        with transaction(self.db) as tx:
+            result=bf.reserve_context(tx,self.principal_a,first_intent)
+            self.assertEqual(bf.reserve_context(tx,self.principal_a,first_intent)
+                             ["context_id"],result["context_id"])
+            tx.execute("UPDATE metadata.banking_contexts SET state='RETAINED' WHERE context_id=%s",
+                       (UUID(result["context_id"]),))
+            with self.assertRaisesRegex(bf.BankingDenied,"Allocation rate"):
+                bf.reserve_context(tx,self.principal_a,uuid4())
+        # Another authenticated session for same user remains separately bound.
+        second=TestClient(create_app(self.db))
+        self.assertEqual(second.post("/api/auth/login",json={
+            "username":self.user["username"],"password":PASSWORD
+        },headers={"X-DQA-Intent":"1"}).status_code,200)
+        p2={"user_id":self.user["user_id"],
+            "token_hash":accounts.token_hash(second.cookies.get(accounts.COOKIE))}
+        with transaction(self.db) as tx:
+            result=bf.reserve_context(tx,p2,uuid4())
+            tx.execute("UPDATE metadata.banking_contexts SET state='RETAINED' WHERE context_id=%s",
+                       (UUID(result["context_id"]),))
+        # Per-user / 10-minute window rejects third allocation even with new session.
+        third=TestClient(create_app(self.db))
+        self.assertEqual(third.post("/api/auth/login",json={
+            "username":self.user["username"],"password":PASSWORD
+        },headers={"X-DQA-Intent":"1"}).status_code,200)
+        p3={"user_id":self.user["user_id"],
+            "token_hash":accounts.token_hash(third.cookies.get(accounts.COOKIE))}
+        with transaction(self.db) as tx:
+            with self.assertRaisesRegex(bf.BankingDenied,"Allocation rate"):
+                bf.reserve_context(tx,p3,uuid4())
+            self.assertEqual(tx.execute(
+                "SELECT count(*) FROM metadata.banking_contexts c "
+                "JOIN metadata.banking_bindings b USING(binding_ref) WHERE b.user_id=%s",
+                (self.user["user_id"],)).fetchone()[0],2)
+
+    def test_f2_submit_rate_limit_does_not_mutate_unknown(self):
+        with transaction(self.db) as tx:
+            ctx=bf.reserve_context(tx,self.principal_a,uuid4())
+            bf.attach_private_context(tx,self.principal_a,UUID(ctx["context_id"]),
+                                      context_ref="a"*32,epoch="b"*32,revision=1,
+                                      authorized_actors=("alice",))
+            ops=[]
+            for n in range(7):
+                op=bf.accept_intent(tx,self.principal_a,
+                    context_id=UUID(ctx["context_id"]),client_intent_id=uuid4(),
+                    actor="alice",from_account="A",to_account="B",amount=str(n+1))
+                ops.append(UUID(op["operation_id"]))
+            for op in ops[:6]:
+                self.assertTrue(bf.submit_intent(tx,self.principal_a,
+                              operation_id=op)["created"])
+            bf.mark_uncertain(tx,self.principal_a,operation_id=ops[0])
+            with self.assertRaisesRegex(bf.BankingDenied,"Submit rate"):
+                bf.submit_intent(tx,self.principal_a,operation_id=ops[6])
+        with transaction(self.db) as tx:
+            self.assertEqual(tx.execute(
+                "SELECT phase FROM metadata.banking_operations WHERE operation_id=%s",
+                (ops[0],)).fetchone()[0],"UNKNOWN")
+            self.assertEqual(tx.execute(
+                "SELECT phase FROM metadata.banking_operations WHERE operation_id=%s",
+                (ops[6],)).fetchone()[0],"ACCEPTED")
+            self.assertEqual(tx.execute(
+                "SELECT count(*) FROM metadata.banking_attempts WHERE operation_id=ANY(%s)",
+                (ops,)).fetchone()[0],6)
