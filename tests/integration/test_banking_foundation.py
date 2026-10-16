@@ -5,6 +5,7 @@ never touches the learner/demo DB; no private bank network or signer calls.
 """
 import os
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from uuid import UUID, uuid4
 
 from fastapi.testclient import TestClient
@@ -265,3 +266,28 @@ class BankingFoundationPostgresTests(unittest.TestCase):
             self.assertEqual(tx.execute(
                 "SELECT count(*) FROM metadata.banking_attempts WHERE operation_id=ANY(%s)",
                 (ops,)).fetchone()[0],6)
+
+    def test_f2_global_rate_is_atomic_across_concurrent_sessions(self):
+        # Seven independent authenticated users race to allocate: exactly six
+        # succeed in the same one-minute PG window. No quota eviction/SQL race.
+        principals=[self.principal_a]
+        for _ in range(6):
+            client,user=signed_client(self.db)
+            principals.append({"user_id":user["user_id"],
+                 "token_hash":accounts.token_hash(client.cookies.get(accounts.COOKIE))})
+
+        def attempt(principal):
+            try:
+                with transaction(self.db) as tx:
+                    bf.reserve_context(tx,principal,uuid4())
+                return "SUCCESS"
+            except bf.BankingDenied:
+                return "LIMITED"
+
+        with ThreadPoolExecutor(max_workers=7) as pool:
+            outcomes=list(pool.map(attempt,principals))
+        self.assertEqual(outcomes.count("SUCCESS"),6,outcomes)
+        self.assertEqual(outcomes.count("LIMITED"),1,outcomes)
+        with transaction(self.db) as tx:
+            self.assertEqual(tx.execute(
+                "SELECT COUNT(*) FROM metadata.banking_contexts").fetchone()[0],6)
