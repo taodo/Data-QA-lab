@@ -64,7 +64,8 @@ class BankingFoundationPostgresTests(unittest.TestCase):
         with transaction(self.db) as tx:
             with self.assertRaises(bf.BankingDenied):
                 bf.binding_for_session(tx,self.principal_a)
-            bf.fence_session(tx,self.session_a)
+            # accounts.logout must already have atomically queued the
+            # revocation before deleting its session row.
             held=tx.execute("SELECT state FROM metadata.banking_contexts WHERE context_id=%s",
                             (UUID(a["context_id"]),)).fetchone()[0]
             self.assertEqual(held,"RECOVERY_HOLD")
@@ -157,3 +158,30 @@ class BankingFoundationPostgresTests(unittest.TestCase):
                 bf.accept_intent(tx,self.principal_a,context_id=UUID(ctx["context_id"]),
                                  client_intent_id=uuid4(),actor="alice",
                                  from_account="A",to_account="B",amount="1")
+            with self.assertRaises(bf.BankingDenied):
+                bf.reserve_context(tx,self.principal_a,uuid4())
+
+
+    def test_session_expiry_sweep_queues_revocation_without_deleting_unknown(self):
+        with transaction(self.db) as tx:
+            ctx=bf.reserve_context(tx,self.principal_a,uuid4())
+            bf.attach_private_context(tx,self.principal_a,UUID(ctx["context_id"]),
+                                      context_ref="a"*32,epoch="b"*32,revision=1)
+            accepted=bf.accept_intent(tx,self.principal_a,
+                      context_id=UUID(ctx["context_id"]),client_intent_id=uuid4(),
+                      actor="alice",from_account="A",to_account="B",amount="1")
+            bf.submit_intent(tx,self.principal_a,
+                             operation_id=UUID(accepted["operation_id"]))
+        with transaction(self.db) as tx:
+            tx.execute("UPDATE metadata.account_sessions SET expires_at=NOW()-interval '1 second'"
+                       " WHERE token_hash=%s",(self.session_a,))
+            self.assertGreaterEqual(bf.fence_orphaned_bindings(tx),1)
+        with transaction(self.db) as tx:
+            self.assertEqual(tx.execute(
+                "SELECT phase,outcome FROM metadata.banking_operations WHERE operation_id=%s",
+                (UUID(accepted["operation_id"]),)).fetchone(),("UNKNOWN","INCONCLUSIVE"))
+            self.assertEqual(tx.execute(
+                "SELECT count(*) FROM metadata.banking_revocation_outbox "
+                "WHERE context_id=%s AND status='PENDING'",
+                (UUID(ctx["context_id"]),)).fetchone()[0],1)
+            self.assertEqual(bf.fence_orphaned_bindings(tx),0)
