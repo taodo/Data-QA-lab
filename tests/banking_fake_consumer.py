@@ -63,7 +63,7 @@ def interpret_producer(outer: int | None, envelope: dict | None, *,
         if envelope is not None:
             raise BankingDenied("Untrusted response without HTTP status")
         return "UNKNOWN",previous if previous=="MATCHING_COMMIT" else "INCONCLUSIVE"
-    if outer in (202,401,403,422,429,500,503,504):
+    if outer in (202,400,401,403,409,422,429,500,503,504):
         # A subsequent HTTP error must never erase previous UNKNOWN/commit.
         return "UNKNOWN",previous if previous=="MATCHING_COMMIT" else "INCONCLUSIVE"
     if outer != 200:
