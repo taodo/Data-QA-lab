@@ -125,6 +125,50 @@ def binding_for_session(connection, principal: dict) -> str:
     return binding
 
 
+# Serialize quota decisions across sessions and users within one PG database.
+# Counts are scoped to retained rows; no UNKNOWN or held record is evicted.
+_ALLOCATION_LOCK = 62047001
+_SUBMIT_LOCK = 62047002
+
+
+def _quota_lock(connection, key: int) -> None:
+    connection.execute("SELECT pg_advisory_xact_lock(%s)", (key,))
+
+
+def _allocation_budgets(connection, owner, binding: str) -> None:
+    _quota_lock(connection, _ALLOCATION_LOCK)
+    counts = connection.execute(
+        """SELECT
+             COUNT(*) FILTER (WHERE b.user_id=%s),
+             COUNT(*),
+             COUNT(*) FILTER (WHERE c.created_at > NOW()-INTERVAL '1 minute'),
+             COUNT(*) FILTER (WHERE b.user_id=%s AND c.created_at>NOW()-INTERVAL '10 minutes'),
+             COUNT(*) FILTER (WHERE c.binding_ref=%s AND c.created_at>NOW()-INTERVAL '5 minutes')
+           FROM metadata.banking_contexts c
+           JOIN metadata.banking_bindings b ON b.binding_ref=c.binding_ref""",
+        (owner, owner, binding)).fetchone()
+    user_total, global_total, global_minute, user_ten, session_five = counts
+    if user_total >= 3 or global_total >= 100:
+        raise BankingDenied("Retained context capacity; held contexts cannot be evicted")
+    if global_minute >= 6 or user_ten >= 2 or session_five >= 1:
+        raise BankingDenied("Allocation rate limit")
+
+
+def _submit_budgets(connection, binding: str) -> None:
+    _quota_lock(connection, _SUBMIT_LOCK)
+    # Sliding-window values are persisted in submitted_at / immutable attempt
+    # records. No automatic retry and no deletion of UNKNOWN to recover capacity.
+    counts = connection.execute(
+        """SELECT
+          COUNT(*) FILTER (WHERE submitted_at>NOW()-INTERVAL '1 minute'),
+          COUNT(*) FILTER (WHERE submitted_at>NOW()-INTERVAL '5 minutes'),
+          COUNT(*)
+          FROM metadata.banking_operations WHERE binding_ref=%s""",
+        (binding,)).fetchone()
+    if counts[0] >= 6 or counts[1] >= 10 or counts[2] > 100:
+        raise BankingDenied("Submit rate or retained intent capacity")
+
+
 def reserve_context(connection, principal: dict, allocation_intent_id: UUID) -> dict:
     if type(allocation_intent_id) is not UUID:
         raise BankingDenied("Invalid allocation intent")
@@ -144,6 +188,8 @@ def reserve_context(connection, principal: dict, allocation_intent_id: UUID) -> 
         raise BankingDenied("Context retention budget reached")
     if row[1]:
         raise BankingDenied("One live context per session")
+    owner = _session(connection, principal)
+    _allocation_budgets(connection, owner, binding)
     context_id = uuid4()
     connection.execute(
         """INSERT INTO metadata.banking_contexts
@@ -248,6 +294,7 @@ def submit_intent(connection, principal: dict, *, operation_id: UUID) -> dict:
         raise BankingDenied("Foreign operation")
     if row[0] != "ACCEPTED":
         return {"operation_id":str(operation_id),"phase":row[0],"created":False}
+    _submit_budgets(connection, binding)
     connection.execute(
         """UPDATE metadata.banking_operations
            SET phase='SUBMITTING',submitted_at=NOW()
