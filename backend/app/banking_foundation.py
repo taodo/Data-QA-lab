@@ -272,6 +272,18 @@ def fence_session(connection, session_hash: str) -> None:
            WHERE session_hash=%s AND state='ACTIVE' RETURNING binding_ref""",
         (session_hash,)).fetchall()
     for (binding,) in rows:
+        # A persisted submit may have reached the private producer even if
+        # logout/expiry interrupts its response. Never settle it as failed.
+        connection.execute(
+            """UPDATE metadata.banking_operations
+               SET phase='UNKNOWN',outcome='INCONCLUSIVE'
+               WHERE binding_ref=%s AND phase='SUBMITTING'""",(binding,))
+        connection.execute(
+            """UPDATE metadata.banking_attempts SET state='UNKNOWN'
+               WHERE operation_id IN
+                 (SELECT operation_id FROM metadata.banking_operations
+                  WHERE binding_ref=%s AND phase='UNKNOWN')
+                 AND state='SUBMITTING'""",(binding,))
         contexts=connection.execute(
             """SELECT context_id FROM metadata.banking_contexts
                WHERE binding_ref=%s AND state IN ('RESERVED','ACTIVE','DRAINING','RECOVERY_HOLD')""",
@@ -285,3 +297,26 @@ def fence_session(connection, session_hash: str) -> None:
             """UPDATE metadata.banking_contexts SET state='RECOVERY_HOLD'
                WHERE binding_ref=%s AND state IN ('RESERVED','ACTIVE','DRAINING')""",
             (binding,))
+
+
+
+def fence_orphaned_bindings(connection) -> int:
+    """Operator-only/scheduled maintenance for expired or deleted sessions.
+
+    No network, deletion or operator key use. Must run periodically before
+    revocation delivery is considered fresh; foundation alone has no scheduler.
+    """
+    rows=connection.execute(
+        """SELECT b.session_hash FROM metadata.banking_bindings b
+           LEFT JOIN metadata.account_sessions s
+             ON s.token_hash=b.session_hash
+           LEFT JOIN metadata.accounts a ON a.user_id=b.user_id
+           LEFT JOIN metadata.public_demo_accounts p ON p.user_id=b.user_id
+           WHERE b.state='ACTIVE' AND
+             (s.token_hash IS NULL OR s.expires_at<=NOW() OR NOT a.active
+              OR (p.user_id IS NOT NULL AND NOT p.enabled))
+           ORDER BY b.created_at,b.binding_ref
+           FOR UPDATE OF b""").fetchall()
+    for (session_hash,) in rows:
+        fence_session(connection,session_hash)
+    return len(rows)
