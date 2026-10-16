@@ -27,6 +27,21 @@ class BankingFoundationContractTests(unittest.TestCase):
         self.assertEqual(wire,json.dumps(B3,sort_keys=True,separators=(",",":"),
                                          ensure_ascii=True,allow_nan=False))
 
+    def test_accepted_domain_source_vectors_not_mislabelled_runtime_proven(self):
+        fixture=json.loads((Path(__file__).resolve().parents[1] /
+                            "fixtures/banking_b3_producer_v1.json").read_text())
+        self.assertEqual(fixture["version"],"BIC-1.1-candidate")
+        self.assertEqual(fixture["sha256"],B3_DIGEST)
+        self.assertEqual(fixture["canonical_json"],f.canonical_request(B3)[0])
+        self.assertEqual(fixture["dispatch_claims"]["request_digest"],B3_DIGEST)
+        self.assertEqual(fixture["operation_contract"]["actor_token_endpoint"],
+                         "NOT_PRESENT_DOMAIN_INTERNAL_ONLY")
+        self.assertEqual(fixture["operation_contract"]["capability"],"OFF")
+        self.assertEqual(fixture["control_claims"]["allocate"]["fixture_id"],"synthetic-abc-v1")
+        self.assertEqual(fixture["jws_profile"]["grant_max_bytes"],4096)
+        self.assertEqual(fixture["jws_profile"]["ttl_max_seconds"],30)
+        self.assertNotIn("private_key",fixture)
+
     def test_decimal_string_exact_s64(self):
         for value in ("1",str(2**53-1),str(2**53+1),str(2**63-1)):
             self.assertEqual(f.money_to_domain(value),int(value))
