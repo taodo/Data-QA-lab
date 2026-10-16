@@ -1,0 +1,39 @@
+# Issue #49 — isolated local Data QA Lab verification. NOT the public demo.
+# Run ONLY from the separate D:\Data-QA-Lab-U5-Local worktree.
+# DO NOT combine with docker-compose.yml or docker-compose.demo.yml.
+services:
+  app:
+    build: .
+    environment:
+      DATA_QA_DATABASE_HOST: postgres
+      POSTGRES_DB: dqa_u5_local
+      POSTGRES_USER: dqa_u5_local
+      POSTGRES_PASSWORD: ${U5_LOCAL_DB_PASSWORD:?Set U5_LOCAL_DB_PASSWORD in ignored .env.release49}
+    ports:
+      - "127.0.0.1:18080:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 5s
+      timeout: 4s
+      retries: 20
+      start_period: 30s
+    restart: unless-stopped
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: dqa_u5_local
+      POSTGRES_USER: dqa_u5_local
+      POSTGRES_PASSWORD: ${U5_LOCAL_DB_PASSWORD:?Set U5_LOCAL_DB_PASSWORD in ignored .env.release49}
+    volumes:
+      # Ignored by Git; separate from both ./data/postgres and public demo state.
+      - "./data/generated/release49/postgres:/var/lib/postgresql/data"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dqa_u5_local -d dqa_u5_local"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+# No PostgreSQL host port; no proxy, tunnel, or external Banking listener.
