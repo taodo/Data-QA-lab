@@ -135,10 +135,14 @@ def reserve_context(connection, principal: dict, allocation_intent_id: UUID) -> 
     if existing:
         return {"context_id":str(existing[0]),"state":existing[1],"created":False}
     row = connection.execute(
-        "SELECT COUNT(*) FROM metadata.banking_contexts WHERE binding_ref=%s",
+        """SELECT COUNT(*), COUNT(*) FILTER (
+             WHERE state IN ('RESERVED','ACTIVE','DRAINING','RECOVERY_HOLD'))
+           FROM metadata.banking_contexts WHERE binding_ref=%s""",
         (binding,)).fetchone()
     if row[0] >= 100:
         raise BankingDenied("Context retention budget reached")
+    if row[1]:
+        raise BankingDenied("One live context per session")
     context_id = uuid4()
     connection.execute(
         """INSERT INTO metadata.banking_contexts
