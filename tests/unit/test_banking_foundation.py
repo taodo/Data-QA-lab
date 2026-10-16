@@ -84,7 +84,7 @@ class FakeProducerContractTests(unittest.TestCase):
         from tests.banking_fake_consumer import FakeU5Consumer
         self.fixture=json.loads((Path(__file__).resolve().parents[1] /
                 "fixtures/banking_b3_producer_v1.json").read_text())
-        self.request=self.fixture["request"]
+        self.request={k:v for k,v in self.fixture["request"].items() if k!="digest"}
         self.claims=self.fixture["dispatch_claims"]
         self.header={"alg":"ES256","typ":"banking+jwt","kid":"current"}
 
