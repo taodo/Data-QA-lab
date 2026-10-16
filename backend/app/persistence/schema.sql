@@ -284,3 +284,90 @@ CREATE TABLE IF NOT EXISTS metadata.legacy_imports (
 
 ALTER TABLE metadata.course_enrollments DROP CONSTRAINT IF EXISTS course_enrollments_course_id_check;
 ALTER TABLE metadata.course_enrollments ADD CONSTRAINT course_enrollments_course_id_check CHECK (course_id IN ('sql-data-qa','etl-testing','api-testing','fabric-testing','adf-testing','onelake-testing','databricks-testing','synapse-testing','azure-testing'));
+
+
+-- U5-F: inert Banking platform metadata, no producer connection or BFF routes.
+-- Session reference is intentionally an opaque token_hash snapshot (not a FK):
+-- logout/expiry deletes account_sessions, but UNKNOWN/held evidence MUST survive.
+CREATE TABLE IF NOT EXISTS metadata.banking_bindings (
+    binding_ref TEXT PRIMARY KEY CHECK (binding_ref ~ '^[A-Za-z0-9_-]{32,128}$'),
+    session_hash TEXT NOT NULL UNIQUE CHECK (length(session_hash)=64),
+    user_id UUID NOT NULL REFERENCES metadata.accounts(user_id),
+    state TEXT NOT NULL DEFAULT 'ACTIVE' CHECK (state IN ('ACTIVE','FENCED','HELD')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS banking_bindings_owner_idx ON metadata.banking_bindings(user_id);
+
+CREATE TABLE IF NOT EXISTS metadata.banking_contexts (
+    context_id UUID PRIMARY KEY,
+    binding_ref TEXT NOT NULL REFERENCES metadata.banking_bindings(binding_ref),
+    allocation_intent_id UUID NOT NULL,
+    context_ref TEXT CHECK (context_ref IS NULL OR context_ref ~ '^[0-9a-f]{32}$'),
+    context_epoch TEXT CHECK (context_epoch IS NULL OR context_epoch ~ '^[0-9a-f]{32}$'),
+    authorization_revision BIGINT NOT NULL DEFAULT 1 CHECK (authorization_revision>0),
+    authorized_actors TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[] CHECK (cardinality(authorized_actors) BETWEEN 0 AND 8),
+    state TEXT NOT NULL CHECK (state IN ('RESERVED','ACTIVE','DRAINING','RECOVERY_HOLD','RETAINED')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(binding_ref,allocation_intent_id),
+    UNIQUE(binding_ref,context_id)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS banking_contexts_single_live
+  ON metadata.banking_contexts(binding_ref)
+  WHERE state IN ('RESERVED','ACTIVE','DRAINING','RECOVERY_HOLD');
+
+CREATE TABLE IF NOT EXISTS metadata.banking_operations (
+    operation_id UUID PRIMARY KEY,
+    binding_ref TEXT NOT NULL,
+    context_id UUID NOT NULL,
+    client_intent_id UUID NOT NULL,
+    actor_id TEXT NOT NULL CHECK (actor_id ~ '^[A-Za-z0-9._:-]{1,128}$'),
+    request_id TEXT NOT NULL CHECK (request_id ~ '^[A-Za-z0-9._:-]{1,128}$'),
+    idempotency_key TEXT NOT NULL CHECK (idempotency_key ~ '^[A-Za-z0-9._:-]{1,128}$'),
+    producer_context_ref TEXT NOT NULL CHECK (producer_context_ref ~ '^[0-9a-f]{32}$'),
+    producer_context_epoch TEXT NOT NULL CHECK (producer_context_epoch ~ '^[0-9a-f]{32}$'),
+    authorization_revision BIGINT NOT NULL CHECK (authorization_revision>0),
+    frozen_request JSONB NOT NULL,
+    request_digest TEXT NOT NULL CHECK (request_digest ~ '^[0-9a-f]{64}$'),
+    contract_version TEXT NOT NULL DEFAULT 'BIC-1.1-producer-baseline',
+    phase TEXT NOT NULL DEFAULT 'ACCEPTED' CHECK
+        (phase IN ('ACCEPTED','SUBMITTING','UNKNOWN','OBSERVED','HELD','REJECTED')),
+    outcome TEXT NOT NULL DEFAULT 'INCONCLUSIVE' CHECK
+        (outcome IN ('INCONCLUSIVE','MATCHING_COMMIT','NO_COMMIT_PROVEN')),
+    assessment TEXT NOT NULL DEFAULT 'NOT_ASSESSED' CHECK (assessment='NOT_ASSESSED'),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    submitted_at TIMESTAMPTZ,
+    UNIQUE(binding_ref,client_intent_id),
+    UNIQUE(binding_ref,operation_id),
+    UNIQUE(binding_ref,request_id),
+    FOREIGN KEY (binding_ref,context_id) REFERENCES metadata.banking_contexts(binding_ref,context_id)
+);
+CREATE INDEX IF NOT EXISTS banking_operations_pending
+  ON metadata.banking_operations(binding_ref,phase)
+  WHERE phase IN ('ACCEPTED','SUBMITTING','UNKNOWN','HELD');
+
+CREATE TABLE IF NOT EXISTS metadata.banking_attempts (
+    attempt_id UUID PRIMARY KEY,
+    operation_id UUID NOT NULL REFERENCES metadata.banking_operations(operation_id),
+    attempt_number INTEGER NOT NULL CHECK (attempt_number>0),
+    state TEXT NOT NULL CHECK (state IN ('SUBMITTING','UNKNOWN','RECONCILED')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(operation_id,attempt_number)
+);
+CREATE TABLE IF NOT EXISTS metadata.banking_observations (
+    observation_id UUID PRIMARY KEY,
+    operation_id UUID NOT NULL REFERENCES metadata.banking_operations(operation_id),
+    execution TEXT NOT NULL CHECK (execution IN ('NOT_RUN','OBSERVED','UNKNOWN')),
+    outcome TEXT NOT NULL CHECK (outcome IN ('INCONCLUSIVE','MATCHING_COMMIT','NO_COMMIT_PROVEN')),
+    completeness TEXT NOT NULL CHECK (length(completeness) BETWEEN 1 AND 80),
+    assessment TEXT NOT NULL DEFAULT 'NOT_ASSESSED' CHECK (assessment='NOT_ASSESSED'),
+    evidence JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS metadata.banking_revocation_outbox (
+    revocation_id UUID PRIMARY KEY,
+    binding_ref TEXT NOT NULL REFERENCES metadata.banking_bindings(binding_ref),
+    context_id UUID REFERENCES metadata.banking_contexts(context_id),
+    status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING','ACKNOWLEDGED','HELD')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    acknowledged_at TIMESTAMPTZ
+);

@@ -159,6 +159,10 @@ def set_cookie(response, token, request):
 
 def logout(db, user):
     with transaction(db) as connection:
+        # Session lifecycle fences Banking admissions before deleting the cookie
+        # record. Unknown banking receipts and revocation outbox survive logout.
+        from backend.app.banking_foundation import fence_session
+        fence_session(connection, user["token_hash"])
         connection.execute("DELETE FROM metadata.account_sessions WHERE token_hash=%s", (user["token_hash"],))
 
 
@@ -174,6 +178,12 @@ def change_password(db, user, old_password, new_password):
         except (VerificationError, InvalidHashError) as exc:
             raise HTTPException(401, "AUTH_INVALID") from exc
         connection.execute("UPDATE metadata.accounts SET password_hash=%s WHERE user_id=%s", (HASHER.hash(new_password), user["user_id"]))
+        from backend.app.banking_foundation import fence_session
+        previous = connection.execute(
+            "SELECT token_hash FROM metadata.account_sessions WHERE user_id=%s FOR UPDATE",
+            (user["user_id"],)).fetchall()
+        for (session_hash,) in previous:
+            fence_session(connection, session_hash)
         connection.execute("DELETE FROM metadata.account_sessions WHERE user_id=%s", (user["user_id"],))
         return _issue(connection, user)
 
@@ -185,6 +195,12 @@ def reset_password(db, name, new_password):
         row = connection.execute("UPDATE metadata.accounts SET password_hash=%s WHERE username=%s RETURNING user_id", (hashed, username(name))).fetchone()
         if not row:
             raise ValueError("Unknown local account")
+        from backend.app.banking_foundation import fence_session
+        previous = connection.execute(
+            "SELECT token_hash FROM metadata.account_sessions WHERE user_id=%s FOR UPDATE",
+            (row[0],)).fetchall()
+        for (session_hash,) in previous:
+            fence_session(connection, session_hash)
         connection.execute("DELETE FROM metadata.account_sessions WHERE user_id=%s", (row[0],))
         # Operator recovery keeps the deliberately public display in sync; never enables a disabled account.
         connection.execute("""UPDATE metadata.public_demo_accounts SET password=CASE WHEN enabled THEN %s ELSE NULL END,
