@@ -1,0 +1,164 @@
+{
+  "version": "BIC-1.1-candidate",
+  "vector_id": "b3-dispatch-001",
+  "request": {
+    "handle": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "epoch": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "actor": "alice",
+    "authorization_revision": 1,
+    "binding_ref": "session-1",
+    "request_id": "attempt-1",
+    "operation": "transfers.create",
+    "operation_id": "intent-1",
+    "payload": {
+      "from_account": "A",
+      "to_account": "B",
+      "amount": 1000
+    },
+    "key": "bank-key-1",
+    "recovery": false,
+    "digest": "c4cde604650d69a4d0496de434c22828efd17cb20a3fbf48e645fb5ac097cb5a"
+  },
+  "canonical_json": "{\"actor\":\"alice\",\"authorization_revision\":1,\"binding_ref\":\"session-1\",\"epoch\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"handle\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"key\":\"bank-key-1\",\"operation\":\"transfers.create\",\"operation_id\":\"intent-1\",\"payload\":{\"amount\":1000,\"from_account\":\"A\",\"to_account\":\"B\"},\"recovery\":false,\"request_id\":\"attempt-1\"}",
+  "sha256": "c4cde604650d69a4d0496de434c22828efd17cb20a3fbf48e645fb5ac097cb5a",
+  "jws_profile": {
+    "alg": "ES256",
+    "typ": "banking+jwt",
+    "protected_header_keys": [
+      "alg",
+      "kid",
+      "typ"
+    ],
+    "grant_max_bytes": 4096,
+    "ttl_max_seconds": 30,
+    "clock_skew_max_seconds": 5
+  },
+  "notes": "Synthetic vector only. No signed private-key material. B2 JSON sorted compact ensure_ascii=True is binding; U5 must verify exact bytes and proposed deltas before live integration.",
+  "profile_status": "B3_PRODUCER_CANDIDATE__U5_ACCEPTANCE_PENDING",
+  "request_canonicalization": {
+    "implementation": "backend.context_inventory.request_digest",
+    "encoding": "ASCII bytes / compact sorted JSON / ensure_ascii=True / allow_nan=False",
+    "sort_keys": true,
+    "separators": [
+      ",",
+      ":"
+    ],
+    "ensure_ascii": true,
+    "numeric_types": "strict signed64 integer for banking amounts (no booleans or floats)",
+    "scope": "all Request dataclass fields except digest, including operation_id/request_id/key and original frozen payload",
+    "note": "U5 must match these bytes and/or require a joint version bump; proposed UTF-8 and ensure_ascii are not silently equivalent for non-ASCII"
+  },
+  "dispatch_claims": {
+    "iss": "https://platform.example.invalid",
+    "aud": "minibanking-private",
+    "sub": "data-qa-lab-u5",
+    "service_id": "data-qa-lab-u5",
+    "jti": "jti-1",
+    "iat": 2000000000,
+    "nbf": 2000000000,
+    "exp": 2000000030,
+    "context_ref": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "context_epoch": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "actor_id": "alice",
+    "authorization_revision": 1,
+    "binding_ref": "session-1",
+    "scope": "dispatch",
+    "request_id": "attempt-1",
+    "request_digest": "c4cde604650d69a4d0496de434c22828efd17cb20a3fbf48e645fb5ac097cb5a",
+    "operation": "transfers.create",
+    "operation_id": "intent-1"
+  },
+  "control_claims": {
+    "allocate": {
+      "iss": "https://platform.example.invalid",
+      "aud": "minibanking-private",
+      "sub": "data-qa-lab-u5",
+      "service_id": "data-qa-lab-u5",
+      "jti": "allocate-1",
+      "iat": 2000000000,
+      "nbf": 2000000000,
+      "exp": 2000000030,
+      "scope": "allocate",
+      "binding_ref": "session-1",
+      "allocation_request_id": "allocation-1",
+      "fixture_id": "synthetic-abc-v1"
+    },
+    "revoke": {
+      "iss": "https://platform.example.invalid",
+      "aud": "minibanking-private",
+      "sub": "data-qa-lab-u5",
+      "service_id": "data-qa-lab-u5",
+      "jti": "revoke-1",
+      "iat": 2000000000,
+      "nbf": 2000000000,
+      "exp": 2000000030,
+      "scope": "revoke",
+      "binding_ref": "session-1",
+      "context_ref": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "context_epoch": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "authorization_revision": 1
+    }
+  },
+  "operation_contract": {
+    "private_prefix": "/internal/integrations/v1/banking",
+    "capability": "OFF",
+    "tls_identity": "platform service verified by client-cert trust chain + pinned SAN + clientAuth EKU + pinned SHA256 fingerprint",
+    "jws": {
+      "alg": "ES256",
+      "typ": "banking+jwt",
+      "kid": "current",
+      "untrusted_header_keys_forbidden": [
+        "jku",
+        "x5u",
+        "jwk",
+        "crit"
+      ]
+    },
+    "producer_methods": [
+      "GET /capabilities",
+      "POST /contexts",
+      "GET /contexts/{context_ref}",
+      "POST /contexts/{context_ref}/dispatch",
+      "POST /contexts/{context_ref}/observe-operation",
+      "POST /contexts/{context_ref}/drain",
+      "POST /contexts/{context_ref}/revoke"
+    ],
+    "allocation": {
+      "new_status": 201,
+      "identical_replay_status": 200,
+      "body_keys": [
+        "grant"
+      ],
+      "fixed_fixture_id": "synthetic-abc-v1"
+    },
+    "dispatch": {
+      "body_keys": [
+        "grant",
+        "request"
+      ],
+      "typed_request_fields": [
+        "handle",
+        "epoch",
+        "actor",
+        "authorization_revision",
+        "binding_ref",
+        "request_id",
+        "operation",
+        "operation_id",
+        "payload",
+        "key",
+        "recovery",
+        "digest"
+      ],
+      "response_receipt_not_assessment": true
+    },
+    "revoke": {
+      "signed_scope": "revoke",
+      "response": {
+        "revocation": "ACKNOWLEDGED"
+      }
+    },
+    "actor_token_endpoint": "NOT_PRESENT_DOMAIN_INTERNAL_ONLY",
+    "browser_money_boundary": "U5 canonical ASCII decimal string -> validated signed64 domain integer; never JavaScript Number"
+  }
+}
