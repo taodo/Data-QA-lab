@@ -78,3 +78,75 @@ class BankingFoundationContractTests(unittest.TestCase):
         self.assertFalse(any("/api/integrations/v1/banking" in p for p in paths))
         self.assertFalse(hasattr(f,"private_http_client"))
         self.assertFalse(hasattr(f,"sign_es256"))
+
+class FakeProducerContractTests(unittest.TestCase):
+    def setUp(self):
+        from tests.banking_fake_consumer import FakeU5Consumer
+        self.fixture=json.loads((Path(__file__).resolve().parents[1] /
+                "fixtures/banking_b3_producer_v1.json").read_text())
+        self.request=self.fixture["request"]
+        self.claims=self.fixture["dispatch_claims"]
+        self.header={"alg":"ES256","typ":"banking+jwt","kid":"current"}
+
+    def test_golden_claim_matrix_and_negative_identity(self):
+        from tests.banking_fake_consumer import check_fixture_grant
+        check_fixture_grant(self.header,self.claims,self.request)
+        for claim, wrong in (("iss","untrusted"),("aud","wrong"),("sub","wrong"),
+                             ("service_id","wrong"),("scope","observe"),
+                             ("actor_id","bob"),("context_epoch","0"*32),
+                             ("authorization_revision",2),("request_id","different"),
+                             ("request_digest","0"*64),("exp",self.claims["iat"]+31)):
+            with self.subTest(claim=claim),self.assertRaises(f.BankingDenied):
+                check_fixture_grant(self.header,{**self.claims,claim:wrong},self.request)
+        for extra in ({"jku":"https://evil.invalid/key"},{"alg":"none"},{"kid":"untrusted"}):
+            with self.subTest(extra=extra),self.assertRaises(f.BankingDenied):
+                check_fixture_grant({**self.header,**extra},self.claims,self.request)
+        tampered={**self.request,"payload":{**self.request["payload"],"amount":1001}}
+        with self.assertRaises(f.BankingDenied):
+            check_fixture_grant(self.header,self.claims,tampered)
+
+    def test_response_matrix_and_secret_safe_failure(self):
+        from tests.banking_fake_consumer import interpret_producer
+        transfer={"transfer_id":"tx1","from_account":"A","to_account":"B",
+                  "amount":1000,"currency":"VND","status":"SUCCESS",
+                  "created_at":"2026-10-16T00:00:00+00:00"}
+        for code in (201,200):
+            self.assertEqual(interpret_producer(200,{"stored":False,
+              "response":{"status":code,"body":transfer}},submitted=True),
+              ("OBSERVED","INCONCLUSIVE"))
+        for code in (404,409,422):
+            self.assertEqual(interpret_producer(200,{"stored":False,
+              "response":{"status":code,"body":{"error":{"code":"rejected"}}}},
+              submitted=True),("OBSERVED","INCONCLUSIVE"))
+        for status in (None,202,401,403,422,429,500,503,504):
+            self.assertEqual(interpret_producer(status,None,submitted=True),
+                             ("UNKNOWN","INCONCLUSIVE"))
+        self.assertEqual(interpret_producer(None,None,submitted=False),
+                         ("NOT_RUN","INCONCLUSIVE"))
+        with self.assertRaises(f.BankingDenied):
+            interpret_producer(200,{"stored":False,"response":{"status":201,
+                "body":{**transfer,"amount":2**63}}},submitted=True)
+        with self.assertRaises(f.BankingDenied):
+            interpret_producer(200,{"stored":False,"response":{"status":201,
+                "body":{**transfer,"amount":"1000"}}},submitted=True)
+        with self.assertRaises(f.BankingDenied):
+            interpret_producer(200,{"stored":False,"response":{"status":201,
+                "body":{**transfer,"unexpected_secret":"key"}}},submitted=True)
+
+    def test_fake_crash_windows_original_identity_only(self):
+        from tests.banking_fake_consumer import FakeU5Consumer
+        sim=FakeU5Consumer()
+        self.assertEqual(sim.observe(None,None),("NOT_RUN","INCONCLUSIVE"))
+        with self.assertRaises(f.BankingDenied):
+            sim.submit()
+        sim.accept(self.request)
+        sim.accept(self.request)
+        with self.assertRaises(f.BankingDenied):
+            sim.accept({**self.request,"payload":{**self.request["payload"],"amount":1001}})
+        sim.submit()
+        sim.submit()
+        self.assertEqual(sim.dispatches,1)
+        self.assertEqual(sim.observe(None,None),("UNKNOWN","INCONCLUSIVE"))
+        self.assertEqual(sim.observe(409,None),("UNKNOWN","INCONCLUSIVE"))
+        self.assertEqual(sim.observe(503,None),("UNKNOWN","INCONCLUSIVE"))
+        self.assertEqual(sim.dispatches,1)
