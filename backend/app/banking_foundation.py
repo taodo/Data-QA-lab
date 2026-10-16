@@ -94,13 +94,14 @@ def _session(connection, principal: dict):
     """Authoritative active session check, not trust in stale request claims."""
     if type(principal) is not dict or not isinstance(principal.get("token_hash"), str):
         raise BankingDenied("Authenticated session required")
+    from backend.app import public_demo
     session = connection.execute(
         """SELECT s.user_id FROM metadata.account_sessions s
            JOIN metadata.accounts a ON a.user_id=s.user_id
            LEFT JOIN metadata.public_demo_accounts p ON p.user_id=a.user_id
            WHERE s.token_hash=%s AND s.expires_at>NOW() AND a.active
-             AND (p.user_id IS NULL OR p.enabled)
-           FOR UPDATE OF s""", (principal["token_hash"],)).fetchone()
+             AND (p.user_id IS NULL OR (p.enabled AND %s))
+           FOR UPDATE OF s""", (principal["token_hash"],public_demo.enabled())).fetchone()
     if not session or str(session[0]) != str(principal.get("user_id")):
         raise BankingDenied("Session expired or foreign")
     return session[0]
@@ -152,20 +153,28 @@ def reserve_context(connection, principal: dict, allocation_intent_id: UUID) -> 
 
 
 def attach_private_context(connection, principal: dict, context_id: UUID,
-                           *, context_ref: str, epoch: str, revision: int):
+                           *, context_ref: str, epoch: str, revision: int,
+                           authorized_actors: tuple[str, ...]):
     """Operator/test-only data-plane acknowledgement; no network access."""
     if type(context_id) is not UUID or not all(
          type(s) is str and _HEX32.fullmatch(s) for s in (context_ref,epoch)):
         raise BankingDenied("Invalid private context")
     if type(revision) is not int or revision <= 0:
         raise BankingDenied("Invalid epoch revision")
+    if (type(authorized_actors) is not tuple or
+            not 1 <= len(authorized_actors) <= 8 or
+            len(set(authorized_actors)) != len(authorized_actors) or
+            any(type(actor) is not str or not _IDENT.fullmatch(actor)
+                for actor in authorized_actors)):
+        raise BankingDenied("Untrusted context actor roster")
     binding = binding_for_session(connection, principal)
     result = connection.execute(
         """UPDATE metadata.banking_contexts SET
-             context_ref=%s,context_epoch=%s,authorization_revision=%s,state='ACTIVE'
+             context_ref=%s,context_epoch=%s,authorization_revision=%s,
+             authorized_actors=%s,state='ACTIVE'
            WHERE binding_ref=%s AND context_id=%s AND state='RESERVED'
            RETURNING context_id""",
-        (context_ref,epoch,revision,binding,context_id)).fetchone()
+        (context_ref,epoch,revision,list(authorized_actors),binding,context_id)).fetchone()
     if not result:
         raise BankingDenied("Allocation already consumed or foreign")
 
@@ -181,11 +190,13 @@ def accept_intent(connection, principal: dict, *, context_id: UUID,
     domain_amount = money_to_domain(amount,limit=limit)
     binding = binding_for_session(connection, principal)
     ctx = connection.execute(
-        """SELECT context_ref,context_epoch,authorization_revision,state
+        """SELECT context_ref,context_epoch,authorization_revision,state,authorized_actors
            FROM metadata.banking_contexts WHERE context_id=%s AND binding_ref=%s FOR UPDATE""",
         (context_id,binding)).fetchone()
     if not ctx or ctx[3] != "ACTIVE" or ctx[0] is None or ctx[1] is None:
         raise BankingDenied("Context not provisioned")
+    if actor not in ctx[4]:
+        raise BankingDenied("Actor not authorized for this context")
     prior = connection.execute(
         """SELECT operation_id,frozen_request,phase FROM metadata.banking_operations
            WHERE binding_ref=%s AND client_intent_id=%s FOR UPDATE""",
@@ -306,6 +317,7 @@ def fence_orphaned_bindings(connection) -> int:
     No network, deletion or operator key use. Must run periodically before
     revocation delivery is considered fresh; foundation alone has no scheduler.
     """
+    from backend.app import public_demo
     rows=connection.execute(
         """SELECT b.session_hash FROM metadata.banking_bindings b
            LEFT JOIN metadata.account_sessions s
@@ -314,9 +326,9 @@ def fence_orphaned_bindings(connection) -> int:
            LEFT JOIN metadata.public_demo_accounts p ON p.user_id=b.user_id
            WHERE b.state='ACTIVE' AND
              (s.token_hash IS NULL OR s.expires_at<=NOW() OR NOT a.active
-              OR (p.user_id IS NOT NULL AND NOT p.enabled))
+              OR (p.user_id IS NOT NULL AND (NOT p.enabled OR NOT %s)))
            ORDER BY b.created_at,b.binding_ref
-           FOR UPDATE OF b""").fetchall()
+           FOR UPDATE OF b""", (public_demo.enabled(),)).fetchall()
     for (session_hash,) in rows:
         fence_session(connection,session_hash)
     return len(rows)
