@@ -143,13 +143,14 @@ def _allocation_budgets(connection, owner, binding: str) -> None:
              COUNT(*),
              COUNT(*) FILTER (WHERE c.created_at > NOW()-INTERVAL '1 minute'),
              COUNT(*) FILTER (WHERE b.user_id=%s AND c.created_at>NOW()-INTERVAL '10 minutes'),
-             COUNT(*) FILTER (WHERE c.binding_ref=%s AND c.created_at>NOW()-INTERVAL '5 minutes')
+             COUNT(*) FILTER (WHERE c.binding_ref=%s AND c.created_at>NOW()-INTERVAL '5 minutes'),
+             COUNT(*) FILTER (WHERE c.state IN ('RESERVED','ACTIVE','DRAINING','RECOVERY_HOLD'))
            FROM metadata.banking_contexts c
            JOIN metadata.banking_bindings b ON b.binding_ref=c.binding_ref""",
         (owner, owner, binding)).fetchone()
-    user_total, global_total, global_minute, user_ten, session_five = counts
-    if user_total >= 3 or global_total >= 100:
-        raise BankingDenied("Retained context capacity; held contexts cannot be evicted")
+    user_total, global_total, global_minute, user_ten, session_five, global_active = counts
+    if user_total >= 3 or global_total >= 100 or global_active >= 20:
+        raise BankingDenied("Context capacity; held contexts cannot be evicted")
     if global_minute >= 6 or user_ten >= 2 or session_five >= 1:
         raise BankingDenied("Allocation rate limit")
 
