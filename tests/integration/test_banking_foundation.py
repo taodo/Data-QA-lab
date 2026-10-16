@@ -38,6 +38,13 @@ class BankingFoundationPostgresTests(unittest.TestCase):
             admin.execute(sql.SQL("DROP DATABASE {} WITH (FORCE)").format(sql.Identifier(cls.name)))
 
     def setUp(self):
+        # This entire database is disposable. Isolate quota/time-window state
+        # between tests without ever touching account or Data track tables.
+        with transaction(self.db) as tx:
+            for table in ("banking_observations","banking_attempts",
+                          "banking_revocation_outbox","banking_operations",
+                          "banking_contexts","banking_bindings"):
+                tx.execute("DELETE FROM metadata."+table)
         self.a,self.user=signed_client(self.db)
         self.session_a=accounts.token_hash(self.a.cookies.get(accounts.COOKIE))
         self.principal_a={"user_id":self.user["user_id"],"token_hash":self.session_a}
