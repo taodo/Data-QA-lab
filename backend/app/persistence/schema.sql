@@ -305,6 +305,7 @@ CREATE TABLE IF NOT EXISTS metadata.banking_contexts (
     context_ref TEXT CHECK (context_ref IS NULL OR context_ref ~ '^[0-9a-f]{32}$'),
     context_epoch TEXT CHECK (context_epoch IS NULL OR context_epoch ~ '^[0-9a-f]{32}$'),
     authorization_revision BIGINT NOT NULL DEFAULT 1 CHECK (authorization_revision>0),
+    authorized_actors TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[] CHECK (cardinality(authorized_actors) BETWEEN 0 AND 8),
     state TEXT NOT NULL CHECK (state IN ('RESERVED','ACTIVE','DRAINING','RECOVERY_HOLD','RETAINED')),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE(binding_ref,allocation_intent_id),
