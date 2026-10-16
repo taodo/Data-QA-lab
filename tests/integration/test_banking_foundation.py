@@ -80,7 +80,8 @@ class BankingFoundationPostgresTests(unittest.TestCase):
         with transaction(self.db) as tx:
             reserved=bf.reserve_context(tx,self.principal_a,uuid4())
             bf.attach_private_context(tx,self.principal_a,UUID(reserved["context_id"]),
-                                      context_ref="a"*32,epoch="b"*32,revision=1)
+                                      context_ref="a"*32,epoch="b"*32,revision=1,
+                                      authorized_actors=("alice",))
             accepted=bf.accept_intent(tx,self.principal_a,
                  context_id=UUID(reserved["context_id"]),client_intent_id=intent,
                  actor="alice",from_account="A",to_account="B",amount="1000")
@@ -131,7 +132,8 @@ class BankingFoundationPostgresTests(unittest.TestCase):
         with transaction(self.db) as tx:
             ctx=bf.reserve_context(tx,self.principal_a,uuid4())
             bf.attach_private_context(tx,self.principal_a,UUID(ctx["context_id"]),
-                                      context_ref="a"*32,epoch="b"*32,revision=1)
+                                      context_ref="a"*32,epoch="b"*32,revision=1,
+                                      authorized_actors=("alice",))
             op=bf.accept_intent(tx,self.principal_a,context_id=UUID(ctx["context_id"]),
                                 client_intent_id=uuid4(),actor="alice",
                                 from_account="A",to_account="B",amount="1000")
@@ -166,7 +168,8 @@ class BankingFoundationPostgresTests(unittest.TestCase):
         with transaction(self.db) as tx:
             ctx=bf.reserve_context(tx,self.principal_a,uuid4())
             bf.attach_private_context(tx,self.principal_a,UUID(ctx["context_id"]),
-                                      context_ref="a"*32,epoch="b"*32,revision=1)
+                                      context_ref="a"*32,epoch="b"*32,revision=1,
+                                      authorized_actors=("alice",))
             accepted=bf.accept_intent(tx,self.principal_a,
                       context_id=UUID(ctx["context_id"]),client_intent_id=uuid4(),
                       actor="alice",from_account="A",to_account="B",amount="1")
