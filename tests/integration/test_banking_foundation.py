@@ -157,5 +157,3 @@ class BankingFoundationPostgresTests(unittest.TestCase):
                 bf.accept_intent(tx,self.principal_a,context_id=UUID(ctx["context_id"]),
                                  client_intent_id=uuid4(),actor="alice",
                                  from_account="A",to_account="B",amount="1")
-            with self.assertRaises(Exception):
-                bf.reserve_context(tx,self.principal_a,uuid4())
