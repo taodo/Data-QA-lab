@@ -82,6 +82,10 @@ class BankingFoundationPostgresTests(unittest.TestCase):
             bf.attach_private_context(tx,self.principal_a,UUID(reserved["context_id"]),
                                       context_ref="a"*32,epoch="b"*32,revision=1,
                                       authorized_actors=("alice",))
+            with self.assertRaises(bf.BankingDenied):
+                bf.accept_intent(tx,self.principal_a,
+                     context_id=UUID(reserved["context_id"]),client_intent_id=uuid4(),
+                     actor="bob",from_account="A",to_account="B",amount="1000")
             accepted=bf.accept_intent(tx,self.principal_a,
                  context_id=UUID(reserved["context_id"]),client_intent_id=intent,
                  actor="alice",from_account="A",to_account="B",amount="1000")
