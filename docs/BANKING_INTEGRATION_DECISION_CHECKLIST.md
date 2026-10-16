@@ -232,3 +232,15 @@ documentation PR; it is not a requirement to duplicate full runtime suites local
 No code, schemas, settings, dependencies, secrets, domain repositories, retained
 accounts/history or production infrastructure are modified. Stop for independent
 architecture review; do not merge or begin B2/U5/U6.
+
+## 2026-10-16 U5-F decision closure (implementation/release distinction)
+
+[Issue #47 C1–C11](https://github.com/taodo/Data-QA-lab/issues/47#issuecomment-6195214592) is approved as the **foundation design baseline**. D1–D7 direction and B3 producer parameters can be used for offline PG/schema/fixture development. The earlier unresolved proposed `/actor-token` endpoint is superseded by the domain-internal synthetic actor broker. The actual producer digester uses B2 sorted compact `ensure_ascii=True` JSON SHA-256, and U5 has pinned its public test fixture.
+
+- [x] B3 mTLS/ES256 producer **development baseline** accepted via human-waived B3-only PR #23 merge `d77ce49b6d4ba7303dd796d072f758c9f1086beb`. This does not transfer review waiver to U5/B4 or authorize public/live integration.
+- [x] U5 foundation ownership/scope: per-session opaque binding, PG context allocations, frozen ACCEPT→SUBMIT and UNKNOWN/outbox, canonical string money; test-only producer fixtures, capability OFF, no live key/transport.
+- [ ] U5 foundation migration, security, concurrent/expiry and existing-platform regressions must pass on exact HEAD; independent review and human merge approval required.
+- [ ] Real U5 ES256 signer/private TLS client, real B3/B4 consumer golden positives/negatives, revocation ACK and 7-window E2E matrix, U6 UI and release B5/U10 **NOT RUN**.
+- [ ] Production operator key custody/cert rotation, retention capacity/privacy, network port/firewall and disaster recovery must be approved independently before Banking activation.
+
+No real Banking authorization or assessment may be inferred from green fixture tests, a PG ACCEPT row, a nested 201 response, HTTP success or source-reported evidence.
