@@ -1,0 +1,21 @@
+{
+  "schema": "u5l-offline-source-pins-v1",
+  "producer_repository": "taodo/MiniBanking",
+  "accepted_merge": "970c5fa24092c08c4477b12ad40d45fc8e067b8b",
+  "b3_merge": "d77ce49b6d4ba7303dd796d072f758c9f1086beb",
+  "b4_reviewed_head": "71e8a7f0fae4dba6c0453c02fdb4793588f40b49",
+  "platform_base": "d48e9bf501c831502d90f5894e5d1b5531d0a2c5",
+  "status": "OFFLINE_ONLY__LIVE_INTEROP_BLOCKED_PENDING_JOINT_APPROVAL",
+  "fixtures": [
+    {
+      "upstream_path": "contracts/b3_grant_vectors_v1.json",
+      "fixture": "banking_u5l_b3_accepted.json",
+      "sha256": "75d15019d65dd490287475301e237ec94a41eed4ad9e4b72e21320d51bb4d31b"
+    },
+    {
+      "upstream_path": "contracts/b4_private_producer_evidence_v2.json",
+      "fixture": "banking_u5l_b4_accepted_v2.json",
+      "sha256": "6a52bb77e0b0c82a937ff929c45939008fae1db7063090a018650b34474076d5"
+    }
+  ]
+}

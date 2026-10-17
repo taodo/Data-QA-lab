@@ -1,0 +1,257 @@
+{
+  "schema": "u5l-consumer-offline-policy-v1",
+  "status": "SPECIFICATION_ONLY__AMENDMENT_ACCEPTANCE_AND_SECURITY_SIGNOFF_PENDING",
+  "producer_merge": "970c5fa24092c08c4477b12ad40d45fc8e067b8b",
+  "corrective_specification": "https://github.com/taodo/Data-QA-lab/issues/51#issuecomment-6233402825",
+  "money": "INTEGER_VND_ONLY__BROWSER_CANONICAL_ASCII_DECIMAL",
+  "transfer": {
+    "operation": "transfers.create",
+    "recovery": false,
+    "scope": "dispatch",
+    "maximum_initial_dispatches": 1
+  },
+  "reads": {
+    "accounts.list": {
+      "payload_fields": [],
+      "key": null
+    },
+    "accounts.balance": {
+      "payload_fields": [
+        "account_id"
+      ],
+      "key": null
+    },
+    "accounts.history": {
+      "payload_fields": [
+        "account_id",
+        "limit",
+        "offset"
+      ],
+      "key": null,
+      "limit": [
+        1,
+        100
+      ],
+      "offset": [
+        0,
+        10000
+      ]
+    },
+    "transfers.lookup": {
+      "payload_fields": [
+        "transfer_id"
+      ],
+      "key": null
+    }
+  },
+  "reconciliation": {
+    "route": "/internal/integrations/v1/banking/contexts/{ref}/observe-operation",
+    "scope": "observe",
+    "recovery": false,
+    "redispatch": false,
+    "new_allocation": false,
+    "identity": "ORIGINAL_FROZEN_REQUEST_UNCHANGED",
+    "attempts_per_5_minutes": 3,
+    "attempts_lifetime": 10,
+    "exhaustion": "UNKNOWN_OR_HELD"
+  },
+  "bff_example_pins": {
+    "origin": "http://127.0.0.1:18080",
+    "host": "127.0.0.1:18080"
+  },
+  "bff_required": {
+    "session_active": true,
+    "csrf_matches": true,
+    "public_shared": false,
+    "entry_point": "LOCAL_OWNED",
+    "binding_session": "session-a",
+    "session": "session-a",
+    "authorized_actors": [
+      "alice"
+    ]
+  },
+  "bff_denials": [
+    {
+      "name": "enabled_authenticated_shared_demo",
+      "change": {
+        "public_shared": true
+      },
+      "expect": "DENY"
+    },
+    {
+      "name": "same_owner_other_session",
+      "change": {
+        "session": "session-b"
+      },
+      "expect": "DENY"
+    },
+    {
+      "name": "expired_session",
+      "change": {
+        "session_active": false
+      },
+      "expect": "DENY"
+    },
+    {
+      "name": "missing_origin",
+      "change": {
+        "origin": null
+      },
+      "expect": "DENY"
+    },
+    {
+      "name": "null_origin",
+      "change": {
+        "origin": "null"
+      },
+      "expect": "DENY"
+    },
+    {
+      "name": "cross_origin",
+      "change": {
+        "origin": "https://untrusted.invalid"
+      },
+      "expect": "DENY"
+    },
+    {
+      "name": "wrong_host",
+      "change": {
+        "host": "public.example.invalid"
+      },
+      "expect": "DENY"
+    },
+    {
+      "name": "missing_csrf",
+      "change": {
+        "csrf_matches": false
+      },
+      "expect": "DENY"
+    },
+    {
+      "name": "public_entry_with_local_headers",
+      "change": {
+        "entry_point": "PUBLIC"
+      },
+      "expect": "DENY"
+    },
+    {
+      "name": "demo_entry_with_local_headers",
+      "change": {
+        "entry_point": "DEMO"
+      },
+      "expect": "DENY"
+    },
+    {
+      "name": "ungranted_actor",
+      "change": {
+        "actor": "bob"
+      },
+      "expect": "DENY"
+    },
+    {
+      "name": "test_header_is_not_origin_exemption",
+      "change": {
+        "origin": null,
+        "test_header": true
+      },
+      "expect": "DENY"
+    },
+    {
+      "name": "forwarded_host_is_not_authority",
+      "change": {
+        "host": "public.example.invalid",
+        "forwarded_host": "127.0.0.1:18080"
+      },
+      "expect": "DENY"
+    },
+    {
+      "name": "missing_session_identity",
+      "change": {
+        "session": null,
+        "binding_session": null
+      },
+      "expect": "DENY"
+    },
+    {
+      "name": "empty_session_identity",
+      "change": {
+        "session": "",
+        "binding_session": ""
+      },
+      "expect": "DENY"
+    }
+  ],
+  "inconclusive_observations": [
+    {
+      "source_condition": "REVOKED_BINDING",
+      "outer": 403
+    },
+    {
+      "source_condition": "UNKNOWN_OPERATION",
+      "outer": 403
+    },
+    {
+      "source_condition": "OBSERVATION_CAPACITY",
+      "outer": 403
+    },
+    {
+      "source_condition": "RECEIPT_CAPACITY",
+      "outer": 403
+    },
+    {
+      "source_condition": "WRITER_NOT_DRAINED",
+      "outer": 200
+    },
+    {
+      "source_condition": "TRANSPORT_LOSS",
+      "outer": null
+    }
+  ],
+  "ambiguity_policy": {
+    "phase": "UNKNOWN_OR_HELD",
+    "outcome": "INCONCLUSIVE",
+    "successful_observation": false,
+    "settles_original": false,
+    "redispatch": false,
+    "assessment": "NOT_ASSESSED"
+  },
+  "lifecycle_when_possible": [
+    "FENCE_ADMISSION",
+    "PERSIST_DRAIN_ATTEMPT",
+    "DRAIN",
+    "PERSIST_OBSERVE_ATTEMPT",
+    "BOUNDED_ORIGINAL_OBSERVE",
+    "PERSIST_REVOKE_ATTEMPT",
+    "REVOKE",
+    "VERIFY_CURRENT_ACK_FENCE"
+  ],
+  "unobservable": "RETAIN_UNKNOWN_OR_HELD__ESCALATE__REVOKE_WITHOUT_FALSE_SETTLEMENT",
+  "lifecycle_requirements": [
+    "J5-01",
+    "J5-02",
+    "J5-03",
+    "J5-04",
+    "J5-05",
+    "J5-06",
+    "J5-07"
+  ],
+  "ack_correlation": [
+    "outbox_operation_id",
+    "binding",
+    "context",
+    "epoch",
+    "revision",
+    "control_request_identity",
+    "lease_generation"
+  ],
+  "producer_ack_body": {
+    "revocation": "ACKNOWLEDGED"
+  },
+  "ack_rejections": [
+    "late",
+    "stale",
+    "duplicate"
+  ],
+  "retention": "INDEFINITE_UNTIL_AUTHORIZED_DISPOSITION__NO_AUTOMATIC_EVICTION",
+  "runtime_executed": false
+}

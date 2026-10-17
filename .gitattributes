@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+# U5-L accepted producer Git blobs are hashed byte-for-byte in offline preflight.
+tests/fixtures/banking_u5l_b3_accepted.json text eol=lf
+tests/fixtures/banking_u5l_b4_accepted_v2.json text eol=lf

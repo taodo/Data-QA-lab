@@ -1,0 +1,79 @@
+{
+  "contract": "B4-PRIVATE-PRODUCER-EVIDENCE-V2",
+  "status": "PRODUCER_ONLY_CANDIDATE__U5_L_INTEROP_BLOCKED",
+  "predecessor": {
+    "repository": "taodo/MiniBanking",
+    "b3_merged_head": "d77ce49b6d4ba7303dd796d072f758c9f1086beb",
+    "wire_profile": "BIC-1.1-candidate",
+    "joint_design_alias": "BIC-1.1-producer-baseline",
+    "vectors": "contracts/b3_grant_vectors_v1.json",
+    "wire_changed": false,
+    "actor_token_endpoint": "NOT_PRESENT_DOMAIN_INTERNAL_ONLY"
+  },
+  "trust": {
+    "default_banking": "OFF",
+    "transport": "private mTLS, pinned SAN/fingerprint/clientAuth EKU",
+    "signing": "ES256 verifier public allowlist; ephemeral signer only in tests",
+    "evidence": "TRUSTED_LOCAL_TEST_CAPTURE_NOT_AUTHENTICATED",
+    "signed_receipt": "NOT_VERIFIED_BY_SQL_HELPER",
+    "assessment": "NOT_ASSESSED"
+  },
+  "canonical_request": {
+    "source": "B3 Request except digest",
+    "sort_keys": true,
+    "separators": [",", ":"],
+    "ensure_ascii": true,
+    "allow_nan": false,
+    "encoding": "ASCII subset of UTF-8",
+    "digest": "SHA-256",
+    "grant": {"alg": "ES256", "typ": "banking+jwt", "ttl_seconds": 30, "skew_seconds": 5, "max_bytes": 4096}
+  },
+  "private_http_status_matrix": [
+    {"outer": 200, "inner": 201, "meaning": "new bank result; SQL proof separate"},
+    {"outer": 200, "inner": 200, "meaning": "bank replay OR stored receipt; inspect stored flag and original nested result"},
+    {"outer": 200, "inner": 409, "meaning": "bank conflict/limit; cannot settle an earlier UNKNOWN"},
+    {"outer": 200, "inner": 404, "meaning": "bank inaccessible source/recipient/history/transfer"},
+    {"outer": 200, "inner": 422, "meaning": "bank semantic validation, including same account"},
+    {"outer": 200, "inner": 401, "meaning": "bank authentication denial; earlier UNKNOWN preserved; controlled B4 fault test"},
+    {"outer": 200, "inner": 500, "meaning": "bank infrastructure error; independent drained proof required"},
+    {"outer": 200, "inner": 503, "meaning": "bank SQLite contention; original identity only"},
+    {"outer": 202, "inner": null, "meaning": "source receipt UNKNOWN; timeout does not cancel writer"},
+    {"outer": 400, "inner": null, "meaning": "malformed envelope/duplicate keys/JSON float/NaN/size/type"},
+    {"outer": 403, "inner": null, "meaning": "private grant/identity/lifecycle/payload/capacity denial"},
+    {"outer": 404, "inner": null, "meaning": "fixed private route/method not found"},
+    {"outer": 503, "inner": null, "meaning": "source operation unavailable; never infer no historic commit"},
+    {"outer": null, "inner": null, "meaning": "TLS/transport unavailable; UNKNOWN if submit may have reached source"}
+  ],
+  "not_emitted_by_current_producer": ["outer401", "outer422", "outer429"],
+  "recovery_windows": [
+    {"window": 1, "owner": "U5-L", "phase": "before ACCEPT", "status": "BLOCKED_NOT_RUN"},
+    {"window": 2, "owner": "U5-L", "phase": "ACCEPT before SUBMIT", "status": "BLOCKED_NOT_RUN"},
+    {"window": 3, "owner": "U5-L+B4", "phase": "SUBMIT before source admission", "producer_test": "test_real_tls_source_owned_recovery_windows_preserve_original[before_admission]", "platform_status": "BLOCKED_NOT_RUN"},
+    {"window": 4, "owner": "B4", "phase": "ADMITTED before SQL commit", "producer_tests": ["test_real_tls_source_owned_recovery_windows_preserve_original[after_admission]", "test_real_tls_source_owned_recovery_windows_preserve_original[after_debit]", "test_real_tls_inflight_timeout_actual_drain_and_late_commit"]},
+    {"window": 5, "owner": "B4", "phase": "SQL commit before source receipt", "producer_test": "test_real_tls_source_owned_recovery_windows_preserve_original[after_response]"},
+    {"window": 6, "owner": "B4+U5-L", "phase": "source response before BFF confirmation", "producer_test": "test_real_tls_lost_bff_response_keeps_committed_original_observable", "platform_status": "BLOCKED_NOT_RUN"},
+    {"window": 7, "owner": "B4+B5+U5-L", "phase": "expiry/drain/restart/older restore", "producer_test": "test_real_tls_clean_reopen_expiry_and_older_restore_never_relabel_original", "operational_and_platform_status": "BLOCKED_NOT_RUN"}
+  ],
+  "evidence_schema": {
+    "schema": "minibanking-b4-sql-evidence-v2",
+    "source": "independent_sqlite_read_only",
+    "snapshot": "one read_state BEGIN/query_only snapshot; same state feeds audit and exported rows",
+    "baseline": "in-process manager-owned fresh capture, immutable bytes/hash, file identity, context/epoch, UTC capture time; no external baseline/path import",
+    "observation_identity": "CALLER_DECLARED_NOT_A_VERIFIED_SIGNED_RECEIPT",
+    "outcomes": ["SQL_MATCH_FOR_DECLARED_OBSERVATIONS", "INCONCLUSIVE"],
+    "signed_receipt": "NOT_VERIFIED",
+    "assessment": "NOT_ASSESSED",
+    "completeness": ["COMPLETE_FOR_DECLARED_DISPOSABLE_SQL_OBSERVATIONS", "INCOMPLETE_NO_SIGNED_DOMAIN_RECEIPT"],
+    "money": "ASCII decimal-string balances/net changes; exact signed64 JSON integer on domain wire",
+    "bounded_observations": 100,
+    "omitted_or_forged_observations": "REJECT_ON_SQL_DIFFERENTIAL_MISMATCH",
+    "absence": "INCONCLUSIVE_NEVER_NO_COMMIT",
+    "import_trust": "UNTRUSTED_IMPORTED_EVIDENCE_NOT_A_PLATFORM_GRADE"
+  },
+  "migration": {
+    "from": "minibanking-b4-sql-evidence-v1",
+    "breaking_changes": ["capture_disposable_baseline(manager, context_ref, context_epoch) replaces caller baseline/path", "SQL match no longer implies MATCHING_COMMIT or signed receipt authenticity"],
+    "consumer_note": "V1 remains historical. Do not auto-convert/import/promote either version into platform progress. Joint U5-L V2 schema review and genuine interoperability remain BLOCKED. B3 signed wire is unchanged."
+  },
+  "gates": {"producer": "INDEPENDENT_REVIEW_REQUIRED", "U5_L_interop": "BLOCKED_ISSUE_51", "public_and_deployment": "OFF_B5_U10_NOT_AUTHORIZED"}
+}
